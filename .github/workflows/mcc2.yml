@@ -1,0 +1,17 @@
+name: mcc2 build
+
+on:
+  push:
+    paths:
+      - '.github/workflows/mcc2.yml'
+      - '*'
+      - 'test.sh'
+  workflow_dispath:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: make test
+
