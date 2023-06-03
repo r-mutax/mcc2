@@ -8,7 +8,7 @@ mcc2: $(OBJS)
 $(OBJS):
 
 test: mcc2
-	./test/sh
+	./test.sh
 
 clean:
 	rm -f mcc2 *.o *~ tmp*
