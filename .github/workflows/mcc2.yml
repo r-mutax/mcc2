@@ -6,7 +6,6 @@ on:
       - '.github/workflows/mcc2.yml'
       - '*'
       - 'test.sh'
-  workflow_dispath:
 
 jobs:
   test:
