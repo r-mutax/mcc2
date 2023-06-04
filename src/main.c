@@ -4,7 +4,7 @@
 #include "tokenizer.h"
 #include "parse.h"
 #include "gen_ir.h"
-#include "gen_x86.h"
+#include "gen_x86_64.h"
 
 int main(int argc, char **argv){
     if( argc != 2){

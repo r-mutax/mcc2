@@ -1,4 +1,4 @@
-#include "gen_x86.h"
+#include "gen_x86_64.h"
 #include "gen_ir.h"
 #include <stdio.h>
 
