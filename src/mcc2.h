@@ -5,16 +5,20 @@ typedef struct Node Node;
 typedef struct IR IR;
 
 typedef enum TokenKind {
-    TK_NUM,             // 数値
-    TK_ADD,             // + 記号
-    TK_SUB,             // - 記号
+    TK_NUM,                     // 数値
+    TK_ADD,                     // + 記号
+    TK_SUB,                     // - 記号
     TK_MUL,
     TK_DIV,
-    TK_L_PAREN,         // (
-    TK_R_PAREN,         // )
-    TK_EQUAL,           // ==
-    TK_NOT_EQUAL,       // !=
-    TK_EOF              // 終端記号
+    TK_L_PAREN,                 // (
+    TK_R_PAREN,                 // )
+    TK_EQUAL,                   // ==
+    TK_NOT_EQUAL,               // !=
+    TK_L_ANGLE_BRACKET,         // <
+    TK_L_ANGLE_BRACKET_EQUAL,   // <=
+    TK_R_ANGLE_BRACKET,         // >
+    TK_R_ANGLE_BRACKET_EQUAL,   // >=
+    TK_EOF                      // 終端記号
 } TokenKind;
 
 struct Token {
@@ -32,6 +36,8 @@ typedef enum NodeKind {
     ND_DIV,
     ND_EQUAL,
     ND_NOT_EQUAL,
+    ND_LT,
+    ND_LE,
 } NodeKind;
 
 struct Node {
@@ -49,6 +55,8 @@ typedef enum IRKind{
     IR_DIV,
     IR_EQUAL,
     IR_NOT_EQUAL,
+    IR_LT,
+    IR_LE,
 } IRKind;
 
 struct IR{

@@ -71,6 +71,22 @@ void tokenize(char* src){
                     error_at(p, "error: unexpected token.\n");
                 }
                 break;
+            case '<':
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_L_ANGLE_BRACKET_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_L_ANGLE_BRACKET, cur, p++);
+                }
+                break;
+            case '>':
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_R_ANGLE_BRACKET_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_R_ANGLE_BRACKET, cur, p++);
+                }
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
