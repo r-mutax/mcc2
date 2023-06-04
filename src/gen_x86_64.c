@@ -42,7 +42,7 @@ void gen_x86(IR* ir){
     }
 
 
-    // ひとまず、スタくトップの値をリターンすることにする
+    // ひとまず、スタックトップの値をリターンすることにする
     fprintf(fp, "  pop rax\n");
     fprintf(fp, "  ret\n");
 }

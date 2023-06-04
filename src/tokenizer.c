@@ -47,6 +47,12 @@ void tokenize(char* src){
             case '/':
                 cur = new_token(TK_DIV, cur, p++);
                 break;
+            case '(':
+                cur = new_token(TK_L_PAREN, cur, p++);
+                break;
+            case ')':
+                cur = new_token(TK_R_PAREN, cur, p++);
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);

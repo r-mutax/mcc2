@@ -41,6 +41,12 @@ static Node* mul(){
 }
 
 static Node* primary(){
+    if(consume_token(TK_L_PAREN)){
+        Node* node = expr();
+        expect_token(TK_R_PAREN);
+        return node;
+    }
+
     return new_node_num(expect_num());
 }
 

@@ -10,6 +10,8 @@ typedef enum TokenKind {
     TK_SUB,             // - 記号
     TK_MUL,
     TK_DIV,
+    TK_L_PAREN,         // (
+    TK_R_PAREN,         // )
     TK_EOF              // 終端記号
 } TokenKind;
 
