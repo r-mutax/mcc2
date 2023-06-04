@@ -40,4 +40,5 @@ typedef enum IRKind{
 struct IR{
     IRKind kind;
     IR* next;
+    int val;
 };

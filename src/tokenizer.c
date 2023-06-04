@@ -24,20 +24,20 @@ void tokenize(char* src){
         switch(c){
             case 0:
                 continue_flg = false;
-                cur = new_token(TK_EOF, cur, p);
+                cur = new_token(TK_EOF, cur, p++);
                 break;
             case '+':
                 if(*(p + 1) == '+'){
 
                 } else {
-                    cur = new_token(TK_ADD, cur, p);
+                    cur = new_token(TK_ADD, cur, p++);
                 }
                 break;
             case '-':
                 if(*(p + 1) == '-'){
 
                 } else {
-                    cur = new_token(TK_ADD, cur, p);
+                    cur = new_token(TK_SUB, cur, p++);
                 }
                 break;
             default:
@@ -49,7 +49,6 @@ void tokenize(char* src){
                 }
                 break;
         }
-        p++;
     }
 
     token = head.next;

@@ -1,8 +1,8 @@
 #include "mcc2.h"
 #include "tokenizer.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
-Node* expr();
 static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_num(int num);

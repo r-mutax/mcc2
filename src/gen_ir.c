@@ -1,17 +1,18 @@
 #include "gen_ir.h"
 #include <stdlib.h>
 
-IR* ir;
-static IR* new_IR(IRKind kind, IR* cur);
+IR head;
+IR* ir = &head;
+static IR* new_IR(IRKind kind);
 
 void gen_ir(Node* node){
-    IR head = {};
-    IR* cur = &head;
-
     switch(node->kind){
         case ND_NUM:
-            cur = new_IR(IR_NUM, cur);
+        {
+            IR* ir = new_IR(IR_NUM);
+            ir->val = node->val;
             return;
+        }
         default:
             break;
     }
@@ -21,22 +22,27 @@ void gen_ir(Node* node){
 
     switch(node->kind){
         case ND_ADD:
-            cur = new_IR(IR_ADD, cur);
+            new_IR(IR_ADD);
             break;
         case ND_SUB:
-            cur = new_IR(IR_SUB, cur);
+            new_IR(IR_SUB);
             break;
         default:
             break;
     }
 
-    ir = head.next;
+    return;
 }
 
-static IR* new_IR(IRKind kind, IR* cur){
-    IR* ir = calloc(1, sizeof(IR));
-    ir->kind = kind;
-    cur->next = ir;
-    return ir;
+IR* get_ir(){
+    return head.next;
+}
+
+static IR* new_IR(IRKind kind){
+    IR* tmp = calloc(1, sizeof(IR));
+    tmp->kind = kind;
+    ir->next = tmp;
+    ir = tmp;
+    return tmp;
 }
 
