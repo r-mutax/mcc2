@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/mcc2.yml'
-      - '*'
+      - 'src/*'
       - 'test.sh'
 
 jobs:
