@@ -1,3 +1,4 @@
+#pragma once
 
 typedef struct Token Token;
 typedef struct Node Node;
@@ -12,5 +13,19 @@ typedef enum TokenKind {
 struct Token {
     TokenKind   kind;   // トークンの種類
     char*       pos;    // 位置
+    int         val;
     Token*      next;   // 次のトークン
+};
+
+typedef enum NodeKind {
+    ND_NUM,
+    ND_ADD,
+    ND_SUB,
+} NodeKind;
+
+struct Node {
+    NodeKind    kind;
+    Node*       lhs;
+    Node*       rhs;
+    int         val; 
 };

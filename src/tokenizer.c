@@ -1,9 +1,8 @@
-#include "mcc2.h"
 #include "tokenizer.h"
 #include <stdlib.h>
-#include <stdbool.h>
+#include <ctype.h>
 
-Token* tokens;
+Token* token;
 
 static Token* new_token(TokenKind kind, Token* cur, char* p);
 static Token* next(char* p);
@@ -25,6 +24,7 @@ void tokenize(char* src){
         switch(c){
             case 0:
                 continue_flg = false;
+                cur = new_token(TK_EOF, cur, p);
                 break;
             case '+':
                 if(*(p + 1) == '+'){
@@ -40,11 +40,45 @@ void tokenize(char* src){
                     cur = new_token(TK_ADD, cur, p);
                 }
                 break;
+            default:
+                if(isdigit(c)){
+                    cur = new_token(TK_NUM, cur, p);
+                    cur->val = strtol(p, &p, 10);
+                } else if(isspace(c)){
+                    // 何もしない
+                }
+                break;
         }
         p++;
     }
 
-    tokens = head.next;
+    token = head.next;
+}
+
+void expect_token(TokenKind kind){
+    if(token->kind != kind){
+        exit(1);
+    }
+
+    token = token->next;
+}
+
+int expect_num(){
+    if(token->kind != TK_NUM){
+        exit(1);
+    }
+
+    int result = token->val;
+    token = token->next;
+    return result;
+}
+
+bool consume_token(TokenKind kind){
+    if(token->kind != kind){
+        return false;
+    }
+    token = token->next;
+    return true;
 }
 
 static Token* new_token(TokenKind kind, Token* cur, char* p){
