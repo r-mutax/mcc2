@@ -2,6 +2,7 @@
 
 typedef struct Token Token;
 typedef struct Node Node;
+typedef struct IR IR;
 
 typedef enum TokenKind {
     TK_NUM,             // 数値
@@ -28,4 +29,15 @@ struct Node {
     Node*       lhs;
     Node*       rhs;
     int         val; 
+};
+
+typedef enum IRKind{
+    IR_NUM,
+    IR_ADD,
+    IR_SUB,
+} IRKind;
+
+struct IR{
+    IRKind kind;
+    IR* next;
 };
