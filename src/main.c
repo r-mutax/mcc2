@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "error.h"
 #include "tokenizer.h"
 #include "parse.h"
 #include "gen_ir.h"
@@ -11,6 +12,8 @@ int main(int argc, char **argv){
         fprintf(stderr, "invalid arguments num.\n");
         return 1;
     }
+
+    user_input = argv[1];
 
     tokenize(argv[1]);
     Node* node = expr();

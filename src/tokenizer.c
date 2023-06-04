@@ -1,4 +1,5 @@
 #include "tokenizer.h"
+#include "error.h"
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -46,6 +47,9 @@ void tokenize(char* src){
                     cur->val = strtol(p, &p, 10);
                 } else if(isspace(c)){
                     // 何もしない
+                } else {
+                    // 想定外のトークンが来た
+                    error_at(p, "error: unexpected token.\n");
                 }
                 break;
         }
@@ -56,7 +60,7 @@ void tokenize(char* src){
 
 void expect_token(TokenKind kind){
     if(token->kind != kind){
-        exit(1);
+        error_at(token->pos, "error: unexpected token.\n");
     }
 
     token = token->next;
@@ -64,7 +68,7 @@ void expect_token(TokenKind kind){
 
 int expect_num(){
     if(token->kind != TK_NUM){
-        exit(1);
+        error_at(token->pos, "error: not a number.\n", token->pos);
     }
 
     int result = token->val;
