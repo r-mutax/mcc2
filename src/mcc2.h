@@ -12,6 +12,8 @@ typedef enum TokenKind {
     TK_DIV,
     TK_L_PAREN,         // (
     TK_R_PAREN,         // )
+    TK_EQUAL,           // ==
+    TK_NOT_EQUAL,       // !=
     TK_EOF              // 終端記号
 } TokenKind;
 
@@ -28,6 +30,8 @@ typedef enum NodeKind {
     ND_SUB,
     ND_MUL,
     ND_DIV,
+    ND_EQUAL,
+    ND_NOT_EQUAL,
 } NodeKind;
 
 struct Node {
@@ -43,6 +47,8 @@ typedef enum IRKind{
     IR_SUB,
     IR_MUL,
     IR_DIV,
+    IR_EQUAL,
+    IR_NOT_EQUAL,
 } IRKind;
 
 struct IR{

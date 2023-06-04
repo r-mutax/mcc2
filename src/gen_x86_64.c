@@ -36,6 +36,20 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  idiv rdi\n");
                 fprintf(fp, "  push rax\n");
                 break;
+            case IR_EQUAL:
+                pop2(fp);
+                fprintf(fp, "  cmp rax, rdi\n");
+                fprintf(fp, "  sete al\n");
+                fprintf(fp, "  movzb rax, al\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_NOT_EQUAL:
+                pop2(fp);
+                fprintf(fp, "  cmp rax, rdi\n");
+                fprintf(fp, "  setne al\n");
+                fprintf(fp, "  movzb rax, al\n");
+                fprintf(fp, "  push rax\n");
+                break;            
         }
 
         ir = ir->next;

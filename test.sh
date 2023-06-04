@@ -23,6 +23,10 @@ assert 3 "8-5"
 assert 13 "1 + 3 * 4"
 assert 5 "3 + 4 / 2"
 assert 5 "(9 + 6) / 3"
+assert 1 "2 == 2"
+assert 0 "2 == 3"
+assert 1 "3 + 4 != 8"
+assert 0 "3 + 4 != 7"
 
 echo OK
 

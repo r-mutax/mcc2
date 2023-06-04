@@ -53,6 +53,24 @@ void tokenize(char* src){
             case ')':
                 cur = new_token(TK_R_PAREN, cur, p++);
                 break;
+            case '=':
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    // まだ使えない
+                    error_at(p, "error: unexpected token.\n");
+                }
+                break;
+            case '!':
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_NOT_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    // まだ使えないから
+                    error_at(p, "error: unexpected token.\n");
+                }
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
