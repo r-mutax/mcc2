@@ -8,6 +8,10 @@ typedef enum TokenKind {
     TK_NUM,             // 数値
     TK_ADD,             // + 記号
     TK_SUB,             // - 記号
+    TK_MUL,
+    TK_DIV,
+    TK_L_PAREN,         // (
+    TK_R_PAREN,         // )
     TK_EOF              // 終端記号
 } TokenKind;
 
@@ -22,6 +26,8 @@ typedef enum NodeKind {
     ND_NUM,
     ND_ADD,
     ND_SUB,
+    ND_MUL,
+    ND_DIV,
 } NodeKind;
 
 struct Node {
@@ -35,6 +41,8 @@ typedef enum IRKind{
     IR_NUM,
     IR_ADD,
     IR_SUB,
+    IR_MUL,
+    IR_DIV,
 } IRKind;
 
 struct IR{
