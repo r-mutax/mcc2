@@ -1,5 +1,5 @@
 CFLAGS=-std=c11 -g -static
-SRCS=$(wildcard *.c)
+SRCS=$(wildcard ./src/*.c)
 OBJS=$(SRCS:.c=.o)
 
 mcc2: $(OBJS)
@@ -11,6 +11,6 @@ test: mcc2
 	./test.sh
 
 clean:
-	rm -f mcc2 *.o *~ tmp*
+	rm -f mcc2 src/*.o *~ tmp*
 
 .PHONY: test clean
