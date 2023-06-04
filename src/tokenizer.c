@@ -41,12 +41,18 @@ void tokenize(char* src){
                     cur = new_token(TK_SUB, cur, p++);
                 }
                 break;
+            case '*':
+                cur = new_token(TK_MUL, cur, p++);
+                break;
+            case '/':
+                cur = new_token(TK_DIV, cur, p++);
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
                     cur->val = strtol(p, &p, 10);
                 } else if(isspace(c)){
-                    // 何もしない
+                    p++;
                 } else {
                     // 想定外のトークンが来た
                     error_at(p, "error: unexpected token.\n");

@@ -2,6 +2,8 @@
 #include "gen_ir.h"
 #include <stdio.h>
 
+static void pop2();
+
 void gen_x86(IR* ir){
     FILE* fp = stdout;
 
@@ -14,15 +16,24 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  push %d\n", ir->val);
                 break;
             case IR_ADD:
-                fprintf(fp, "  pop rdi\n");
-                fprintf(fp, "  pop rax\n");
+                pop2(fp);
                 fprintf(fp, "  add rax, rdi\n");
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_SUB:
-                fprintf(fp, "  pop rdi\n");
-                fprintf(fp, "  pop rax\n");
+                pop2(fp);
                 fprintf(fp, "  sub rax, rdi\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_MUL:
+                pop2(fp);
+                fprintf(fp, "  imul rax, rdi\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_DIV:
+                pop2(fp);
+                fprintf(fp, "  cqo\n");
+                fprintf(fp, "  idiv rdi\n");
                 fprintf(fp, "  push rax\n");
                 break;
         }
@@ -34,4 +45,9 @@ void gen_x86(IR* ir){
     // ひとまず、スタくトップの値をリターンすることにする
     fprintf(fp, "  pop rax\n");
     fprintf(fp, "  ret\n");
+}
+
+static void pop2(FILE* fp){
+    fprintf(fp, "  pop rdi\n");
+    fprintf(fp, "  pop rax\n");
 }

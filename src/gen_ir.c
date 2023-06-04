@@ -27,6 +27,12 @@ void gen_ir(Node* node){
         case ND_SUB:
             new_IR(IR_SUB);
             break;
+        case ND_MUL:
+            new_IR(IR_MUL);
+            break;
+        case ND_DIV:
+            new_IR(IR_DIV);
+            break;
         default:
             break;
     }
