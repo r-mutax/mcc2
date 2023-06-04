@@ -11,6 +11,6 @@ test: mcc2
 	./test.sh
 
 clean:
-	rm -f mcc2 *.o *~ tmp*
+	rm -f mcc2 src/*.o *~ tmp*
 
 .PHONY: test clean
