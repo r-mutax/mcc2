@@ -20,6 +20,7 @@ assert 0 0
 assert 42 42
 assert 8 "3+5"
 assert 3 "8-5"
+assert 5 "abd"
 
 echo OK
 
