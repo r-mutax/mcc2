@@ -1,5 +1,5 @@
 CFLAGS=-std=c11 -g -static
-SRCS=$(wildcard *.c)
+SRCS=$(wildcard ./src/*.c)
 OBJS=$(SRCS:.c=.o)
 
 mcc2: $(OBJS)
