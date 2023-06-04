@@ -33,6 +33,18 @@ void gen_ir(Node* node){
         case ND_DIV:
             new_IR(IR_DIV);
             break;
+        case ND_EQUAL:
+            new_IR(IR_EQUAL);
+            break;
+        case ND_NOT_EQUAL:
+            new_IR(IR_NOT_EQUAL);
+            break;
+        case ND_LT:
+            new_IR(IR_LT);
+            break;
+        case ND_LE:
+            new_IR(IR_LE);
+            break;
         default:
             break;
     }

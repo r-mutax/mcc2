@@ -3,12 +3,60 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+/*
+    expr = equality
+    equality = relational ('==' relational | '!=' relational)*
+    relational = add ('<' add | '<=' add | '>' add | '>=' add)*
+    add = mul ('+' mul | '-' mul)*
+    mul = unary ('*' unary | '/' unary)
+    unary = ('+' | '-')? primary
+    primary = '(' expr ')' | num
+*/
+
+static Node* equality();
+static Node* relational();
+static Node* add();
 static Node* mul();
 static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
 
 Node* expr(){
+    return equality();
+}
+
+static Node* equality(){
+    Node* node = relational();
+
+    while(true){
+        if(consume_token(TK_EQUAL)){
+            node = new_node(ND_EQUAL, node, relational());
+        } else if(consume_token(TK_NOT_EQUAL)){
+            node = new_node(ND_NOT_EQUAL, node, relational());
+        } else {
+            return node;
+        }
+    }
+}
+
+static Node* relational(){
+    Node* node = add();
+    while(true){
+        if(consume_token(TK_L_ANGLE_BRACKET)){
+            node = new_node(ND_LT, node, add());
+        } else if(consume_token(TK_L_ANGLE_BRACKET_EQUAL)){
+            node = new_node(ND_LE, node, add());
+        } else if(consume_token(TK_R_ANGLE_BRACKET)){
+            node = new_node(ND_LT, add(), node);
+        } else if(consume_token(TK_R_ANGLE_BRACKET_EQUAL)){
+            node = new_node(ND_LE, add(), node);
+        } else {
+            return node;
+        }
+    }
+}
+
+static Node* add(){
     Node* node = mul();
 
     while(true){
@@ -17,11 +65,9 @@ Node* expr(){
         } else if(consume_token(TK_SUB)){
             node = new_node(ND_SUB, node, mul());
         } else {
-            break;
+            return node;
         }
     }
-
-    return node;
 }
 
 static Node* mul(){
