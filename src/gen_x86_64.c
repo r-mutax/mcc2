@@ -13,7 +13,8 @@ void gen_x86(IR* ir){
     while(ir){
         switch(ir->kind){
             case IR_NUM:
-                fprintf(fp, "  push %d\n", ir->val);
+                fprintf(fp, "  mov rax, %d\n", ir->val);
+                fprintf(fp, "  push rax\n");
                 break;
             case IR_ADD:
                 pop2(fp);
@@ -64,6 +65,9 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  movzb rax, al\n");
                 fprintf(fp, "  push rax\n");
                 break;
+            case IR_POP:
+                fprintf(fp, "  pop rax\n");
+                break;
         }
 
         ir = ir->next;
@@ -71,7 +75,6 @@ void gen_x86(IR* ir){
 
 
     // ひとまず、スタックトップの値をリターンすることにする
-    fprintf(fp, "  pop rax\n");
     fprintf(fp, "  ret\n");
 }
 

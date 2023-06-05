@@ -4,15 +4,19 @@
 #include <stdlib.h>
 
 /*
+    program = stmt*
+    stmt = expr ';'
     expr = equality
     equality = relational ('==' relational | '!=' relational)*
     relational = add ('<' add | '<=' add | '>' add | '>=' add)*
     add = mul ('+' mul | '-' mul)*
     mul = unary ('*' unary | '/' unary)
     unary = ('+' | '-')? primary
-    primary = '(' expr ')' | num
+    primary = '(' expr ')' | num | ident
 */
 
+static Node* stmt();
+static Node* expr();
 static Node* equality();
 static Node* relational();
 static Node* add();
@@ -21,7 +25,27 @@ static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
 
-Node* expr(){
+Function* function(){
+    Function* func = calloc(1, sizeof(Function));
+    
+    Node head = {};
+    Node* cur = &head;
+    while(!is_eof()){
+        cur->next = stmt();
+        cur = cur->next;
+    }
+
+    func->stmts = head.next;
+    return func;
+}
+
+static Node* stmt(){
+    Node* node = expr();
+    expect_token(TK_SEMICORON);
+    return node;
+}
+
+static Node* expr(){
     return equality();
 }
 

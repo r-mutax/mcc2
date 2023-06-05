@@ -2,4 +2,4 @@
 
 #include "mcc2.h"
 
-Node* expr();
+Function* function();

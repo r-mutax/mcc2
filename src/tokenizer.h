@@ -7,3 +7,4 @@ void tokenize(char* src);
 void expect_token(TokenKind kind);
 int expect_num();
 bool consume_token(TokenKind kind);
+bool is_eof();

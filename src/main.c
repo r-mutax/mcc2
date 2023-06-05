@@ -16,8 +16,9 @@ int main(int argc, char **argv){
     user_input = argv[1];
 
     tokenize(argv[1]);
-    Node* node = expr();
-    gen_ir(node);
+    Function* func = function();
+
+    gen_ir(func);
     gen_x86(get_ir());
 
     return 0;

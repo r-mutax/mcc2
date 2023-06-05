@@ -6,7 +6,6 @@
 Token* token;
 
 static Token* new_token(TokenKind kind, Token* cur, char* p);
-static Token* next(char* p);
 
 void tokenize(char* src){
     char* p = src;
@@ -87,6 +86,9 @@ void tokenize(char* src){
                     cur = new_token(TK_R_ANGLE_BRACKET, cur, p++);
                 }
                 break;
+            case ';':
+                cur = new_token(TK_SEMICORON, cur, p++);
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
@@ -128,6 +130,10 @@ bool consume_token(TokenKind kind){
     }
     token = token->next;
     return true;
+}
+
+bool is_eof(){
+    return token->kind == TK_EOF;
 }
 
 static Token* new_token(TokenKind kind, Token* cur, char* p){

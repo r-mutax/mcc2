@@ -2,6 +2,8 @@
 
 typedef struct Token Token;
 typedef struct Node Node;
+typedef struct Stmt Stmt;
+typedef struct Function Function;
 typedef struct IR IR;
 
 typedef enum TokenKind {
@@ -18,6 +20,7 @@ typedef enum TokenKind {
     TK_L_ANGLE_BRACKET_EQUAL,   // <=
     TK_R_ANGLE_BRACKET,         // >
     TK_R_ANGLE_BRACKET_EQUAL,   // >=
+    TK_SEMICORON,               // ;
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -44,7 +47,14 @@ struct Node {
     NodeKind    kind;
     Node*       lhs;
     Node*       rhs;
-    int         val; 
+    int         val;
+
+    Node*       next;
+};
+
+
+struct Function {
+    Node*       stmts;
 };
 
 typedef enum IRKind{
@@ -57,6 +67,7 @@ typedef enum IRKind{
     IR_NOT_EQUAL,
     IR_LT,
     IR_LE,
+    IR_POP,
 } IRKind;
 
 struct IR{

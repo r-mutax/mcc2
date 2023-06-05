@@ -4,8 +4,25 @@
 IR head;
 IR* ir = &head;
 static IR* new_IR(IRKind kind);
+static void gen_stmt(Node* stmt);
+static void gen_expr(Node* node);
 
-void gen_ir(Node* node){
+void gen_ir(Function* func){
+    Node* cur = func->stmts;
+    while(cur){
+        gen_stmt(cur);
+        cur = cur->next;
+    }
+}
+
+static void gen_stmt(Node* stmt){
+    gen_expr(stmt);
+
+    // スタックトップに値が残っているはずなので、消しておく
+    new_IR(IR_POP);
+}
+
+static void gen_expr(Node* node){
     switch(node->kind){
         case ND_NUM:
         {
@@ -17,8 +34,8 @@ void gen_ir(Node* node){
             break;
     }
 
-    gen_ir(node->lhs);
-    gen_ir(node->rhs);
+    gen_expr(node->lhs);
+    gen_expr(node->rhs);
 
     switch(node->kind){
         case ND_ADD:
