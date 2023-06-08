@@ -2,16 +2,19 @@
 
 typedef struct Token Token;
 typedef struct Node Node;
+typedef struct Ident Ident;
 typedef struct Stmt Stmt;
 typedef struct Function Function;
 typedef struct IR IR;
 
 typedef enum TokenKind {
     TK_NUM,                     // 数値
+    TK_IDENT,
     TK_ADD,                     // + 記号
     TK_SUB,                     // - 記号
     TK_MUL,
     TK_DIV,
+    TK_ASSIGN,                  // =
     TK_L_PAREN,                 // (
     TK_R_PAREN,                 // )
     TK_EQUAL,                   // ==
@@ -28,11 +31,30 @@ struct Token {
     TokenKind   kind;   // トークンの種類
     char*       pos;    // 位置
     int         val;
+    int         len;
     Token*      next;   // 次のトークン
+};
+
+typedef enum IdentKind {
+    ID_LVAR,
+    ID_GVAR,
+    ID_FUNC,
+    ID_ENUM,
+    ID_EOI,             // End of IdentList
+} IdentKind;
+
+struct Ident {
+    IdentKind   kind;
+    Token* tok;         // 宣言部分のトークンポインタ
+    int size;           // ローカル変数のサイズ
+    int offset;         // ローカル変数ののオフセット
+    int level;          // スコープのレベル
+    Ident* next;
 };
 
 typedef enum NodeKind {
     ND_NUM,
+    ND_LVAR,
     ND_ADD,
     ND_SUB,
     ND_MUL,
@@ -41,6 +63,7 @@ typedef enum NodeKind {
     ND_NOT_EQUAL,
     ND_LT,
     ND_LE,
+    ND_ASSIGN,
 } NodeKind;
 
 struct Node {
@@ -48,6 +71,7 @@ struct Node {
     Node*       lhs;
     Node*       rhs;
     int         val;
+    Ident*      ident;
 
     Node*       next;
 };
@@ -55,10 +79,13 @@ struct Node {
 
 struct Function {
     Node*       stmts;
+    int         stack_size;
 };
 
 typedef enum IRKind{
     IR_NUM,
+    IR_LVAR,
+    IR_ASSIGN,
     IR_ADD,
     IR_SUB,
     IR_MUL,
@@ -68,10 +95,15 @@ typedef enum IRKind{
     IR_LT,
     IR_LE,
     IR_POP,
+    IR_LOAD,
+    IR_FN_START,
+    IR_FN_END,
 } IRKind;
 
 struct IR{
     IRKind kind;
     IR* next;
     int val;
+    int address;
+    int size;
 };
