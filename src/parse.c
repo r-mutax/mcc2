@@ -1,12 +1,14 @@
 #include "mcc2.h"
 #include "tokenizer.h"
+#include "ident.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
 /*
     program = stmt*
     stmt = expr ';'
-    expr = equality
+    expr = assign
+    assign = equality ( '=' assign )?
     equality = relational ('==' relational | '!=' relational)*
     relational = add ('<' add | '<=' add | '>' add | '>=' add)*
     add = mul ('+' mul | '-' mul)*
@@ -17,6 +19,7 @@
 
 static Node* stmt();
 static Node* expr();
+static Node* assign();
 static Node* equality();
 static Node* relational();
 static Node* add();
@@ -24,10 +27,12 @@ static Node* mul();
 static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
+static Node* new_node_lvar(Ident* ident);
 
 Function* function(){
     Function* func = calloc(1, sizeof(Function));
     
+    scope_in();
     Node head = {};
     Node* cur = &head;
     while(!is_eof()){
@@ -36,6 +41,9 @@ Function* function(){
     }
 
     func->stmts = head.next;
+    func->stack_size = get_stack_size();
+    scope_out();
+    
     return func;
 }
 
@@ -46,7 +54,16 @@ static Node* stmt(){
 }
 
 static Node* expr(){
-    return equality();
+    return assign();
+}
+
+static Node* assign(){
+    Node* node = equality();
+    
+    if(consume_token(TK_ASSIGN)){
+        node = new_node(ND_ASSIGN, node, assign());
+    }
+    return node;
 }
 
 static Node* equality(){
@@ -117,6 +134,16 @@ static Node* primary(){
         return node;
     }
 
+    Token* ident_token = consume_ident();
+    if(ident_token){
+        Ident* ident = find_ident(ident_token);
+        if(!ident){
+            ident = declare_ident(ident_token, 8, ID_LVAR);
+        }
+        Node* node = new_node_lvar(ident);
+        return node;
+    }
+
     return new_node_num(expect_num());
 }
 
@@ -131,5 +158,13 @@ static Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
 static Node* new_node_num(int num){
     Node* result = calloc(1, sizeof(Node));
     result->val = num;
+    return result;
+}
+
+static Node* new_node_lvar(Ident* ident){
+    Node* result = calloc(1, sizeof(Node));
+    result->kind = ND_LVAR;
+    result->ident = ident;
+
     return result;
 }

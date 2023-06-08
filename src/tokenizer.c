@@ -6,6 +6,8 @@
 Token* token;
 
 static Token* new_token(TokenKind kind, Token* cur, char* p);
+static bool is_ident1(char c);
+static bool is_ident2(char c);
 
 void tokenize(char* src){
     char* p = src;
@@ -57,8 +59,7 @@ void tokenize(char* src){
                     cur = new_token(TK_EQUAL, cur, p);
                     p += 2;
                 } else {
-                    // まだ使えない
-                    error_at(p, "error: unexpected token.\n");
+                    cur = new_token(TK_ASSIGN, cur, p++);
                 }
                 break;
             case '!':
@@ -95,6 +96,15 @@ void tokenize(char* src){
                     cur->val = strtol(p, &p, 10);
                 } else if(isspace(c)){
                     p++;
+                } else if(is_ident1(c)){
+                    char* s = p;
+                    p++;
+                    while(is_ident2(*p)) { 
+                        p++;
+                    }
+                    
+                    cur = new_token(TK_IDENT, cur, s);
+                    cur->len = p - s;
                 } else {
                     // 想定外のトークンが来た
                     error_at(p, "error: unexpected token.\n");
@@ -132,6 +142,14 @@ bool consume_token(TokenKind kind){
     return true;
 }
 
+Token* consume_ident(){
+    if(token->kind != TK_IDENT) return NULL;
+
+    Token* tok = token;
+    token = token->next;
+    return tok;
+}
+
 bool is_eof(){
     return token->kind == TK_EOF;
 }
@@ -142,4 +160,12 @@ static Token* new_token(TokenKind kind, Token* cur, char* p){
     tok->pos = p;
     cur->next = tok;
     return tok;
+}
+
+static bool is_ident1(char c){
+    return isalpha(c) || c == '_';
+}
+
+static bool is_ident2(char c){
+    return is_ident1(c) || isdigit(c);
 }

@@ -12,9 +12,35 @@ void gen_x86(IR* ir){
     fprintf(fp, "main:\n");
     while(ir){
         switch(ir->kind){
+            case IR_FN_START:
+                fprintf(fp, "  push rbp\n");
+                fprintf(fp, "  mov rbp, rsp\n");
+                fprintf(fp, "  sub rsp, %d\n", ir->size);
+                break;
+            case IR_FN_END:
+                fprintf(fp, "  mov rsp, rbp\n");
+                fprintf(fp, "  pop rbp\n");
+                fprintf(fp, "  ret\n");
+                break;
             case IR_NUM:
                 fprintf(fp, "  mov rax, %d\n", ir->val);
                 fprintf(fp, "  push rax\n");
+                break;
+            case IR_LVAR:
+                fprintf(fp, "  lea rax, [rbp - %d]\n", ir->address);
+                // fprintf(fp, "  mov rax, [rax]\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_LOAD:
+                fprintf(fp, "  pop rax\n");
+                fprintf(fp, "  mov rax, [rax]\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_ASSIGN:
+                fprintf(fp, "  pop rdi\n");
+                fprintf(fp, "  pop rax\n");
+                fprintf(fp, "  mov [rax], rdi\n");
+                fprintf(fp, "  push rdi\n");
                 break;
             case IR_ADD:
                 pop2(fp);
@@ -68,6 +94,8 @@ void gen_x86(IR* ir){
             case IR_POP:
                 fprintf(fp, "  pop rax\n");
                 break;
+            default:
+                break;
         }
 
         ir = ir->next;
@@ -75,7 +103,7 @@ void gen_x86(IR* ir){
 
 
     // ひとまず、スタックトップの値をリターンすることにする
-    fprintf(fp, "  ret\n");
+    //fprintf(fp, "  ret\n");
 }
 
 static void pop2(FILE* fp){

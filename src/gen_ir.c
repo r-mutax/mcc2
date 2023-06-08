@@ -1,18 +1,24 @@
 #include "gen_ir.h"
+#include "error.h"
 #include <stdlib.h>
 
-IR head;
-IR* ir = &head;
+static IR head;
+static IR* ir = &head;
 static IR* new_IR(IRKind kind);
 static void gen_stmt(Node* stmt);
 static void gen_expr(Node* node);
+static void gen_lvar(Node* lvar);
 
 void gen_ir(Function* func){
+    IR* ir = new_IR(IR_FN_START);
+    ir->size = func->stack_size;
+
     Node* cur = func->stmts;
     while(cur){
         gen_stmt(cur);
         cur = cur->next;
     }
+    new_IR(IR_FN_END);
 }
 
 static void gen_stmt(Node* stmt){
@@ -20,6 +26,17 @@ static void gen_stmt(Node* stmt){
 
     // スタックトップに値が残っているはずなので、消しておく
     new_IR(IR_POP);
+}
+
+// 変数のアドレスを計算してスタックに積む
+static void gen_lvar(Node* lvar){
+    if(lvar->kind != ND_LVAR){
+        error_at(lvar->ident->tok->pos, "Not a lhs.\n");
+    }
+    IR* ir = new_IR(IR_LVAR);
+    ir->address = lvar->ident->offset;
+    ir->size = lvar->ident->size;
+    return;
 }
 
 static void gen_expr(Node* node){
@@ -30,6 +47,15 @@ static void gen_expr(Node* node){
             ir->val = node->val;
             return;
         }
+        case ND_LVAR:
+            gen_lvar(node);
+            new_IR(IR_LOAD);
+            return;
+        case ND_ASSIGN:
+            gen_lvar(node->lhs);
+            gen_expr(node->rhs);
+            new_IR(IR_ASSIGN);
+            return;
         default:
             break;
     }

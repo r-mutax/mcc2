@@ -45,5 +45,9 @@ assert 1 "4 >= 4;"
 # test statement
 assert 5 "3; 5;"
 
+# test lvar
+assert 3 "a=3; a;"
+assert 5 "a=5; b = 3; a;"
+
 echo OK
 
