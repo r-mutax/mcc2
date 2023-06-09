@@ -6,7 +6,8 @@
 
 /*
     program = stmt*
-    stmt = expr ';'
+    stmt = expr ';' |
+            'return' expr ';'
     expr = assign
     assign = equality ( '=' assign )?
     equality = relational ('==' relational | '!=' relational)*
@@ -43,11 +44,17 @@ Function* function(){
     func->stmts = head.next;
     func->stack_size = get_stack_size();
     scope_out();
-    
+
     return func;
 }
 
 static Node* stmt(){
+    if(consume_token(TK_RETURN)){
+        Node* node = new_node(ND_RETURN, expr(), NULL);
+        expect_token(TK_SEMICORON);
+        return node;
+    }
+
     Node* node = expr();
     expect_token(TK_SEMICORON);
     return node;

@@ -24,6 +24,7 @@ typedef enum TokenKind {
     TK_R_ANGLE_BRACKET,         // >
     TK_R_ANGLE_BRACKET_EQUAL,   // >=
     TK_SEMICORON,               // ;
+    TK_RETURN,                  // return
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -64,6 +65,7 @@ typedef enum NodeKind {
     ND_LT,
     ND_LE,
     ND_ASSIGN,
+    ND_RETURN,
 } NodeKind;
 
 struct Node {

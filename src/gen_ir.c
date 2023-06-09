@@ -22,10 +22,18 @@ void gen_ir(Function* func){
 }
 
 static void gen_stmt(Node* stmt){
-    gen_expr(stmt);
-
-    // スタックトップに値が残っているはずなので、消しておく
-    new_IR(IR_POP);
+    switch(stmt->kind){
+        case ND_RETURN:
+            gen_expr(stmt->lhs);
+            new_IR(IR_POP);
+            new_IR(IR_FN_END);
+            break;
+        default:
+            gen_expr(stmt);
+            // スタックトップに値が残っているはずなので、消しておく
+            new_IR(IR_POP);
+            break;
+    }
 }
 
 // 変数のアドレスを計算してスタックに積む

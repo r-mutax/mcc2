@@ -1,13 +1,17 @@
 #include "tokenizer.h"
 #include "error.h"
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
+
+#include "keyword_map.h"
 
 Token* token;
 
 static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
+static TokenKind    check_keyword(char* p, char* len);
 
 void tokenize(char* src){
     char* p = src;
@@ -103,7 +107,7 @@ void tokenize(char* src){
                         p++;
                     }
                     
-                    cur = new_token(TK_IDENT, cur, s);
+                    cur = new_token(check_keyword(s, p - s), cur, s);
                     cur->len = p - s;
                 } else {
                     // 想定外のトークンが来た
@@ -168,4 +172,16 @@ static bool is_ident1(char c){
 
 static bool is_ident2(char c){
     return is_ident1(c) || isdigit(c);
+}
+
+static TokenKind check_keyword(char* p, char* len){
+    for(int i = 0; i < sizeof(keyword_map) / sizeof(KEYWORD_MAP); i++){
+        if(len == strlen(keyword_map[i].keyword)
+            && (!memcmp(p, keyword_map[i].keyword, len))){
+            return keyword_map[i].kind;
+        }
+    }
+
+    // keyword_mapになかった場合、トークンは識別子
+    return TK_IDENT;
 }

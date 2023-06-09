@@ -1,0 +1,11 @@
+#pragma once
+#include "mcc2.h"
+
+typedef struct KEYWORD_MAP {
+    char*       keyword;
+    TokenKind   kind;
+} KEYWORD_MAP;
+
+static KEYWORD_MAP keyword_map[] = {
+    {   "return",       TK_RETURN   },
+};
