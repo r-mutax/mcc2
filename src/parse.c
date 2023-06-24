@@ -7,7 +7,8 @@
 /*
     program = stmt*
     stmt = expr ';' |
-            'return' expr ';'
+            'return' expr ';' |
+            'if(' expr ')' stmt ('else' stmt)? 
     expr = assign
     assign = equality ( '=' assign )?
     equality = relational ('==' relational | '!=' relational)*
@@ -52,6 +53,37 @@ static Node* stmt(){
     if(consume_token(TK_RETURN)){
         Node* node = new_node(ND_RETURN, expr(), NULL);
         expect_token(TK_SEMICORON);
+        return node;
+    } else if(consume_token(TK_IF)){
+        Node* node = new_node(ND_IF, NULL, NULL);
+        expect_token(TK_L_PAREN);
+        node->cond = expr();
+        expect_token(TK_R_PAREN);
+        node->then = stmt();
+
+        // else側がある場合
+        if(consume_token(TK_ELSE)){
+            node->elif = stmt();
+            node->kind = ND_IF_ELSE;
+        }
+        return node;
+    } else if(consume_token(TK_WHILE)){
+        Node* node = new_node(ND_WHILE, NULL, NULL);
+        expect_token(TK_L_PAREN);
+        node->cond = expr();
+        expect_token(TK_R_PAREN);
+        node->body = stmt();
+        return node;
+    } else if(consume_token(TK_FOR)){
+        Node* node = new_node(ND_FOR, NULL, NULL);
+        expect_token(TK_L_PAREN);
+        node->init = expr();
+        expect_token(TK_SEMICORON);
+        node->cond = expr();
+        expect_token(TK_SEMICORON);
+        node->incr = expr();
+        expect_token(TK_R_PAREN);
+        node->body = stmt();
         return node;
     }
 

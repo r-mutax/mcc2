@@ -25,6 +25,10 @@ typedef enum TokenKind {
     TK_R_ANGLE_BRACKET_EQUAL,   // >=
     TK_SEMICORON,               // ;
     TK_RETURN,                  // return
+    TK_IF,
+    TK_ELSE,
+    TK_WHILE,
+    TK_FOR,
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -66,6 +70,10 @@ typedef enum NodeKind {
     ND_LE,
     ND_ASSIGN,
     ND_RETURN,
+    ND_IF,
+    ND_IF_ELSE,
+    ND_WHILE,
+    ND_FOR,
 } NodeKind;
 
 struct Node {
@@ -74,6 +82,13 @@ struct Node {
     Node*       rhs;
     int         val;
     Ident*      ident;
+
+    Node*       cond;
+    Node*       then;
+    Node*       elif;
+    Node*       body;
+    Node*       init;
+    Node*       incr;
 
     Node*       next;
 };
@@ -100,6 +115,10 @@ typedef enum IRKind{
     IR_LOAD,
     IR_FN_START,
     IR_FN_END,
+    IR_LABEL,
+    IR_JMP,
+    IR_JZ,
+    IR_JNZ,
 } IRKind;
 
 struct IR{
