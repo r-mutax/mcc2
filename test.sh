@@ -53,6 +53,8 @@ assert 3 "return abc=3; abc;"
 # test it
 assert 5 "a=0; if(1) a = 5; return a;"
 assert 0 "a=0; if(0) a = 5; return a;"
-
+assert 3 "a=0; if(1) a = 3; else a = 2; return a;"
+assert 3 "a=0; if(0) a = 1; else a = 3; return a;"
+assert 3 "a = 0; if(0) a = 1; else if(0) a = 2; else a = 3; return a;"
 echo OK
 
