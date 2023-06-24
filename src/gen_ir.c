@@ -53,6 +53,19 @@ static void gen_stmt(Node* node){
             new_IR(IR_LABEL)->val = l_end;
             break;
         }
+        case ND_WHILE:
+        {
+            long l_start = get_label();
+            long l_end = get_label();
+
+            new_IR(IR_LABEL)->val = l_start;
+            gen_expr(node->cond);
+            new_IR(IR_JZ)->val = l_end;
+            gen_stmt(node->body);
+            new_IR(IR_JMP)->val = l_start;
+            new_IR(IR_LABEL)->val = l_end;
+            break;
+        }
         default:
             gen_expr(node);
             // スタックトップに値が残っているはずなので、消しておく

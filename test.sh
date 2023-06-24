@@ -49,12 +49,18 @@ assert 3 "return 3; 5;"
 assert 3 "return a=3; a;"
 assert 5 "return a=5; b = 3; a;"
 assert 3 "return abc=3; abc;"
+assert 4 "a = 1; a = a + 3; return a;"
 
-# test it
+# test if
 assert 5 "a=0; if(1) a = 5; return a;"
 assert 0 "a=0; if(0) a = 5; return a;"
 assert 3 "a=0; if(1) a = 3; else a = 2; return a;"
 assert 3 "a=0; if(0) a = 1; else a = 3; return a;"
 assert 3 "a = 0; if(0) a = 1; else if(0) a = 2; else a = 3; return a;"
+
+# test while
+assert 3 "a = 0; while(a < 3) a = a + 1; return a;"
+
+
 echo OK
 

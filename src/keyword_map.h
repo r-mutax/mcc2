@@ -10,4 +10,5 @@ static KEYWORD_MAP keyword_map[] = {
     {   "return",       TK_RETURN   },
     {   "if",           TK_IF       },
     {   "else",         TK_ELSE     },
+    {   "while",        TK_WHILE    },
 };

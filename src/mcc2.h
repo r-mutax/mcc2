@@ -27,6 +27,7 @@ typedef enum TokenKind {
     TK_RETURN,                  // return
     TK_IF,
     TK_ELSE,
+    TK_WHILE,
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -70,6 +71,7 @@ typedef enum NodeKind {
     ND_RETURN,
     ND_IF,
     ND_IF_ELSE,
+    ND_WHILE,
 } NodeKind;
 
 struct Node {
@@ -83,6 +85,7 @@ struct Node {
     Node*       then;
     Node*       elif;
 
+    Node*       body;
     Node*       next;
 };
 

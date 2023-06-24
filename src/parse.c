@@ -67,6 +67,13 @@ static Node* stmt(){
             node->kind = ND_IF_ELSE;
         }
         return node;
+    } else if(consume_token(TK_WHILE)){
+        Node* node = new_node(ND_WHILE, NULL, NULL);
+        expect_token(TK_L_PAREN);
+        node->cond = expr();
+        expect_token(TK_R_PAREN);
+        node->body = stmt();
+        return node;
     }
 
     Node* node = expr();
