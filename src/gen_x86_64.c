@@ -94,6 +94,21 @@ void gen_x86(IR* ir){
             case IR_POP:
                 fprintf(fp, "  pop rax\n");
                 break;
+            case IR_LABEL:
+                fprintf(fp, ".L%d:\n", ir->val);
+                break;
+            case IR_JMP:
+                fprintf(fp, "  jmp .L%d\n", ir->val);
+            case IR_JZ:
+                fprintf(fp, "  pop rax\n");
+                fprintf(fp, "  cmp rax, 0\n");
+                fprintf(fp, "  je .L%d\n", ir->val);
+                break;
+            case IR_JNZ:
+                fprintf(fp, "  pop rax\n");
+                fprintf(fp, "  cmp rax, 0\n");
+                fprintf(fp, "  jne .L%d\n", ir->val);
+                break;
             default:
                 break;
         }

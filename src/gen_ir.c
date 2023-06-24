@@ -2,12 +2,14 @@
 #include "error.h"
 #include <stdlib.h>
 
+static long g_label = 0;
 static IR head;
 static IR* ir = &head;
 static IR* new_IR(IRKind kind);
 static void gen_stmt(Node* stmt);
 static void gen_expr(Node* node);
 static void gen_lvar(Node* lvar);
+static long get_label();
 
 void gen_ir(Function* func){
     IR* ir = new_IR(IR_FN_START);
@@ -21,15 +23,24 @@ void gen_ir(Function* func){
     new_IR(IR_FN_END);
 }
 
-static void gen_stmt(Node* stmt){
-    switch(stmt->kind){
+static void gen_stmt(Node* node){
+    switch(node->kind){
         case ND_RETURN:
-            gen_expr(stmt->lhs);
+            gen_expr(node->lhs);
             new_IR(IR_POP);
             new_IR(IR_FN_END);
             break;
+        case ND_IF:
+        {
+            long l_end = get_label();
+            gen_expr(node->cond);
+            new_IR(IR_JZ)->val = l_end;
+            gen_stmt(node->then);
+            new_IR(IR_LABEL)->val = l_end;
+            break;
+        }
         default:
-            gen_expr(stmt);
+            gen_expr(node);
             // スタックトップに値が残っているはずなので、消しておく
             new_IR(IR_POP);
             break;
@@ -115,3 +126,6 @@ static IR* new_IR(IRKind kind){
     return tmp;
 }
 
+static long get_label(){
+    return g_label++;
+}
