@@ -11,7 +11,7 @@ Token* token;
 static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
-static TokenKind    check_keyword(char* p, char* len);
+static TokenKind    check_keyword(char* p, int len);
 
 void tokenize(char* src){
     char* p = src;
@@ -174,7 +174,7 @@ static bool is_ident2(char c){
     return is_ident1(c) || isdigit(c);
 }
 
-static TokenKind check_keyword(char* p, char* len){
+static TokenKind check_keyword(char* p, int len){
     for(int i = 0; i < sizeof(keyword_map) / sizeof(KEYWORD_MAP); i++){
         if(len == strlen(keyword_map[i].keyword)
             && (!memcmp(p, keyword_map[i].keyword, len))){
