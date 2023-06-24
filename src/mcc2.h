@@ -28,6 +28,7 @@ typedef enum TokenKind {
     TK_IF,
     TK_ELSE,
     TK_WHILE,
+    TK_FOR,
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -72,6 +73,7 @@ typedef enum NodeKind {
     ND_IF,
     ND_IF_ELSE,
     ND_WHILE,
+    ND_FOR,
 } NodeKind;
 
 struct Node {
@@ -84,8 +86,10 @@ struct Node {
     Node*       cond;
     Node*       then;
     Node*       elif;
-
     Node*       body;
+    Node*       init;
+    Node*       incr;
+
     Node*       next;
 };
 

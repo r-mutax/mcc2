@@ -11,4 +11,5 @@ static KEYWORD_MAP keyword_map[] = {
     {   "if",           TK_IF       },
     {   "else",         TK_ELSE     },
     {   "while",        TK_WHILE    },
+    {   "for",          TK_FOR      },
 };

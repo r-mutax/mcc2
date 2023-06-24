@@ -74,6 +74,17 @@ static Node* stmt(){
         expect_token(TK_R_PAREN);
         node->body = stmt();
         return node;
+    } else if(consume_token(TK_FOR)){
+        Node* node = new_node(ND_FOR, NULL, NULL);
+        expect_token(TK_L_PAREN);
+        node->init = expr();
+        expect_token(TK_SEMICORON);
+        node->cond = expr();
+        expect_token(TK_SEMICORON);
+        node->incr = expr();
+        expect_token(TK_R_PAREN);
+        node->body = stmt();
+        return node;
     }
 
     Node* node = expr();
