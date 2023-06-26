@@ -81,6 +81,13 @@ static void gen_stmt(Node* node){
             new_IR(IR_LABEL)->val = l_end;
             break;
         }
+        case ND_BLOCK:
+        {
+            for(Node* cur = node->body; cur; cur = cur->next){
+                gen_stmt(cur);
+            }
+            break;
+        }
         default:
             gen_expr(node);
             // スタックトップに値が残っているはずなので、消しておく

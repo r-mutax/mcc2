@@ -62,7 +62,10 @@ assert 3 "a = 0; if(0) a = 1; else if(0) a = 2; else a = 3; return a;"
 assert 3 "a = 0; while(a < 3) a = a + 1; return a;"
 
 # test for
-assert 10 "b = 0; for(a = 0; a < 5; a = a + 1) b = b + 2; return b; " 
+assert 10 "b = 0; for(a = 0; a < 5; a = a + 1) b = b + 2; return b;"
+
+# test block
+assert 5 "a = 0; c = 0; for(i = 0; i < 5; i = i + 1) { a = a + 1; c = c + 1; } return a;"
 
 echo OK
 

@@ -85,11 +85,22 @@ static Node* stmt(){
         expect_token(TK_R_PAREN);
         node->body = stmt();
         return node;
-    }
+    } else if(consume_token(TK_L_BRACKET)){
+        Node* node = new_node(ND_BLOCK, NULL, NULL);
 
-    Node* node = expr();
-    expect_token(TK_SEMICORON);
-    return node;
+        Node head = {};
+        Node* cur = &head;
+        while(!consume_token(TK_R_BRACKET)){
+            cur->next = stmt();
+            cur = cur->next;
+        }
+        node->body = head.next;
+        return node;
+    } else {
+        Node* node = expr();
+        expect_token(TK_SEMICORON);
+        return node;        
+    }
 }
 
 static Node* expr(){

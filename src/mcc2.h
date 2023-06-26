@@ -17,6 +17,8 @@ typedef enum TokenKind {
     TK_ASSIGN,                  // =
     TK_L_PAREN,                 // (
     TK_R_PAREN,                 // )
+    TK_L_BRACKET,               // {
+    TK_R_BRACKET,               // }
     TK_EQUAL,                   // ==
     TK_NOT_EQUAL,               // !=
     TK_L_ANGLE_BRACKET,         // <
@@ -74,6 +76,7 @@ typedef enum NodeKind {
     ND_IF_ELSE,
     ND_WHILE,
     ND_FOR,
+    ND_BLOCK,
 } NodeKind;
 
 struct Node {
