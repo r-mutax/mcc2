@@ -16,7 +16,7 @@ int main(int argc, char **argv){
     user_input = argv[1];
 
     tokenize(argv[1]);
-    Function* func = function();
+    Function* func = Program();
 
     gen_ir(func);
     gen_x86(get_ir());
