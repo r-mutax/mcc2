@@ -42,6 +42,9 @@ assert 0 "main(){return 3 <= 2;}"
 assert 1 "main(){return 4 > 3;}"
 assert 1 "main(){return 4 >= 4;}"
 
+# test expr
+assert 1 "main(){ return 5 & 3; }"
+
 # test statement
 assert 3 "main(){return 3; 5;}"
 
