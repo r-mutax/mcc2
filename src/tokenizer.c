@@ -75,6 +75,14 @@ void tokenize(char* src){
             case '^':
                 cur = new_token(TK_HAT, cur, p++);
                 break;
+            case '|':
+                if(*(p + 1) == '|'){
+                    cur = new_token(TK_PIPE_PIPE, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_PIPE, cur, p++);
+                }
+                break;
             case '=':
                 if(*(p + 1) == '='){
                     cur = new_token(TK_EQUAL, cur, p);

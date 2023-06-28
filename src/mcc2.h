@@ -22,6 +22,8 @@ typedef enum TokenKind {
     TK_AND,                     // &
     TK_AND_AND,                 // &&
     TK_HAT,                     // ^
+    TK_PIPE,                    // |
+    TK_PIPE_PIPE,               // ||
     TK_EQUAL,                   // ==
     TK_NOT_EQUAL,               // !=
     TK_L_ANGLE_BRACKET,         // <
@@ -75,6 +77,7 @@ typedef enum NodeKind {
     ND_LE,
     ND_BIT_AND,
     ND_BIT_XOR,
+    ND_BIT_OR,
     ND_ASSIGN,
     ND_RETURN,
     ND_IF,
@@ -124,6 +127,7 @@ typedef enum IRKind{
     IR_LE,
     IR_BIT_AND,
     IR_BIT_XOR,
+    IR_BIT_OR,
     IR_POP,
     IR_LOAD,
     IR_FN_START,
