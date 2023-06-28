@@ -160,6 +160,14 @@ Token* consume_ident(){
     return tok;
 }
 
+Token* expect_ident(){
+    Token* tok = consume_ident();
+    if(tok == NULL){
+        error_at(token->pos, "error: not a ident.\n", token->pos);
+    }
+    return tok;
+}
+
 bool is_eof(){
     return token->kind == TK_EOF;
 }
@@ -190,4 +198,10 @@ static TokenKind check_keyword(char* p, int len){
 
     // keyword_mapになかった場合、トークンは識別子
     return TK_IDENT;
+}
+
+char* get_token_string(Token* tok){
+    char* str = calloc(1, sizeof(char) * tok->len);
+    memcpy(str, tok->pos, tok->len);
+    return str;
 }

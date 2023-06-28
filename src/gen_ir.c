@@ -12,8 +12,8 @@ static void gen_lvar(Node* lvar);
 static long get_label();
 
 void gen_ir(Function* func){
-    IR* ir = new_IR(IR_FN_START);
-    ir->size = func->stack_size;
+    new_IR(IR_FN_LABEL)->name = func->name;
+    new_IR(IR_FN_START)->size = func->stack_size;
 
     Node* cur = func->stmts;
     while(cur){

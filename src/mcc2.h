@@ -98,6 +98,7 @@ struct Node {
 
 
 struct Function {
+    Ident*      name;
     Node*       stmts;
     int         stack_size;
 };
@@ -118,6 +119,7 @@ typedef enum IRKind{
     IR_LOAD,
     IR_FN_START,
     IR_FN_END,
+    IR_FN_LABEL,
     IR_LABEL,
     IR_JMP,
     IR_JZ,
@@ -130,4 +132,5 @@ struct IR{
     int val;
     int address;
     int size;
+    Ident*  name;
 };
