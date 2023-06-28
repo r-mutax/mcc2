@@ -44,6 +44,7 @@ assert 1 "main(){return 4 >= 4;}"
 
 # test expr
 assert 1 "main(){ return 5 & 3; }"
+assert 6 "main(){ return 5 ^ 3; }"
 
 # test statement
 assert 3 "main(){return 3; 5;}"

@@ -171,6 +171,9 @@ static void gen_expr(Node* node){
         case ND_BIT_AND:
             new_IR(IR_BIT_AND);
             break;
+        case ND_BIT_XOR:
+            new_IR(IR_BIT_XOR);
+            break;
         default:
             break;
     }
