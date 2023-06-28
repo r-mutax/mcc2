@@ -5,10 +5,15 @@
 #include <stdlib.h>
 
 /*
-    program = stmt*
+    program = function*
+    function = ident '(){' stmt* '}'
     stmt = expr ';' |
             'return' expr ';' |
-            'if(' expr ')' stmt ('else' stmt)? 
+            'if(' expr ')' stmt ('else' stmt)? |
+            'while(' expr ')' stmt | 
+            'for(' expr ';' expr ';)' stmt |
+            '{' compound_stmt
+    compound_stmt = stmt* '}'
     expr = assign
     assign = equality ( '=' assign )?
     equality = relational ('==' relational | '!=' relational)*
@@ -16,10 +21,12 @@
     add = mul ('+' mul | '-' mul)*
     mul = unary ('*' unary | '/' unary)
     unary = ('+' | '-')? primary
-    primary = '(' expr ')' | num | ident
+    primary = '(' expr ')' | num | ident | ident '()'
 */
 
+static Function* function();
 static Node* stmt();
+static Node* compound_stmt();
 static Node* expr();
 static Node* assign();
 static Node* equality();
@@ -31,23 +38,41 @@ static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
 static Node* new_node_lvar(Ident* ident);
 
-Function* function(){
+Function* Program(){
+    Function head;
+    Function* cur = &head;
+
+    while(!is_eof()){
+        cur->next = function();
+        cur = cur->next;
+    }
+
+    return head.next;
+}
+
+static Function* function(){
     Function* func = calloc(1, sizeof(Function));
     
-    Token* tok = expect_ident();
+    Token* tok = consume_ident();
+    if(!tok){
+        // 識別子がない場合は、関数宣言がない
+        return NULL;
+    }
+
     func->name = declare_ident(tok, 0, ID_FUNC);
     expect_token(TK_L_PAREN);
     expect_token(TK_R_PAREN);
 
     scope_in();
-    Node head = {};
-    Node* cur = &head;
-    while(!is_eof()){
-        cur->next = stmt();
-        cur = cur->next;
-    }
+    // Node head = {};
+    // Node* cur = &head;
+    // while(!is_eof()){
+    //     cur->next = stmt();
+    //     cur = cur->next;
+    // }
 
-    func->stmts = head.next;
+    expect_token(TK_L_BRACKET);
+    func->stmts = compound_stmt();
     func->stack_size = get_stack_size();
     scope_out();
 
@@ -91,21 +116,25 @@ static Node* stmt(){
         node->body = stmt();
         return node;
     } else if(consume_token(TK_L_BRACKET)){
-        Node* node = new_node(ND_BLOCK, NULL, NULL);
-
-        Node head = {};
-        Node* cur = &head;
-        while(!consume_token(TK_R_BRACKET)){
-            cur->next = stmt();
-            cur = cur->next;
-        }
-        node->body = head.next;
-        return node;
+        return compound_stmt();
     } else {
         Node* node = expr();
         expect_token(TK_SEMICORON);
         return node;        
     }
+}
+
+static Node* compound_stmt(){
+    Node* node = new_node(ND_BLOCK, NULL, NULL);
+
+    Node head = {};
+    Node* cur = &head;
+    while(!consume_token(TK_R_BRACKET)){
+        cur->next = stmt();
+        cur = cur->next;
+    }
+    node->body = head.next;
+    return node;
 }
 
 static Node* expr(){
@@ -191,11 +220,20 @@ static Node* primary(){
 
     Token* ident_token = consume_ident();
     if(ident_token){
+        NodeKind kind = ND_LVAR;
+        if(consume_token(TK_L_PAREN)){
+            // 関数の場合
+            expect_token(TK_R_PAREN);
+            kind = ND_FUNCCALL;
+        }
+        // 変数の場合
         Ident* ident = find_ident(ident_token);
         if(!ident){
             ident = declare_ident(ident_token, 8, ID_LVAR);
         }
-        Node* node = new_node_lvar(ident);
+
+        Node* node = new_node(kind, 0, 0);
+        node->ident = ident;
         return node;
     }
 

@@ -67,5 +67,8 @@ assert 10 "main(){b = 0; for(a = 0; a < 5; a = a + 1) b = b + 2; return b;}"
 # test block
 assert 5 "main(){a = 0; c = 0; for(i = 0; i < 5; i = i + 1) { a = a + 1; c = c + 1; } return a;}"
 
+# test function call
+assert 3 "foo(){ return 3; } main(){ return foo(); }"
+
 echo OK
 

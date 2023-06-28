@@ -30,6 +30,14 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  pop rbp\n");
                 fprintf(fp, "  ret\n");
                 break;
+            case IR_FN_CALL_NOARGS:
+                {
+                    char* str = get_token_string(ir->name->tok);
+                    fprintf(fp, "  call %s\n", str);
+                    fprintf(fp, "  push rax\n");
+                    free(str);
+                    break;
+                }
             case IR_NUM:
                 fprintf(fp, "  mov rax, %d\n", ir->val);
                 fprintf(fp, "  push rax\n");

@@ -77,6 +77,7 @@ typedef enum NodeKind {
     ND_WHILE,
     ND_FOR,
     ND_BLOCK,
+    ND_FUNCCALL,
 } NodeKind;
 
 struct Node {
@@ -101,6 +102,7 @@ struct Function {
     Ident*      name;
     Node*       stmts;
     int         stack_size;
+    Function*   next;
 };
 
 typedef enum IRKind{
@@ -120,6 +122,7 @@ typedef enum IRKind{
     IR_FN_START,
     IR_FN_END,
     IR_FN_LABEL,
+    IR_FN_CALL_NOARGS,
     IR_LABEL,
     IR_JMP,
     IR_JZ,

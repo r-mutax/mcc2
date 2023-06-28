@@ -6,12 +6,21 @@ static long g_label = 0;
 static IR head;
 static IR* ir = &head;
 static IR* new_IR(IRKind kind);
+static void gen_function(Function* func);
 static void gen_stmt(Node* stmt);
 static void gen_expr(Node* node);
 static void gen_lvar(Node* lvar);
 static long get_label();
 
 void gen_ir(Function* func){
+    Function* cur = func;
+    while(func){
+        gen_function(func);
+        func = func->next;
+    }
+}
+
+static void gen_function(Function* func){
     new_IR(IR_FN_LABEL)->name = func->name;
     new_IR(IR_FN_START)->size = func->stack_size;
 
@@ -123,6 +132,9 @@ static void gen_expr(Node* node){
             gen_lvar(node->lhs);
             gen_expr(node->rhs);
             new_IR(IR_ASSIGN);
+            return;
+        case ND_FUNCCALL:
+            new_IR(IR_FN_CALL_NOARGS)->name = node->ident;
             return;
         default:
             break;
