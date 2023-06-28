@@ -34,6 +34,11 @@ static Node* new_node_lvar(Ident* ident);
 Function* function(){
     Function* func = calloc(1, sizeof(Function));
     
+    Token* tok = expect_ident();
+    func->name = declare_ident(tok, 0, ID_FUNC);
+    expect_token(TK_L_PAREN);
+    expect_token(TK_R_PAREN);
+
     scope_in();
     Node head = {};
     Node* cur = &head;

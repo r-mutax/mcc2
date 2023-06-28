@@ -1,6 +1,8 @@
 #include "gen_x86_64.h"
 #include "gen_ir.h"
+#include "tokenizer.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static void pop2();
 
@@ -9,9 +11,15 @@ void gen_x86(IR* ir){
 
     fprintf(fp, ".intel_syntax noprefix\n");
     fprintf(fp, ".global main\n");
-    fprintf(fp, "main:\n");
     while(ir){
         switch(ir->kind){
+            case IR_FN_LABEL:
+            {
+                char* str = get_token_string(ir->name->tok);
+                fprintf(fp, "%s:\n", str);
+                free(str);
+            }
+                break;
             case IR_FN_START:
                 fprintf(fp, "  push rbp\n");
                 fprintf(fp, "  mov rbp, rsp\n");
