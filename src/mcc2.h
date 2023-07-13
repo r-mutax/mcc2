@@ -10,8 +10,8 @@ typedef struct IR IR;
 typedef enum TokenKind {
     TK_NUM,                     // 数値
     TK_IDENT,
-    TK_ADD,                     // + 記号
-    TK_SUB,                     // - 記号
+    TK_PLUS,                    // + 記号
+    TK_MINUS,                   // - 記号
     TK_MUL,
     TK_DIV,
     TK_PLUS_EQUAL,              // +=

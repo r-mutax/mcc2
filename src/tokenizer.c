@@ -39,7 +39,7 @@ void tokenize(char* src){
                     cur = new_token(TK_PLUS_EQUAL, cur, p);
                     p += 2;
                 } else {
-                    cur = new_token(TK_ADD, cur, p++);
+                    cur = new_token(TK_PLUS, cur, p++);
                 }
                 break;
             case '-':
@@ -49,7 +49,7 @@ void tokenize(char* src){
                     cur = new_token(TK_MINUS_EQUAL, cur, p);
                     p += 2;
                 } else {
-                    cur = new_token(TK_SUB, cur, p++);
+                    cur = new_token(TK_MINUS, cur, p++);
                 }
                 break;
             case '*':

@@ -288,9 +288,9 @@ static Node* add(){
     Node* node = mul();
 
     while(true){
-        if(consume_token(TK_ADD)){
+        if(consume_token(TK_PLUS)){
             node = new_node(ND_ADD, node, mul());
-        } else if(consume_token(TK_SUB)){
+        } else if(consume_token(TK_MINUS)){
             node = new_node(ND_SUB, node, mul());
         } else {
             return node;
