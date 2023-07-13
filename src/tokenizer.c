@@ -35,6 +35,9 @@ void tokenize(char* src){
             case '+':
                 if(*(p + 1) == '+'){
 
+                } else if(*(p + 1) == '=') {
+                    cur = new_token(TK_PLUS_EQUAL, cur, p);
+                    p += 2;
                 } else {
                     cur = new_token(TK_ADD, cur, p++);
                 }
@@ -42,15 +45,28 @@ void tokenize(char* src){
             case '-':
                 if(*(p + 1) == '-'){
 
+                } else if(*(p + 1) == '=') {
+                    cur = new_token(TK_MINUS_EQUAL, cur, p);
+                    p += 2;
                 } else {
                     cur = new_token(TK_SUB, cur, p++);
                 }
                 break;
             case '*':
-                cur = new_token(TK_MUL, cur, p++);
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_MUL_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_MUL, cur, p++);
+                }
                 break;
             case '/':
-                cur = new_token(TK_DIV, cur, p++);
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_DIV_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_DIV, cur, p++);
+                }
                 break;
             case '(':
                 cur = new_token(TK_L_PAREN, cur, p++);

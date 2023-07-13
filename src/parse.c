@@ -15,7 +15,12 @@
             '{' compound_stmt
     compound_stmt = stmt* '}'
     expr = assign
-    assign = cond_expr ( '=' assign )?
+    assign = cond_expr ( '=' assign
+                        | '+=' assign
+                        | '-=' assign
+                        | '*=' assign
+                        | '/=' assign
+                    )?
     cond_expr = logicOR ( '?' expr : cond_expr );
     logicOr = logicAnd ( '||' logicOr )*
     logicAnd = bitOr ( '&&' bitOr )*
@@ -47,6 +52,10 @@ static Node* add();
 static Node* mul();
 static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
+static Node* new_node_add(Node* lhs, Node* rhs);
+static Node* new_node_sub(Node* lhs, Node* rhs);
+static Node* new_node_div(Node* lhs, Node* rhs);
+static Node* new_node_mul(Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
 static Node* new_node_lvar(Ident* ident);
 
@@ -158,6 +167,14 @@ static Node* assign(){
     
     if(consume_token(TK_ASSIGN)){
         node = new_node(ND_ASSIGN, node, assign());
+    } else if(consume_token(TK_PLUS_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node_add(node, assign()));
+    } else if(consume_token(TK_MINUS_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node_sub(node, assign()));
+    } else if(consume_token(TK_MUL_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node_mul(node, assign()));
+    } else if(consume_token(TK_DIV_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node_div(node, assign()));
     }
     return node;
 }
@@ -345,5 +362,22 @@ static Node* new_node_lvar(Ident* ident){
     result->kind = ND_LVAR;
     result->ident = ident;
 
+    return result;
+}
+
+static Node* new_node_add(Node* lhs, Node* rhs){
+    Node* result = new_node(ND_ADD, lhs, rhs);
+    return result;
+}
+static Node* new_node_sub(Node* lhs, Node* rhs){
+    Node* result = new_node(ND_SUB, lhs, rhs);
+    return result;
+}
+static Node* new_node_div(Node* lhs, Node* rhs){
+    Node* result = new_node(ND_DIV, lhs, rhs);
+    return result;
+}
+static Node* new_node_mul(Node* lhs, Node* rhs){
+    Node* result = new_node(ND_MUL, lhs, rhs);
     return result;
 }

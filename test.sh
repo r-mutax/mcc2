@@ -74,6 +74,11 @@ assert 3 "main(){return abc=3; abc;}"
 assert 4 "main(){a = 1; a = a + 3; return a;}"
 assert 5 "main(){ a = 4; b = c = 5; return b;}"
 
+assert 5 "main(){ a = 2; a += 3; return a; }"
+assert 3 "main(){ a = 5; a -= 2; return a; }"
+assert 6 "main(){ a = 2; a *= 3; return a; }"
+assert 2 "main(){ a = 8; a /= 4; return 2; }"
+
 # test if
 assert 5 "main(){a=0; if(1) a = 5; return a;}"
 assert 0 "main(){a=0; if(0) a = 5; return a;}"

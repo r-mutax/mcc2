@@ -14,6 +14,10 @@ typedef enum TokenKind {
     TK_SUB,                     // - 記号
     TK_MUL,
     TK_DIV,
+    TK_PLUS_EQUAL,              // +=
+    TK_MINUS_EQUAL,             // -=
+    TK_MUL_EQUAL,               // *=
+    TK_DIV_EQUAL,               // /=
     TK_QUESTION,                // ?
     TK_ASSIGN,                  // =
     TK_L_PAREN,                 // (
