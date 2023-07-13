@@ -14,6 +14,8 @@ typedef enum TokenKind {
     TK_MINUS,                   // - 記号
     TK_MUL,
     TK_DIV,
+    TK_PERCENT,                 // %
+    TK_PERCENT_EQUAL,           // %=
     TK_PLUS_EQUAL,              // +=
     TK_MINUS_EQUAL,             // -=
     TK_MUL_EQUAL,               // *=
@@ -77,6 +79,7 @@ typedef enum NodeKind {
     ND_SUB,
     ND_MUL,
     ND_DIV,
+    ND_MOD,
     ND_EQUAL,
     ND_NOT_EQUAL,
     ND_LT,
@@ -130,6 +133,7 @@ typedef enum IRKind{
     IR_SUB,
     IR_MUL,
     IR_DIV,
+    IR_MOD,
     IR_EQUAL,
     IR_NOT_EQUAL,
     IR_LT,

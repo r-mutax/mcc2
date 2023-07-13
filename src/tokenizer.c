@@ -68,6 +68,14 @@ void tokenize(char* src){
                     cur = new_token(TK_DIV, cur, p++);
                 }
                 break;
+            case '%':
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_PERCENT_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_PERCENT, cur, p++);
+                }
+                break;
             case '(':
                 cur = new_token(TK_L_PAREN, cur, p++);
                 break;

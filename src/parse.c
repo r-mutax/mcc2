@@ -20,6 +20,7 @@
                         | '-=' assign
                         | '*=' assign
                         | '/=' assign
+                        | '%=' assign
                     )?
     cond_expr = logicOR ( '?' expr : cond_expr );
     logicOr = logicAnd ( '||' logicOr )*
@@ -56,6 +57,7 @@ static Node* new_node_add(Node* lhs, Node* rhs);
 static Node* new_node_sub(Node* lhs, Node* rhs);
 static Node* new_node_div(Node* lhs, Node* rhs);
 static Node* new_node_mul(Node* lhs, Node* rhs);
+static Node* new_node_mod(Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
 static Node* new_node_lvar(Ident* ident);
 
@@ -175,7 +177,9 @@ static Node* assign(){
         node = new_node(ND_ASSIGN, node, new_node_mul(node, assign()));
     } else if(consume_token(TK_DIV_EQUAL)){
         node = new_node(ND_ASSIGN, node, new_node_div(node, assign()));
-    }
+    } else if(consume_token(TK_PERCENT_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node_mod(node, assign()));
+    } 
     return node;
 }
 
@@ -379,5 +383,9 @@ static Node* new_node_div(Node* lhs, Node* rhs){
 }
 static Node* new_node_mul(Node* lhs, Node* rhs){
     Node* result = new_node(ND_MUL, lhs, rhs);
+    return result;
+}
+static Node* new_node_mod(Node* lhs, Node* rhs){
+    Node* result = new_node(ND_MOD, lhs, rhs);
     return result;
 }
