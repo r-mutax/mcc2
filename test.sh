@@ -20,12 +20,13 @@ assert() {
 assert 0 "main(){return 0;}"
 assert 42 "main(){return 42;}"
 
-# test + - * /
+# test + - * / %
 assert 8 "main(){return 3+5;}"
 assert 3 "main(){return 8-5;}"
 assert 13 "main(){return 1 + 3 * 4;}"
 assert 5 "main(){return 3 + 4 / 2;}"
 assert 5 "main(){return (9 + 6) / 3;}"
+assert 2 "main(){ return 5 % 3; }"
 
 # test equality
 assert 1 "main(){return 2 == 2;}"
