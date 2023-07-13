@@ -15,7 +15,8 @@
             '{' compound_stmt
     compound_stmt = stmt* '}'
     expr = assign
-    assign = bitOr ( '=' assign )?
+    assign = bitOr ( '=' logicAnd )?
+    logicAnd = bitOr ( '&&' bitOr )*
     bitOr = bitXor ('|' bitXor)*
     bitXor = bitAnd ('^' bitAnd )*
     bitAnd = equality ('&' equality )*
@@ -32,6 +33,7 @@ static Node* stmt();
 static Node* compound_stmt();
 static Node* expr();
 static Node* assign();
+static Node* logicAnd();
 static Node* bitOr();
 static Node* bitXor();
 static Node* bitAnd();
@@ -148,12 +150,25 @@ static Node* expr(){
 }
 
 static Node* assign(){
-    Node* node = bitOr();
+    Node* node = logicAnd();
     
     if(consume_token(TK_ASSIGN)){
         node = new_node(ND_ASSIGN, node, assign());
     }
     return node;
+}
+
+static Node* logicAnd(){
+    Node* node = bitOr();
+
+    while(true){
+        if(consume_token(TK_AND_AND)){
+            node = new_node(ND_LOGIC_AND, node, bitOr());
+        } else {
+            return node;
+        }
+    }
+
 }
 
 static Node* bitOr(){

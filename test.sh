@@ -48,6 +48,12 @@ assert 6 "main(){ return 5 ^ 3; }"
 assert 7 "main(){ return 3 | 4; }"
 assert 15 "main(){ return 8 | 3 ^ 5 & 4;}"
 
+# test logic
+assert 1 "main(){ return 3 && 5; }"
+assert 0 "main(){ return 3 && 0; }"
+assert 0 "main(){ return 0 && 5; }"
+assert 0 "main(){ return 0 && 0; }"
+
 # test statement
 assert 3 "main(){return 3; 5;}"
 
@@ -56,6 +62,7 @@ assert 3 "main(){return a=3; a;}"
 assert 5 "main(){return a=5; b = 3; a;}"
 assert 3 "main(){return abc=3; abc;}"
 assert 4 "main(){a = 1; a = a + 3; return a;}"
+assert 5 "main(){ a = 4; b = c = 5; return b;}"
 
 # test if
 assert 5 "main(){a=0; if(1) a = 5; return a;}"
