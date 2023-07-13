@@ -129,6 +129,18 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  or rax, rdi\n");
                 fprintf(fp, "  push rax\n");
                 break;
+            case IR_L_BIT_SHIFT:
+                pop2(fp);
+                fprintf(fp, "  mov rcx, rdi\n");
+                fprintf(fp, "  sal rax, cl\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_R_BIT_SHIFT:
+                pop2(fp);
+                fprintf(fp, "  mov rcx, rdi\n");
+                fprintf(fp, "  sar rax, cl\n");
+                fprintf(fp, "  push rax\n");
+                break;
             case IR_POP:
                 fprintf(fp, "  pop rax\n");
                 break;

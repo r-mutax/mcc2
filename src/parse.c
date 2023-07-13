@@ -21,6 +21,8 @@
                         | '*=' assign
                         | '/=' assign
                         | '%=' assign
+                        | '<<' assign
+                        | '>>' assign
                     )?
     cond_expr = logicOR ( '?' expr : cond_expr );
     logicOr = logicAnd ( '||' logicOr )*
@@ -29,7 +31,8 @@
     bitXor = bitAnd ('^' bitAnd )*
     bitAnd = equality ('&' equality )*
     equality = relational ('==' relational | '!=' relational)*
-    relational = add ('<' add | '<=' add | '>' add | '>=' add)*
+    relational = bitShift ('<' bitShift | '<=' bitShift | '>' bitShift | '>=' bitShift)*
+    bitShift = add ('<<' add | '>>' add)?
     add = mul ('+' mul | '-' mul)*
     mul = unary ('*' unary | '/' unary)
     unary = ('+' | '-')? primary
@@ -49,6 +52,7 @@ static Node* bitXor();
 static Node* bitAnd();
 static Node* equality();
 static Node* relational();
+static Node* bitShift();
 static Node* add();
 static Node* mul();
 static Node* primary();
@@ -179,6 +183,10 @@ static Node* assign(){
         node = new_node(ND_ASSIGN, node, new_node_div(node, assign()));
     } else if(consume_token(TK_PERCENT_EQUAL)){
         node = new_node(ND_ASSIGN, node, new_node_mod(node, assign()));
+    } else if(consume_token(TK_L_BITSHIFT_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node(ND_L_BITSHIFT, node, assign()));
+    } else if(consume_token(TK_R_BITSHIFT_EQUAL)){
+        node = new_node(ND_ASSIGN, node, new_node(ND_R_BITSHIFT, node, assign()));
     } 
     return node;
 }
@@ -272,16 +280,30 @@ static Node* equality(){
 }
 
 static Node* relational(){
-    Node* node = add();
+    Node* node = bitShift();
     while(true){
         if(consume_token(TK_L_ANGLE_BRACKET)){
-            node = new_node(ND_LT, node, add());
+            node = new_node(ND_LT, node, bitShift());
         } else if(consume_token(TK_L_ANGLE_BRACKET_EQUAL)){
-            node = new_node(ND_LE, node, add());
+            node = new_node(ND_LE, node, bitShift());
         } else if(consume_token(TK_R_ANGLE_BRACKET)){
-            node = new_node(ND_LT, add(), node);
+            node = new_node(ND_LT, bitShift(), node);
         } else if(consume_token(TK_R_ANGLE_BRACKET_EQUAL)){
-            node = new_node(ND_LE, add(), node);
+            node = new_node(ND_LE, bitShift(), node);
+        } else {
+            return node;
+        }
+    }
+}
+
+static Node* bitShift(){
+    Node* node = add();
+
+    while(true) {
+        if(consume_token(TK_L_BITSHIFT)){
+            node = new_node(ND_L_BITSHIFT, node, add());
+        } else if(consume_token(TK_R_BITSHIFT)){
+            node = new_node(ND_R_BITSHIFT, node, add());
         } else {
             return node;
         }

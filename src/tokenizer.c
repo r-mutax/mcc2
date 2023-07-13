@@ -134,6 +134,14 @@ void tokenize(char* src){
                 if(*(p + 1) == '='){
                     cur = new_token(TK_L_ANGLE_BRACKET_EQUAL, cur, p);
                     p += 2;
+                } else if(*(p + 1) == '<') {
+                    if(*(p + 2) == '=') {
+                        cur = new_token(TK_L_BITSHIFT_EQUAL, cur, p);
+                        p += 3;
+                    } else {
+                        cur = new_token(TK_L_BITSHIFT, cur, p);
+                        p += 2;
+                    }
                 } else {
                     cur = new_token(TK_L_ANGLE_BRACKET, cur, p++);
                 }
@@ -142,6 +150,14 @@ void tokenize(char* src){
                 if(*(p + 1) == '='){
                     cur = new_token(TK_R_ANGLE_BRACKET_EQUAL, cur, p);
                     p += 2;
+                } else if(*(p + 1) == '>') {
+                    if(*(p + 2) == '=') {
+                        cur = new_token(TK_R_BITSHIFT_EQUAL, cur, p);
+                        p += 3;
+                    } else {
+                        cur = new_token(TK_R_BITSHIFT, cur, p);
+                        p += 2;
+                    }
                 } else {
                     cur = new_token(TK_R_ANGLE_BRACKET, cur, p++);
                 }

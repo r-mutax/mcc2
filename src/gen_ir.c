@@ -232,6 +232,12 @@ static void gen_expr(Node* node){
         case ND_MOD:
             new_IR(IR_MOD);
             break;
+        case ND_L_BITSHIFT:
+            new_IR(IR_L_BIT_SHIFT);
+            break;
+        case ND_R_BITSHIFT:
+            new_IR(IR_R_BIT_SHIFT);
+            break;
         default:
             break;
     }

@@ -37,6 +37,10 @@ typedef enum TokenKind {
     TK_L_ANGLE_BRACKET_EQUAL,   // <=
     TK_R_ANGLE_BRACKET,         // >
     TK_R_ANGLE_BRACKET_EQUAL,   // >=
+    TK_L_BITSHIFT,              // <<
+    TK_L_BITSHIFT_EQUAL,        // <<=
+    TK_R_BITSHIFT,              // >>
+    TK_R_BITSHIFT_EQUAL,        // >>=
     TK_SEMICORON,               // ;
     TK_CORON,                   // :
     TK_RETURN,                  // return
@@ -90,6 +94,8 @@ typedef enum NodeKind {
     ND_BIT_AND,
     ND_BIT_XOR,
     ND_BIT_OR,
+    ND_L_BITSHIFT,
+    ND_R_BITSHIFT,
     ND_ASSIGN,
     ND_RETURN,
     ND_IF,
@@ -141,6 +147,8 @@ typedef enum IRKind{
     IR_BIT_AND,
     IR_BIT_XOR,
     IR_BIT_OR,
+    IR_L_BIT_SHIFT,
+    IR_R_BIT_SHIFT,
     IR_POP,
     IR_LOAD,
     IR_FN_START,

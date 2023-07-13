@@ -27,6 +27,10 @@ assert 13 "main(){return 1 + 3 * 4;}"
 assert 5 "main(){return 3 + 4 / 2;}"
 assert 5 "main(){return (9 + 6) / 3;}"
 assert 2 "main(){ return 5 % 3; }"
+assert 7 "main(){ return 56 >> 3; }"
+assert 56 "main(){ return 7 << 3; }"
+assert 7 "main(){ a = 56; a >>= 3; return a; }"
+assert 56 "main(){ a = 7; a <<= 3; return a; }"
 
 # test equality
 assert 1 "main(){return 2 == 2;}"
