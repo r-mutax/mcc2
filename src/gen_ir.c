@@ -174,6 +174,20 @@ static void gen_expr(Node* node){
             new_IR(IR_LABEL)->val = l_end;
             return;
         }
+        case ND_COND_EXPR:
+        {
+            long l_false = get_label();
+            long l_end = get_label();
+
+            gen_expr(node->cond);
+            new_IR(IR_JZ)->val = l_false;
+            gen_expr(node->lhs);
+            new_IR(IR_JMP)->val = l_end;
+            new_IR(IR_LABEL)->val = l_false;
+            gen_expr(node->rhs);
+            new_IR(IR_LABEL)->val = l_end;
+            return;
+        }
         default:
             break;
     }

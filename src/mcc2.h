@@ -14,6 +14,7 @@ typedef enum TokenKind {
     TK_SUB,                     // - 記号
     TK_MUL,
     TK_DIV,
+    TK_QUESTION,                // ?
     TK_ASSIGN,                  // =
     TK_L_PAREN,                 // (
     TK_R_PAREN,                 // )
@@ -31,6 +32,7 @@ typedef enum TokenKind {
     TK_R_ANGLE_BRACKET,         // >
     TK_R_ANGLE_BRACKET_EQUAL,   // >=
     TK_SEMICORON,               // ;
+    TK_CORON,                   // :
     TK_RETURN,                  // return
     TK_IF,
     TK_ELSE,
@@ -75,6 +77,7 @@ typedef enum NodeKind {
     ND_NOT_EQUAL,
     ND_LT,
     ND_LE,
+    ND_COND_EXPR,
     ND_LOGIC_OR,
     ND_LOGIC_AND,
     ND_BIT_AND,

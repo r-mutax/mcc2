@@ -61,6 +61,9 @@ assert 1 "main(){ return 0 || 5; }"
 assert 0 "main(){ return 0 || 0; }"
 assert 5 "main(){ a = 5; 1 || (a = 4); return a; }"
 
+assert 6 "main(){ return 1 ? 6 : 3; }"
+assert 3 "main(){ return 0 ? 6 : 3; }"
+
 # test statement
 assert 3 "main(){return 3; 5;}"
 

@@ -100,6 +100,12 @@ void tokenize(char* src){
                     error_at(p, "error: unexpected token.\n");
                 }
                 break;
+            case '?':
+                cur = new_token(TK_QUESTION, cur, p++);
+                break;
+            case ':':
+                cur = new_token(TK_CORON, cur, p++);
+                break;
             case '<':
                 if(*(p + 1) == '='){
                     cur = new_token(TK_L_ANGLE_BRACKET_EQUAL, cur, p);
