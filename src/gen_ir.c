@@ -136,6 +136,25 @@ static void gen_expr(Node* node){
         case ND_FUNCCALL:
             new_IR(IR_FN_CALL_NOARGS)->name = node->ident;
             return;
+        case ND_LOGIC_OR:
+        {
+            long l_true = get_label();
+            long l_end = get_label();
+
+            gen_expr(node->lhs);
+            new_IR(IR_JNZ)->val = l_true;
+            gen_expr(node->rhs);
+            new_IR(IR_JNZ)->val = l_true;
+
+            // false側
+            new_IR(IR_NUM)->val = 0;
+            new_IR(IR_JMP)->val = l_end;
+            
+            new_IR(IR_LABEL)->val = l_true;
+            new_IR(IR_NUM)->val = 1;
+            new_IR(IR_LABEL)->val = l_end;
+            return;
+        }
         case ND_LOGIC_AND:
         {
             long l_false = get_label();
@@ -153,8 +172,8 @@ static void gen_expr(Node* node){
             new_IR(IR_LABEL)->val = l_false;
             new_IR(IR_NUM)->val = 0;
             new_IR(IR_LABEL)->val = l_end;
-        }
             return;
+        }
         default:
             break;
     }

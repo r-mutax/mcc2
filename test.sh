@@ -53,6 +53,13 @@ assert 1 "main(){ return 3 && 5; }"
 assert 0 "main(){ return 3 && 0; }"
 assert 0 "main(){ return 0 && 5; }"
 assert 0 "main(){ return 0 && 0; }"
+assert 5 "main(){ a = 5; 0 && (a = 4); return a; }"
+
+assert 1 "main(){ return 3 || 5; }"
+assert 1 "main(){ return 3 || 0; }"
+assert 1 "main(){ return 0 || 5; }"
+assert 0 "main(){ return 0 || 0; }"
+assert 5 "main(){ a = 5; 1 || (a = 4); return a; }"
 
 # test statement
 assert 3 "main(){return 3; 5;}"

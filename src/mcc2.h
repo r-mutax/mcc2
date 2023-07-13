@@ -75,6 +75,7 @@ typedef enum NodeKind {
     ND_NOT_EQUAL,
     ND_LT,
     ND_LE,
+    ND_LOGIC_OR,
     ND_LOGIC_AND,
     ND_BIT_AND,
     ND_BIT_XOR,
