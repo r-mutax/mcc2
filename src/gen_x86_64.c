@@ -79,6 +79,13 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  idiv rdi\n");
                 fprintf(fp, "  push rax\n");
                 break;
+            case IR_MOD:
+                pop2(fp);
+                fprintf(fp, "  cqo\n");
+                fprintf(fp, "  idiv rdi\n");
+                fprintf(fp, "  mov rax, rdx\n");
+                fprintf(fp, "  push rax\n");
+                break;
             case IR_EQUAL:
                 pop2(fp);
                 fprintf(fp, "  cmp rax, rdi\n");
@@ -105,6 +112,33 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  cmp rax, rdi\n");
                 fprintf(fp, "  setle al\n");
                 fprintf(fp, "  movzb rax, al\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_BIT_AND:
+                pop2(fp);
+                fprintf(fp, "  and rax, rdi\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_BIT_XOR:
+                pop2(fp);
+                fprintf(fp, "  xor rax, rdi\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_BIT_OR:
+                pop2(fp);
+                fprintf(fp, "  or rax, rdi\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_L_BIT_SHIFT:
+                pop2(fp);
+                fprintf(fp, "  mov rcx, rdi\n");
+                fprintf(fp, "  sal rax, cl\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_R_BIT_SHIFT:
+                pop2(fp);
+                fprintf(fp, "  mov rcx, rdi\n");
+                fprintf(fp, "  sar rax, cl\n");
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_POP:

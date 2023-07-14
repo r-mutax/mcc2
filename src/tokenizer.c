@@ -35,22 +35,46 @@ void tokenize(char* src){
             case '+':
                 if(*(p + 1) == '+'){
 
+                } else if(*(p + 1) == '=') {
+                    cur = new_token(TK_PLUS_EQUAL, cur, p);
+                    p += 2;
                 } else {
-                    cur = new_token(TK_ADD, cur, p++);
+                    cur = new_token(TK_PLUS, cur, p++);
                 }
                 break;
             case '-':
                 if(*(p + 1) == '-'){
 
+                } else if(*(p + 1) == '=') {
+                    cur = new_token(TK_MINUS_EQUAL, cur, p);
+                    p += 2;
                 } else {
-                    cur = new_token(TK_SUB, cur, p++);
+                    cur = new_token(TK_MINUS, cur, p++);
                 }
                 break;
             case '*':
-                cur = new_token(TK_MUL, cur, p++);
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_MUL_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_MUL, cur, p++);
+                }
                 break;
             case '/':
-                cur = new_token(TK_DIV, cur, p++);
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_DIV_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_DIV, cur, p++);
+                }
+                break;
+            case '%':
+                if(*(p + 1) == '='){
+                    cur = new_token(TK_PERCENT_EQUAL, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_PERCENT, cur, p++);
+                }
                 break;
             case '(':
                 cur = new_token(TK_L_PAREN, cur, p++);
@@ -63,6 +87,25 @@ void tokenize(char* src){
                 break;
             case '}':
                 cur = new_token(TK_R_BRACKET, cur, p++);
+                break;
+            case '&':
+                if(*(p + 1) == '&'){
+                    cur = new_token(TK_AND_AND, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_AND, cur, p++);
+                }
+                break;
+            case '^':
+                cur = new_token(TK_HAT, cur, p++);
+                break;
+            case '|':
+                if(*(p + 1) == '|'){
+                    cur = new_token(TK_PIPE_PIPE, cur, p);
+                    p += 2;
+                } else {
+                    cur = new_token(TK_PIPE, cur, p++);
+                }
                 break;
             case '=':
                 if(*(p + 1) == '='){
@@ -81,10 +124,24 @@ void tokenize(char* src){
                     error_at(p, "error: unexpected token.\n");
                 }
                 break;
+            case '?':
+                cur = new_token(TK_QUESTION, cur, p++);
+                break;
+            case ':':
+                cur = new_token(TK_CORON, cur, p++);
+                break;
             case '<':
                 if(*(p + 1) == '='){
                     cur = new_token(TK_L_ANGLE_BRACKET_EQUAL, cur, p);
                     p += 2;
+                } else if(*(p + 1) == '<') {
+                    if(*(p + 2) == '=') {
+                        cur = new_token(TK_L_BITSHIFT_EQUAL, cur, p);
+                        p += 3;
+                    } else {
+                        cur = new_token(TK_L_BITSHIFT, cur, p);
+                        p += 2;
+                    }
                 } else {
                     cur = new_token(TK_L_ANGLE_BRACKET, cur, p++);
                 }
@@ -93,6 +150,14 @@ void tokenize(char* src){
                 if(*(p + 1) == '='){
                     cur = new_token(TK_R_ANGLE_BRACKET_EQUAL, cur, p);
                     p += 2;
+                } else if(*(p + 1) == '>') {
+                    if(*(p + 2) == '=') {
+                        cur = new_token(TK_R_BITSHIFT_EQUAL, cur, p);
+                        p += 3;
+                    } else {
+                        cur = new_token(TK_R_BITSHIFT, cur, p);
+                        p += 2;
+                    }
                 } else {
                     cur = new_token(TK_R_ANGLE_BRACKET, cur, p++);
                 }

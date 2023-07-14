@@ -10,22 +10,39 @@ typedef struct IR IR;
 typedef enum TokenKind {
     TK_NUM,                     // 数値
     TK_IDENT,
-    TK_ADD,                     // + 記号
-    TK_SUB,                     // - 記号
+    TK_PLUS,                    // + 記号
+    TK_MINUS,                   // - 記号
     TK_MUL,
     TK_DIV,
+    TK_PERCENT,                 // %
+    TK_PERCENT_EQUAL,           // %=
+    TK_PLUS_EQUAL,              // +=
+    TK_MINUS_EQUAL,             // -=
+    TK_MUL_EQUAL,               // *=
+    TK_DIV_EQUAL,               // /=
+    TK_QUESTION,                // ?
     TK_ASSIGN,                  // =
     TK_L_PAREN,                 // (
     TK_R_PAREN,                 // )
     TK_L_BRACKET,               // {
     TK_R_BRACKET,               // }
+    TK_AND,                     // &
+    TK_AND_AND,                 // &&
+    TK_HAT,                     // ^
+    TK_PIPE,                    // |
+    TK_PIPE_PIPE,               // ||
     TK_EQUAL,                   // ==
     TK_NOT_EQUAL,               // !=
     TK_L_ANGLE_BRACKET,         // <
     TK_L_ANGLE_BRACKET_EQUAL,   // <=
     TK_R_ANGLE_BRACKET,         // >
     TK_R_ANGLE_BRACKET_EQUAL,   // >=
+    TK_L_BITSHIFT,              // <<
+    TK_L_BITSHIFT_EQUAL,        // <<=
+    TK_R_BITSHIFT,              // >>
+    TK_R_BITSHIFT_EQUAL,        // >>=
     TK_SEMICORON,               // ;
+    TK_CORON,                   // :
     TK_RETURN,                  // return
     TK_IF,
     TK_ELSE,
@@ -66,10 +83,19 @@ typedef enum NodeKind {
     ND_SUB,
     ND_MUL,
     ND_DIV,
+    ND_MOD,
     ND_EQUAL,
     ND_NOT_EQUAL,
     ND_LT,
     ND_LE,
+    ND_COND_EXPR,
+    ND_LOGIC_OR,
+    ND_LOGIC_AND,
+    ND_BIT_AND,
+    ND_BIT_XOR,
+    ND_BIT_OR,
+    ND_L_BITSHIFT,
+    ND_R_BITSHIFT,
     ND_ASSIGN,
     ND_RETURN,
     ND_IF,
@@ -113,10 +139,16 @@ typedef enum IRKind{
     IR_SUB,
     IR_MUL,
     IR_DIV,
+    IR_MOD,
     IR_EQUAL,
     IR_NOT_EQUAL,
     IR_LT,
     IR_LE,
+    IR_BIT_AND,
+    IR_BIT_XOR,
+    IR_BIT_OR,
+    IR_L_BIT_SHIFT,
+    IR_R_BIT_SHIFT,
     IR_POP,
     IR_LOAD,
     IR_FN_START,
