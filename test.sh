@@ -103,6 +103,7 @@ assert 5 "main(){a = 0; c = 0; for(i = 0; i < 5; i = i + 1) { a = a + 1; c = c +
 
 # test function call
 assert 3 "foo(){ return 3; } main(){ return foo(); }"
+assert 3 "bar(a, b) { a = 3; return a;} main(){ return bar(); }"
 
 echo OK
 

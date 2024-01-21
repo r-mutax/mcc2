@@ -87,16 +87,22 @@ static Function* function(){
     }
 
     func->name = declare_ident(tok, 0, ID_FUNC);
-    expect_token(TK_L_PAREN);
-    expect_token(TK_R_PAREN);
-
     scope_in();
-    // Node head = {};
-    // Node* cur = &head;
-    // while(!is_eof()){
-    //     cur->next = stmt();
-    //     cur = cur->next;
-    // }
+    expect_token(TK_L_PAREN);
+
+    if(!consume_token(TK_R_PAREN)){
+        Parameter head = {};
+        Parameter* cur = &head;
+        do {
+            Token* tok = expect_ident();
+            Ident* ident = declare_ident(tok, 8, ID_LVAR);
+            Parameter* param = calloc(1, sizeof(Parameter));
+            param->ident = ident;
+            cur = cur->next = param;
+        } while(consume_token(TK_CANMA));
+        func->params = head.next;
+        expect_token(TK_R_PAREN);
+    }
 
     expect_token(TK_L_BRACKET);
     func->stmts = compound_stmt();
