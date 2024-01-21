@@ -17,3 +17,9 @@ void error_at(char* loc, char* fmt, ...){
     fprintf(stderr, "\n");
     exit(1);
 }
+
+void unreachable()
+{
+    fprintf(stderr, "%s\n", "Reached unreachable code.");
+    exit(1);
+}

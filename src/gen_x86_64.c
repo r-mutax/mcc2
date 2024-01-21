@@ -1,8 +1,11 @@
 #include "gen_x86_64.h"
 #include "gen_ir.h"
 #include "tokenizer.h"
+#include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 static void pop2();
 
@@ -159,7 +162,11 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  cmp rax, 0\n");
                 fprintf(fp, "  jne .L%d\n", ir->val);
                 break;
+            case IR_STORE_ARGREG:
+                fprintf(fp, "  push %s\n", argreg64[ir->val]);
+                break;
             default:
+                unreachable();
                 break;
         }
 

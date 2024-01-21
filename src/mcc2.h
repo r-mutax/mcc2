@@ -6,6 +6,7 @@ typedef struct Ident Ident;
 typedef struct Stmt Stmt;
 typedef struct Function Function;
 typedef struct IR IR;
+typedef struct Parameter Parameter;
 
 typedef enum TokenKind {
     TK_NUM,                     // 数値
@@ -43,6 +44,7 @@ typedef enum TokenKind {
     TK_R_BITSHIFT_EQUAL,        // >>=
     TK_SEMICORON,               // ;
     TK_CORON,                   // :
+    TK_CANMA,                   // ,
     TK_RETURN,                  // return
     TK_IF,
     TK_ELSE,
@@ -123,10 +125,15 @@ struct Node {
     Node*       next;
 };
 
+struct Parameter {
+    Ident*      ident;
+    Parameter*  next;
+};
 
 struct Function {
     Ident*      name;
     Node*       stmts;
+    Parameter*  params;
     int         stack_size;
     Function*   next;
 };
@@ -159,6 +166,7 @@ typedef enum IRKind{
     IR_JMP,
     IR_JZ,
     IR_JNZ,
+    IR_STORE_ARGREG,
 } IRKind;
 
 struct IR{

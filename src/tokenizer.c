@@ -165,6 +165,9 @@ void tokenize(char* src){
             case ';':
                 cur = new_token(TK_SEMICORON, cur, p++);
                 break;
+            case ',':
+                cur = new_token(TK_CANMA, cur, p++);
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);

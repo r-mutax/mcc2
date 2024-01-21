@@ -24,6 +24,21 @@ static void gen_function(Function* func){
     new_IR(IR_FN_LABEL)->name = func->name;
     new_IR(IR_FN_START)->size = func->stack_size;
 
+    Parameter* param = func->params;
+    for(int i = 0;
+        param; ++i, param = param->next){
+
+        IR* ir = new_IR(IR_LVAR);
+        ir->address = param->ident->offset;
+        ir->size = param->ident->size;
+        new_IR(IR_STORE_ARGREG)->val = i;
+        new_IR(IR_ASSIGN);
+
+        if(i >= 6){
+            error_at(func->name->tok->pos, "Functions with more than six arguments are not supported.");
+        }
+    }
+
     Node* cur = func->stmts;
     while(cur){
         gen_stmt(cur);
