@@ -121,13 +121,22 @@ static void gen_stmt(Node* node){
 }
 
 // 変数のアドレスを計算してスタックに積む
-static void gen_lvar(Node* lvar){
-    if(lvar->kind != ND_LVAR){
-        error_at(lvar->ident->tok->pos, "Not a lhs.\n");
+static void gen_lvar(Node* node){
+    switch(node->kind){
+        case ND_LVAR:
+            {
+                IR* ir = new_IR(IR_LVAR);
+                ir->address = node->ident->offset;
+                ir->size = node->ident->size;
+                return;
+            }
+        case ND_DREF:
+            gen_expr(node->lhs);
+            break;
+        default:
+            error_at(node->ident->tok->pos, "Not a lhs.\n");
+            break;
     }
-    IR* ir = new_IR(IR_LVAR);
-    ir->address = lvar->ident->offset;
-    ir->size = lvar->ident->size;
     return;
 }
 
@@ -150,6 +159,13 @@ static void gen_expr(Node* node){
             return;
         case ND_FUNCCALL:
             new_IR(IR_FN_CALL_NOARGS)->name = node->ident;
+            return;
+        case ND_ADDR:
+            gen_lvar(node->lhs);
+            return;
+        case ND_DREF:
+            gen_expr(node->lhs);
+            new_IR(IR_DREF);
             return;
         case ND_LOGIC_OR:
         {
