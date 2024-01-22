@@ -55,6 +55,7 @@ static Node* relational();
 static Node* bitShift();
 static Node* add();
 static Node* mul();
+static Node* unary();
 static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_add(Node* lhs, Node* rhs);
@@ -331,21 +332,30 @@ static Node* add(){
 }
 
 static Node* mul(){
-    Node* node = primary();
+    Node* node = unary();
 
     while(true){
         if(consume_token(TK_MUL)){
-            node = new_node(ND_MUL, node, primary());
+            node = new_node(ND_MUL, node, unary());
         } else if(consume_token(TK_DIV)){
-            node = new_node(ND_DIV, node, primary());
+            node = new_node(ND_DIV, node, unary());
         } else if(consume_token(TK_PERCENT)){
-            node = new_node(ND_MOD, node, primary());
+            node = new_node(ND_MOD, node, unary());
         } else {
             break;
         }
     }
 
     return node;
+}
+
+static Node* unary(){
+    if(consume_token(TK_PLUS)){
+        return unary();
+    } else if(consume_token(TK_MINUS)){
+        return new_node_sub(new_node_num(0), unary());
+    }
+    return primary();
 }
 
 static Node* primary(){
