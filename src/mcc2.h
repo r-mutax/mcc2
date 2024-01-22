@@ -122,6 +122,9 @@ struct Node {
     Node*       init;
     Node*       incr;
 
+    // 関数呼び出しの引数
+    Node*       params;
+
     Node*       next;
 };
 
@@ -167,6 +170,7 @@ typedef enum IRKind{
     IR_JZ,
     IR_JNZ,
     IR_STORE_ARGREG,
+    IR_LOAD_ARGREG,
 } IRKind;
 
 struct IR{

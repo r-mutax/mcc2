@@ -1,6 +1,7 @@
 #include "mcc2.h"
 #include "tokenizer.h"
 #include "ident.h"
+#include "error.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -357,21 +358,35 @@ static Node* primary(){
 
     Token* ident_token = consume_ident();
     if(ident_token){
-        NodeKind kind = ND_LVAR;
-        if(consume_token(TK_L_PAREN)){
-            // 関数の場合
-            expect_token(TK_R_PAREN);
-            kind = ND_FUNCCALL;
-        }
-        // 変数の場合
         Ident* ident = find_ident(ident_token);
         if(!ident){
             ident = declare_ident(ident_token, 8, ID_LVAR);
+            Node* node = new_node(ND_LVAR, 0, 0);
+            node->ident = ident;
+            return node;
+        } else {
+            if(ident->kind == ID_LVAR){
+                Node* node = new_node(ND_LVAR, 0, 0);
+                node->ident = ident;
+                return node;
+            } else if(ident->kind == ID_FUNC){
+                if(consume_token(TK_L_PAREN)){
+                    Node* node = new_node(ND_FUNCCALL, 0, 0);
+                    node->ident = ident;
+                    if(!consume_token(TK_R_PAREN)){
+                        Node head = {};
+                        Node* nd_param = &head;
+                        do{
+                            nd_param = nd_param->next = assign();
+                        } while(consume_token(TK_CANMA));
+                        expect_token(TK_R_PAREN);
+                        node->params = head.next;
+                    }
+                    return node;
+                }
+                unreachable();
+            }
         }
-
-        Node* node = new_node(kind, 0, 0);
-        node->ident = ident;
-        return node;
     }
 
     return new_node_num(expect_num());
