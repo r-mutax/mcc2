@@ -163,7 +163,11 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  jne .L%d\n", ir->val);
                 break;
             case IR_STORE_ARGREG:
-                fprintf(fp, "  push %s\n", argreg64[ir->val]);
+                fprintf(fp, "  pop rax\n");
+                fprintf(fp, "  mov [rax], %s\n", argreg64[ir->val]);
+                break;
+            case IR_LOAD_ARGREG:
+                fprintf(fp, "  pop %s\n", argreg64[ir->val]);
                 break;
             case IR_DREF:
                 fprintf(fp, "  pop rax\n");

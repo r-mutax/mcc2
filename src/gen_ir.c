@@ -30,10 +30,7 @@ static void gen_function(Function* func){
 
         IR* ir = new_IR(IR_LVAR);
         ir->address = param->ident->offset;
-        ir->size = param->ident->size;
         new_IR(IR_STORE_ARGREG)->val = i;
-        new_IR(IR_ASSIGN);
-
         if(i >= 6){
             error_at(func->name->tok->pos, "Functions with more than six arguments are not supported.");
         }
@@ -158,8 +155,21 @@ static void gen_expr(Node* node){
             new_IR(IR_ASSIGN);
             return;
         case ND_FUNCCALL:
-            new_IR(IR_FN_CALL_NOARGS)->name = node->ident;
-            return;
+            {
+                int nargs = 0;
+                for(Node* cur = node->params; cur; cur = cur->next){
+                    gen_expr(cur);
+                    nargs++;
+                }
+
+                for(;nargs; nargs--){
+                    IR* ir = new_IR(IR_LOAD_ARGREG);
+                    ir->size = 8;
+                    ir->val = nargs - 1;
+                }
+                new_IR(IR_FN_CALL_NOARGS)->name = node->ident;
+                return;
+            }
         case ND_ADDR:
             gen_lvar(node->lhs);
             return;
