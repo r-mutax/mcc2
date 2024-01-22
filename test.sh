@@ -32,6 +32,13 @@ assert 56 "main(){ return 7 << 3; }"
 assert 7 "main(){ a = 56; a >>= 3; return a; }"
 assert 56 "main(){ a = 7; a <<= 3; return a; }"
 
+# test unary
+assert 10 "main(){return - -10;}"
+assert 10 "main(){return - -+10;}"
+assert 10 "main(){return -10+20;}"
+assert 5 "main(){a = 5; b = &a; return *b;}"
+assert 10 "main(){a = 5; b = &a; *b = 10; return a;}"
+
 # test equality
 assert 1 "main(){return 2 == 2;}"
 assert 0 "main(){return 2 == 3;}"
