@@ -106,6 +106,8 @@ typedef enum NodeKind {
     ND_FOR,
     ND_BLOCK,
     ND_FUNCCALL,
+    ND_ADDR,
+    ND_DREF
 } NodeKind;
 
 struct Node {
@@ -167,6 +169,7 @@ typedef enum IRKind{
     IR_JZ,
     IR_JNZ,
     IR_STORE_ARGREG,
+    IR_DREF,
 } IRKind;
 
 struct IR{

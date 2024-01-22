@@ -354,6 +354,10 @@ static Node* unary(){
         return unary();
     } else if(consume_token(TK_MINUS)){
         return new_node_sub(new_node_num(0), unary());
+    } else if(consume_token(TK_AND)){
+        return new_node(ND_ADDR, unary(), NULL);
+    } else if(consume_token(TK_MUL)){
+        return new_node(ND_DREF, unary(), NULL);
     }
     return primary();
 }
