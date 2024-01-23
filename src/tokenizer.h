@@ -11,3 +11,4 @@ Token* consume_ident();
 Token* expect_ident();
 bool is_eof();
 char* get_token_string(Token* tok);
+bool is_type();

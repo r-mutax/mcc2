@@ -273,3 +273,7 @@ char* get_token_string(Token* tok){
     memcpy(str, tok->pos, tok->len);
     return str;
 }
+
+bool is_type(){
+    return token->kind == TK_INT;
+}

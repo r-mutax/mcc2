@@ -50,6 +50,7 @@ typedef enum TokenKind {
     TK_ELSE,
     TK_WHILE,
     TK_FOR,
+    TK_INT,                     // "int"
     TK_EOF                      // 終端記号
 } TokenKind;
 

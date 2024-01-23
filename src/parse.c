@@ -7,14 +7,15 @@
 
 /*
     program = function*
-    function = ident '(){' stmt* '}'
+    function = ident '(){' compound_stmt
     stmt = expr ';' |
             'return' expr ';' |
             'if(' expr ')' stmt ('else' stmt)? |
             'while(' expr ')' stmt | 
             'for(' expr ';' expr ';)' stmt |
             '{' compound_stmt
-    compound_stmt = stmt* '}'
+    compound_stmt = stmt* | declaration* '}'
+    declaration = 'int' ident ';'
     expr = assign
     assign = cond_expr ( '=' assign
                         | '+=' assign
@@ -43,6 +44,7 @@
 static Function* function();
 static Node* stmt();
 static Node* compound_stmt();
+static Ident* declaration();
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -82,6 +84,7 @@ Function* Program(){
 static Function* function(){
     Function* func = calloc(1, sizeof(Function));
     
+    expect_token(TK_INT);
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
@@ -96,6 +99,7 @@ static Function* function(){
         Parameter head = {};
         Parameter* cur = &head;
         do {
+            expect_token(TK_INT);
             Token* tok = expect_ident();
             Ident* ident = declare_ident(tok, 8, ID_LVAR);
             Parameter* param = calloc(1, sizeof(Parameter));
@@ -165,11 +169,24 @@ static Node* compound_stmt(){
     Node head = {};
     Node* cur = &head;
     while(!consume_token(TK_R_BRACKET)){
-        cur->next = stmt();
-        cur = cur->next;
+        if(is_type()){
+            declaration();
+        } else {
+            cur->next = stmt();
+            cur = cur->next;
+        }
     }
     node->body = head.next;
     return node;
+}
+
+static Ident* declaration()
+{
+    expect_token(TK_INT);
+    Token* ident_tok = expect_ident();
+    Ident* ident = declare_ident(ident_tok, 8, ID_LVAR);
+    expect_token(TK_SEMICORON);
+    return ident;
 }
 
 static Node* expr(){
@@ -374,10 +391,7 @@ static Node* primary(){
     if(ident_token){
         Ident* ident = find_ident(ident_token);
         if(!ident){
-            ident = declare_ident(ident_token, 8, ID_LVAR);
-            Node* node = new_node(ND_LVAR, 0, 0);
-            node->ident = ident;
-            return node;
+            error_at(ident_token->pos, "Undefined Variable.");
         } else {
             if(ident->kind == ID_LVAR){
                 Node* node = new_node(ND_LVAR, 0, 0);
