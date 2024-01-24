@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "error.h"
+#include "type.h"
 #include "tokenizer.h"
 #include "parse.h"
 #include "gen_ir.h"
@@ -13,8 +14,11 @@ int main(int argc, char **argv){
         return 1;
     }
 
+    // initialize
+    ty_init();
     user_input = argv[1];
 
+    // compile
     tokenize(argv[1]);
     Function* func = Program();
 

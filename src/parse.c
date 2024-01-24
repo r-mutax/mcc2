@@ -7,7 +7,7 @@
 
 /*
     program = function*
-    function = ident '(){' compound_stmt
+    function = ident '(' (declspec ident)*'){' compound_stmt
     stmt = expr ';' |
             'return' expr ';' |
             'if(' expr ')' stmt ('else' stmt)? |
@@ -15,7 +15,8 @@
             'for(' expr ';' expr ';)' stmt |
             '{' compound_stmt
     compound_stmt = stmt* | declaration* '}'
-    declaration = 'int' ident ';'
+    declaration = declspec ident ';'
+    declspec = 'int'
     expr = assign
     assign = cond_expr ( '=' assign
                         | '+=' assign
@@ -45,6 +46,7 @@ static Function* function();
 static Node* stmt();
 static Node* compound_stmt();
 static Ident* declaration();
+static Type* declspec();
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -84,14 +86,14 @@ Function* Program(){
 static Function* function(){
     Function* func = calloc(1, sizeof(Function));
     
-    expect_token(TK_INT);
+    Type* func_type = declspec();
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
         return NULL;
     }
 
-    func->name = declare_ident(tok, 0, ID_FUNC);
+    func->name = declare_ident(tok, ID_FUNC, func_type);
     scope_in();
     expect_token(TK_L_PAREN);
 
@@ -99,9 +101,9 @@ static Function* function(){
         Parameter head = {};
         Parameter* cur = &head;
         do {
-            expect_token(TK_INT);
+            Type* arg_ty = declspec();
             Token* tok = expect_ident();
-            Ident* ident = declare_ident(tok, 8, ID_LVAR);
+            Ident* ident = declare_ident(tok, ID_LVAR, arg_ty);
             Parameter* param = calloc(1, sizeof(Parameter));
             param->ident = ident;
             cur = cur->next = param;
@@ -182,11 +184,16 @@ static Node* compound_stmt(){
 
 static Ident* declaration()
 {
-    expect_token(TK_INT);
+    Type* ty = declspec();
     Token* ident_tok = expect_ident();
-    Ident* ident = declare_ident(ident_tok, 8, ID_LVAR);
+    Ident* ident = declare_ident(ident_tok, ID_LVAR, ty);
     expect_token(TK_SEMICORON);
     return ident;
+}
+
+static Type* declspec(){
+    expect_token(TK_INT);
+    return ty_int;
 }
 
 static Node* expr(){

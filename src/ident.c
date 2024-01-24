@@ -8,17 +8,13 @@ static Scope global_scope = {};
 static Scope* cur_scope = &global_scope;
 static int stack_size = 0;
 
-static Ident   head = {ID_EOI, NULL, 0, 0, 0, NULL};
-static Ident*  cur_i = &head;
-
-
-Ident* declare_ident(Token* tok, int size, IdentKind kind){
+Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     Ident* ident = calloc(1, sizeof(Ident));
 
     ident->kind = kind;
     ident->tok = tok;
-    ident->size = size;
     ident->offset = stack_size + 8;
+    ident->ty = ty;
 
     stack_size += 8;
 

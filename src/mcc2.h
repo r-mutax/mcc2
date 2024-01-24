@@ -8,6 +8,10 @@ typedef struct Function Function;
 typedef struct IR IR;
 typedef struct Parameter Parameter;
 typedef struct Scope Scope;
+typedef struct Type Type;
+typedef enum TypeKind TypeKind;
+
+extern Type* ty_int;
 
 typedef enum TokenKind {
     TK_NUM,                     // 数値
@@ -67,6 +71,7 @@ typedef enum IdentKind {
     ID_LVAR,
     ID_GVAR,
     ID_FUNC,
+    ID_TYPE,            // typedef
     ID_ENUM,
     ID_EOI,             // End of IdentList
 } IdentKind;
@@ -74,9 +79,11 @@ typedef enum IdentKind {
 struct Ident {
     IdentKind   kind;
     Token* tok;         // 宣言部分のトークンポインタ
-    int size;           // ローカル変数のサイズ
     int offset;         // ローカル変数ののオフセット
-    int level;          // スコープのレベル
+
+    // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
+    // ID_TYPE -> 型名が表す型情報
+    Type*   ty;
     Ident* next;
 };
 
@@ -196,4 +203,14 @@ struct Scope {
     int         level;
     Ident*      ident;
     Scope*      parent;
+};
+
+enum TypeKind{
+    TY_INT,
+};
+
+struct Type {
+    TypeKind    kind;
+    int         size;
+    Type*       ptr_to;
 };

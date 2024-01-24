@@ -1,6 +1,7 @@
 #pragma once
+#include "mcc2.h"
 
-Ident* declare_ident(Token* ident, int size, IdentKind kind);
+Ident* declare_ident(Token* ident, IdentKind kind, Type* ty);
 Ident* find_ident(Token* tok);
 void scope_in();
 void scope_out();
