@@ -37,7 +37,7 @@ assert 10 "int main(){return - -10;}"
 assert 10 "int main(){return - -+10;}"
 assert 10 "int main(){return -10+20;}"
 assert 5 "int main(){int a; int b; a = 5; b = &a; return *b;}"
-assert 10 "int main(){int a; int b; a = 5; b = &a; *b = 10; return a;}"
+assert 10 "int main(){int a; int* b; a = 5; b = &a; *b = 10; return a;}"
 
 # test equality
 assert 1 "int main(){return 2 == 2;}"

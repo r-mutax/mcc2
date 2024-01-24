@@ -2,6 +2,7 @@
 #include "tokenizer.h"
 #include "ident.h"
 #include "error.h"
+#include "type.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -16,7 +17,7 @@
             '{' compound_stmt
     compound_stmt = stmt* | declaration* '}'
     declaration = declspec ident ';'
-    declspec = 'int'
+    declspec = 'int' '*' *
     expr = assign
     assign = cond_expr ( '=' assign
                         | '+=' assign
@@ -193,7 +194,12 @@ static Ident* declaration()
 
 static Type* declspec(){
     expect_token(TK_INT);
-    return ty_int;
+    Type* ty = ty_int;
+
+    while(consume_token(TK_MUL)){
+        ty = pointer_to(ty);
+    }
+    return ty;
 }
 
 static Node* expr(){
