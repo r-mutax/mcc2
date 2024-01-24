@@ -207,10 +207,12 @@ struct Scope {
 
 enum TypeKind{
     TY_INT,
+    TY_POINTER,
 };
 
 struct Type {
     TypeKind    kind;
     int         size;
+    int         is_unsigned;
     Type*       ptr_to;
 };
