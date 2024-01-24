@@ -4,10 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+static Scope global_scope = {};
+static Scope* cur_scope = &global_scope;
+static int stack_size = 0;
+
 static Ident   head = {ID_EOI, NULL, 0, 0, 0, NULL};
 static Ident*  cur_i = &head;
-static int scope_level = 0;
-static int stack_size = 0;
+
 
 Ident* declare_ident(Token* tok, int size, IdentKind kind){
     Ident* ident = calloc(1, sizeof(Ident));
@@ -16,25 +19,26 @@ Ident* declare_ident(Token* tok, int size, IdentKind kind){
     ident->tok = tok;
     ident->size = size;
     ident->offset = stack_size + 8;
-    ident->level = scope_level;
 
     stack_size += 8;
 
-    ident->next = cur_i;
-    cur_i = ident;
+    ident->next = cur_scope->ident;
+    cur_scope->ident = ident;
     return ident;
 }
 
 Ident* find_ident(Token* tok){
-    for(Ident* cur = cur_i; cur->kind != ID_EOI; cur = cur->next){
-        Token* lhs = tok;
-        Token* rhs = cur->tok;
-
-        if((lhs->len == rhs->len)
-            && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
-            return cur;
-        }
+    for(Scope* sc = cur_scope; sc; sc = sc->parent){
+        for(Ident* id = sc->ident; id; id = id->next){
+            Token* lhs = tok;
+            Token* rhs = id->tok;
+            if((lhs->len == rhs->len)
+                  && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
+                return id;
+            }
+        } 
     }
+
     return NULL;
 }
 
@@ -43,22 +47,19 @@ int get_stack_size(){
 }
 
 void scope_in(){
-    scope_level++;
+    Scope* new_scope = calloc(1, sizeof(Scope));
+    new_scope->level = cur_scope->level + 1;
+    new_scope->parent = cur_scope;
+    cur_scope = new_scope;
 }
 
 void scope_out(){
-    if(scope_level == 0) return;
+    if(cur_scope->level == 0) return;
 
-    scope_level--;
+    Scope* buf = cur_scope;
+    cur_scope = cur_scope->parent;
 
-    while(true){
-        if(cur_i->level == scope_level){
-            break;
-        }
-        cur_i = cur_i->next;
-    }
-
-    if(scope_level == 0){
+    if(cur_scope == &global_scope){
         stack_size = 0;
     }
 }

@@ -7,6 +7,7 @@ typedef struct Stmt Stmt;
 typedef struct Function Function;
 typedef struct IR IR;
 typedef struct Parameter Parameter;
+typedef struct Scope Scope;
 
 typedef enum TokenKind {
     TK_NUM,                     // 数値
@@ -184,4 +185,15 @@ struct IR{
     int address;
     int size;
     Ident*  name;
+};
+
+// Scope : スコープを表現するもの
+//  int level       : スコープのレベル
+//  Ident* ident    : スコープ内に存在する識別子（typedef含む)
+//  Scope* parent   : 親のスコープ。
+// 識別子の検索は、現在のスコープから親のスコープ側に上がっていく
+struct Scope {
+    int         level;
+    Ident*      ident;
+    Scope*      parent;
 };
