@@ -124,7 +124,7 @@ static void gen_lvar(Node* node){
             {
                 IR* ir = new_IR(IR_LVAR);
                 ir->address = node->ident->offset;
-                ir->size = node->ident->ty->size;
+                ir->size = node->ident->type->size;
                 return;
             }
         case ND_DREF:

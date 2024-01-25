@@ -14,7 +14,7 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     ident->kind = kind;
     ident->tok = tok;
     ident->offset = stack_size + 8;
-    ident->ty = ty;
+    ident->type = ty;
 
     stack_size += 8;
 

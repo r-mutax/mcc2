@@ -83,7 +83,7 @@ struct Ident {
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
-    Type*   ty;
+    Type*   type;
     Ident* next;
 };
 
@@ -125,6 +125,7 @@ struct Node {
     Node*       rhs;
     int         val;
     Ident*      ident;
+    Type*       type;
 
     Node*       cond;
     Node*       then;
