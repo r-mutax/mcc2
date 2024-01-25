@@ -117,6 +117,7 @@ static Function* function(){
     func->stmts = compound_stmt();
     func->stack_size = get_stack_size();
     scope_out();
+    add_type(func->stmts);   
 
     return func;
 }
@@ -178,6 +179,7 @@ static Node* compound_stmt(){
             cur->next = stmt();
             cur = cur->next;
         }
+        add_type(cur);
     }
     node->body = head.next;
     return node;
@@ -409,11 +411,13 @@ static Node* primary(){
             if(ident->kind == ID_LVAR){
                 Node* node = new_node(ND_LVAR, 0, 0);
                 node->ident = ident;
+                node->type = ident->type;
                 return node;
             } else if(ident->kind == ID_FUNC){
                 if(consume_token(TK_L_PAREN)){
                     Node* node = new_node(ND_FUNCCALL, 0, 0);
                     node->ident = ident;
+                    node->type = ident->type;
                     if(!consume_token(TK_R_PAREN)){
                         Node head = {};
                         Node* nd_param = &head;
