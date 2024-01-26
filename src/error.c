@@ -18,6 +18,15 @@ void error_at(char* loc, char* fmt, ...){
     exit(1);
 }
 
+void error(char* fmt, ...){
+    va_list ap;
+    va_start(ap, fmt);
+
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+
+}
 void unreachable()
 {
     fprintf(stderr, "%s\n", "Reached unreachable code.");

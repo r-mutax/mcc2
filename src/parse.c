@@ -460,12 +460,62 @@ static Node* new_node_lvar(Ident* ident){
 }
 
 static Node* new_node_add(Node* lhs, Node* rhs){
+
+    add_type(lhs);
+    add_type(rhs);
+
     Node* result = new_node(ND_ADD, lhs, rhs);
+
+    // num + num
+    if(!lhs->type->ptr_to && !rhs->type->ptr_to)
+    {
+        return result;
+    }
+    
+    // pointer + pointer
+    if(lhs->type->ptr_to && rhs->type->ptr_to){
+        error("tTry add pointer and pointer.");
+    }
+    
+    // num + pointer
+    if(lhs->type->ptr_to && !rhs->type->ptr_to){
+        // ポインタ + 数値、になるように入れ替える
+        Node* buf = lhs;
+        rhs = lhs;
+        lhs = buf;
+    }
+
+    Node* node_mul = new_node_mul(rhs, new_node_num(lhs->type->ptr_to->size));
+    result->lhs = lhs;
+    result->rhs = node_mul;
+
     return result;
 }
 static Node* new_node_sub(Node* lhs, Node* rhs){
+
+    add_type(lhs);
+    add_type(rhs);
+
     Node* result = new_node(ND_SUB, lhs, rhs);
-    return result;
+
+    // num + num
+    if(!lhs->type->ptr_to && !rhs->type->ptr_to)
+    {
+        return result;
+    }
+    
+    // - pointer
+    if(rhs->type->ptr_to){
+        error("invalid operand.");
+    }
+    
+    // pointer - num
+    if(lhs->type->ptr_to && !rhs->type->ptr_to){
+        Node* node_mul = new_node_mul(rhs, new_node_num(lhs->type->ptr_to->size));
+        result->lhs = lhs;
+        result->rhs = node_mul;
+        return result;
+    }
 }
 static Node* new_node_div(Node* lhs, Node* rhs){
     Node* result = new_node(ND_DIV, lhs, rhs);
