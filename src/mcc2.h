@@ -51,6 +51,7 @@ typedef enum TokenKind {
     TK_CORON,                   // :
     TK_CANMA,                   // ,
     TK_RETURN,                  // return
+    TK_SIZEOF,                  // sizeof
     TK_IF,
     TK_ELSE,
     TK_WHILE,

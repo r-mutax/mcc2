@@ -13,4 +13,5 @@ static KEYWORD_MAP keyword_map[] = {
     {   "while",        TK_WHILE    },
     {   "for",          TK_FOR      },
     {   "int",          TK_INT      },
+    {   "sizeof",       TK_SIZEOF   },
 };

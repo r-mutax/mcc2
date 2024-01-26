@@ -391,6 +391,10 @@ static Node* unary(){
         return new_node(ND_ADDR, unary(), NULL);
     } else if(consume_token(TK_MUL)){
         return new_node(ND_DREF, unary(), NULL);
+    } else if(consume_token(TK_SIZEOF)){
+        Node* node = unary();
+        add_type(node);
+        return new_node_num(node->type->size);
     }
     return primary();
 }
