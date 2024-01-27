@@ -189,8 +189,14 @@ static Ident* declaration()
 {
     Type* ty = declspec();
     Token* ident_tok = expect_ident();
-    Ident* ident = declare_ident(ident_tok, ID_LVAR, ty);
+    if(consume_token(TK_L_SQUARE_BRACKET)){
+        int len = expect_num();
+        ty = array_of(ty, len);
+        expect_token(TK_R_SQUARE_BRACKET);
+    }
     expect_token(TK_SEMICORON);
+
+    Ident* ident = declare_ident(ident_tok, ID_LVAR, ty);
     return ident;
 }
 
@@ -394,7 +400,11 @@ static Node* unary(){
     } else if(consume_token(TK_SIZEOF)){
         Node* node = unary();
         add_type(node);
-        return new_node_num(node->type->size);
+        if(node->type->kind == TY_ARRAY){
+            return new_node_num(node->type->array_len * node->type->size);
+        } else {
+            return new_node_num(node->type->size);
+        }
     }
     return primary();
 }

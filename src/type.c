@@ -15,6 +15,14 @@ Type* pointer_to(Type* base){
     return type;
 }
 
+Type* array_of(Type* base, int len){
+    Type* type = new_type(TY_ARRAY, 8);
+    type->ptr_to = base;
+    type->size = base->size;
+    type->array_len = len;
+    return type;
+}
+
 Type* new_type(TypeKind kind, int size){
     Type* type = calloc(1, sizeof(Type));
     type->kind = kind;

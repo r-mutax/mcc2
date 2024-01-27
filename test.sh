@@ -115,5 +115,8 @@ assert 3 "int foo(){ return 3; } int main(){ return foo(); }"
 assert 3 "int bar(int a, int b) { a = 3; return a;} int main(){ return bar(); }"
 assert 4 "int bar(int a, int b) {return b;} int main(){ return bar(3, 4); }"
 
+# test array definition
+assert 88 "int main(){int a[11]; return sizeof(a);}"
+
 echo OK
 

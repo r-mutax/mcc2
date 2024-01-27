@@ -88,6 +88,12 @@ void tokenize(char* src){
             case '}':
                 cur = new_token(TK_R_BRACKET, cur, p++);
                 break;
+            case '[':
+                cur = new_token(TK_L_SQUARE_BRACKET, cur, p++);
+                break;
+            case ']':
+                cur = new_token(TK_R_SQUARE_BRACKET, cur, p++);
+                break;
             case '&':
                 if(*(p + 1) == '&'){
                     cur = new_token(TK_AND_AND, cur, p);

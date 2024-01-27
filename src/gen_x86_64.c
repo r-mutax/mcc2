@@ -26,7 +26,7 @@ void gen_x86(IR* ir){
             case IR_FN_START:
                 fprintf(fp, "  push rbp\n");
                 fprintf(fp, "  mov rbp, rsp\n");
-                fprintf(fp, "  sub rsp, %d\n", ir->size);
+                fprintf(fp, "  sub rsp, %d\n", ((ir->size + 15) / 16) * 16);
                 break;
             case IR_FN_END:
                 fprintf(fp, "  mov rsp, rbp\n");
