@@ -32,6 +32,8 @@ typedef enum TokenKind {
     TK_R_PAREN,                 // )
     TK_L_BRACKET,               // {
     TK_R_BRACKET,               // }
+    TK_L_SQUARE_BRACKET,        // [
+    TK_R_SQUARE_BRACKET,        // ]
     TK_AND,                     // &
     TK_AND_AND,                 // &&
     TK_HAT,                     // ^
@@ -210,11 +212,14 @@ struct Scope {
 enum TypeKind{
     TY_INT,
     TY_POINTER,
+    TY_ARRAY,
+    TY_FUNC,
 };
 
 struct Type {
     TypeKind    kind;
     int         size;
     int         is_unsigned;
+    int         array_len;
     Type*       ptr_to;
 };
