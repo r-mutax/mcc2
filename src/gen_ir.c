@@ -147,9 +147,15 @@ static void gen_expr(Node* node){
         }
         case ND_LVAR:
             gen_lvar(node);
-            new_IR(IR_LOAD);
+            if(node->type->kind != TY_ARRAY){
+                new_IR(IR_LOAD);
+            }
             return;
         case ND_ASSIGN:
+            if(node->lhs->type->kind == TY_ARRAY){
+                error("incompatible types in assignment to array.");
+            }
+
             gen_lvar(node->lhs);
             gen_expr(node->rhs);
             new_IR(IR_ASSIGN);
