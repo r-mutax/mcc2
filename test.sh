@@ -119,6 +119,7 @@ assert 4 "int bar(int a, int b) {return b;} int main(){ return bar(3, 4); }"
 assert 88 "int main(){int a[11]; return sizeof(a);}"
 assert 5 "int main(){int a[5]; *a =5; return *a;}"
 assert 5 "int main(){int a[5]; *(a + 2) =5; return *(a + 2);}"
+assert 4 "int main(){int a[5]; a[3] = 4; return a[3];}"
 
 echo OK
 

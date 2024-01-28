@@ -39,7 +39,8 @@
     bitShift = add ('<<' add | '>>' add)?
     add = mul ('+' mul | '-' mul)*
     mul = unary ('*' unary | '/' unary)
-    unary = ('+' | '-')? primary
+    unary = ('+' | '-' | '&' unary | '*' unary | 'sizeof' unary )? postfix
+    postfix = primary ('[' expr ']')*
     primary = '(' expr ')' | num | ident | ident '()'
 */
 
@@ -62,6 +63,7 @@ static Node* bitShift();
 static Node* add();
 static Node* mul();
 static Node* unary();
+static Node* postfix();
 static Node* primary();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_add(Node* lhs, Node* rhs);
@@ -406,7 +408,20 @@ static Node* unary(){
             return new_node_num(node->type->size);
         }
     }
-    return primary();
+    return postfix();
+}
+
+static Node* postfix(){
+    Node* node = primary();
+
+    while(true){
+        if(consume_token(TK_L_SQUARE_BRACKET)){
+            node = new_node(ND_DREF, new_node_add(node, expr()), NULL);
+            expect_token(TK_R_SQUARE_BRACKET);
+            continue;
+        }
+        return node;
+    }
 }
 
 static Node* primary(){
@@ -492,7 +507,7 @@ static Node* new_node_add(Node* lhs, Node* rhs){
     }
     
     // num + pointer
-    if(lhs->type->ptr_to && !rhs->type->ptr_to){
+    if(!lhs->type->ptr_to && rhs->type->ptr_to){
         // ポインタ + 数値、になるように入れ替える
         Node* buf = lhs;
         rhs = lhs;
