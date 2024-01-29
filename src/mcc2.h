@@ -60,6 +60,7 @@ typedef enum TokenKind {
     TK_FOR,
     TK_INT,                     // "int"
     TK_CHAR,                    // "char"
+    TK_SHORT,                   // "short"
     TK_EOF                      // 終端記号
 } TokenKind;
 

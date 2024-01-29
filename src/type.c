@@ -1,13 +1,15 @@
 #include "mcc2.h"
 #include <stdlib.h>
 
-Type* ty_int;
 Type* ty_char;
+Type* ty_int;
+Type* ty_short;
 Type* new_type(TypeKind kind, int size);
 
 void ty_init(){
-    ty_int = new_type(TY_INT, 8);
     ty_char = new_type(TY_INT, 1);
+    ty_short = new_type(TY_INT, 2);
+    ty_int = new_type(TY_INT, 8);
 }
 
 Type* pointer_to(Type* base){
