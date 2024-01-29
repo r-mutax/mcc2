@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static const char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 static void pop2();
@@ -57,13 +58,22 @@ void gen_x86(IR* ir){
                 break;
             case IR_LOAD:
                 fprintf(fp, "  pop rax\n");
-                fprintf(fp, "  mov rax, [rax]\n");
+                if(ir->size == 1){
+                    fprintf(fp, "  movsx eax, BYTE PTR [rax]\n");
+                } else if(ir->size == 8){
+                    fprintf(fp, "  mov rax, [rax]\n");
+                }
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_ASSIGN:
                 fprintf(fp, "  pop rdi\n");
                 fprintf(fp, "  pop rax\n");
-                fprintf(fp, "  mov [rax], rdi\n");
+
+                if(ir->size == 1){
+                    fprintf(fp, "  mov [rax], dil\n");
+                } else if(ir->size == 8){
+                    fprintf(fp, "  mov [rax], rdi\n");
+                }
                 fprintf(fp, "  push rdi\n");
                 break;
             case IR_ADD:
@@ -169,7 +179,11 @@ void gen_x86(IR* ir){
                 break;
             case IR_STORE_ARGREG:
                 fprintf(fp, "  pop rax\n");
-                fprintf(fp, "  mov [rax], %s\n", argreg64[ir->val]);
+                if(ir->size == 1){
+                    fprintf(fp, "  mov [rax], %s\n", argreg8[ir->val]);
+                } else if(ir->size == 8){
+                    fprintf(fp, "  mov [rax], %s\n", argreg64[ir->val]);
+                }
                 break;
             case IR_LOAD_ARGREG:
                 fprintf(fp, "  pop %s\n", argreg64[ir->val]);

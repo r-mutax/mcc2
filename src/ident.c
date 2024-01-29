@@ -11,11 +11,6 @@ static int stack_size = 0;
 Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     Ident* ident = calloc(1, sizeof(Ident));
 
-    ident->kind = kind;
-    ident->tok = tok;
-    ident->offset = stack_size + 8;
-    ident->type = ty;
-
     if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
         if(ty->kind == TY_ARRAY){
             stack_size += ty->size * ty->array_len;    
@@ -23,6 +18,12 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
             stack_size += ty->size;
         }
     }
+
+    ident->kind = kind;
+    ident->tok = tok;
+    ident->offset = stack_size;
+    ident->type = ty;
+
 
     ident->next = cur_scope->ident;
     cur_scope->ident = ident;

@@ -209,8 +209,14 @@ static Ident* declaration()
 }
 
 static Type* declspec(){
-    expect_token(TK_INT);
-    Type* ty = ty_int;
+    Type* ty;
+    if(consume_token(TK_INT)){
+        ty = ty_int;
+    } else if(consume_token(TK_CHAR)){
+        ty = ty_char;
+    } else {
+        unreachable();
+    }
 
     while(consume_token(TK_MUL)){
         ty = pointer_to(ty);
