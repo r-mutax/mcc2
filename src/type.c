@@ -2,10 +2,12 @@
 #include <stdlib.h>
 
 Type* ty_int;
+Type* ty_char;
 Type* new_type(TypeKind kind, int size);
 
 void ty_init(){
     ty_int = new_type(TY_INT, 8);
+    ty_char = new_type(TY_INT, 1);
 }
 
 Type* pointer_to(Type* base){
@@ -72,7 +74,7 @@ void add_type(Node* node){
             node->type = pointer_to(node->lhs->type);
             break;
         case ND_DREF:
-            if(node->lhs->type->kind == TY_POINTER){
+            if(node->lhs->type->ptr_to){
                 node->type = node->lhs->type->ptr_to;
             } else {
                 node->type = ty_int;

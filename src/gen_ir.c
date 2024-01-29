@@ -41,7 +41,9 @@ static void gen_function(Function* func){
 
         IR* ir = new_IR(IR_LVAR);
         ir->address = param->ident->offset;
-        new_IR(IR_STORE_ARGREG)->val = i;
+        IR* ir2 = new_IR(IR_STORE_ARGREG);
+        ir2->val = i;
+        ir2->size = param->ident->type->size;
         if(i >= 6){
             error_at(func->name->tok->pos, "Functions with more than six arguments are not supported.");
         }
@@ -141,6 +143,7 @@ static void gen_lvar(Node* node){
             else if(node->ident->kind == ID_GVAR){
                 IR* ir = new_IR(IR_GVAR);
                 ir->name = node->ident;
+                ir->size = node->ident->type->size;
                 return;
             }
         case ND_DREF:
@@ -164,7 +167,7 @@ static void gen_expr(Node* node){
         case ND_VAR:
             gen_lvar(node);
             if(node->type->kind != TY_ARRAY){
-                new_IR(IR_LOAD);
+                new_IR(IR_LOAD)->size = node->ident->type->size;
             }
             return;
         case ND_ASSIGN:
@@ -174,7 +177,7 @@ static void gen_expr(Node* node){
 
             gen_lvar(node->lhs);
             gen_expr(node->rhs);
-            new_IR(IR_ASSIGN);
+            new_IR(IR_ASSIGN)->size = node->lhs->type->size;
             return;
         case ND_FUNCCALL:
             {

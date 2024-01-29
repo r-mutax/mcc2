@@ -18,8 +18,8 @@ typedef enum TokenKind {
     TK_IDENT,
     TK_PLUS,                    // + 記号
     TK_MINUS,                   // - 記号
-    TK_MUL,
-    TK_DIV,
+    TK_MUL,                     // *
+    TK_DIV,                     // /
     TK_PERCENT,                 // %
     TK_PERCENT_EQUAL,           // %=
     TK_PLUS_EQUAL,              // +=
@@ -59,6 +59,7 @@ typedef enum TokenKind {
     TK_WHILE,
     TK_FOR,
     TK_INT,                     // "int"
+    TK_CHAR,                    // "char"
     TK_EOF                      // 終端記号
 } TokenKind;
 

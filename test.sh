@@ -125,5 +125,9 @@ assert 4 "int main(){int a[5]; a[3] = 4; return a[3];}"
 assert 5 "int g_a; int main(){ g_a = 5; return g_a;}"
 assert 5 "int g_a; int foo() { g_a = 5; }int main(){ foo(); return g_a;}"
 
+# test char type
+assert 1 "int main(){ char a; a = 1; return a;}"
+assert 1 "int main(){ char a[3]; a[0] = 1; a[1] = 1; a[2] = 1; a[0] = 2; a[2] = 2; return a[1];}"
+assert 7 "char foo(char a, char b){ return a + b;} int main() {return foo(3, 4);}"
 echo OK
 
