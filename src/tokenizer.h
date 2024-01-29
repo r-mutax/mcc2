@@ -5,10 +5,16 @@
 
 void tokenize(char* src);
 void expect_token(TokenKind kind);
-int expect_num();
 bool consume_token(TokenKind kind);
+
 Token* consume_ident();
 Token* expect_ident();
+
+int expect_num();
+
 bool is_eof();
-char* get_token_string(Token* tok);
 bool is_type();
+char* get_token_string(Token* tok);
+
+Token* get_token();
+void set_token(Token* tok);

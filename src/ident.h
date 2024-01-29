@@ -6,3 +6,4 @@ Ident* find_ident(Token* tok);
 void scope_in();
 void scope_out();
 int get_stack_size();
+Scope* get_global_scope();

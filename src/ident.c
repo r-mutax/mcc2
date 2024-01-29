@@ -16,9 +16,7 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     ident->offset = stack_size + 8;
     ident->type = ty;
 
-    if((ident->kind == ID_LVAR)
-        || (ident->kind == ID_GVAR))
-    {
+    if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
         if(ty->kind == TY_ARRAY){
             stack_size += ty->size * ty->array_len;    
         } else {
@@ -66,4 +64,8 @@ void scope_out(){
     if(cur_scope == &global_scope){
         stack_size = 0;
     }
+}
+
+Scope* get_global_scope(){
+    return &global_scope;
 }
