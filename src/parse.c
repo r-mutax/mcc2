@@ -214,6 +214,8 @@ static Type* declspec(){
         ty = ty_int;
     } else if(consume_token(TK_CHAR)){
         ty = ty_char;
+    } else if(consume_token(TK_SHORT)){
+        ty = ty_short;
     } else {
         unreachable();
     }
