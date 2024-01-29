@@ -4,7 +4,7 @@ assert() {
   input="$2"
 
   ./mcc2 "$input" > tmp.s
-  cc -o tmp tmp.s
+  cc -o tmp -no-pie tmp.s
   ./tmp
   actual="$?"
 
@@ -120,6 +120,10 @@ assert 88 "int main(){int a[11]; return sizeof(a);}"
 assert 5 "int main(){int a[5]; *a =5; return *a;}"
 assert 5 "int main(){int a[5]; *(a + 2) =5; return *(a + 2);}"
 assert 4 "int main(){int a[5]; a[3] = 4; return a[3];}"
+
+# test global variable
+assert 5 "int g_a; int main(){ g_a = 5; return g_a;}"
+assert 5 "int g_a; int foo() { g_a = 5; }int main(){ foo(); return g_a;}"
 
 echo OK
 

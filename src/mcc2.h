@@ -92,7 +92,7 @@ struct Ident {
 
 typedef enum NodeKind {
     ND_NUM,
-    ND_LVAR,
+    ND_VAR,
     ND_ADD,
     ND_SUB,
     ND_MUL,
@@ -159,6 +159,7 @@ struct Function {
 typedef enum IRKind{
     IR_NUM,
     IR_LVAR,
+    IR_GVAR,
     IR_ASSIGN,
     IR_ADD,
     IR_SUB,
@@ -186,7 +187,8 @@ typedef enum IRKind{
     IR_JNZ,
     IR_STORE_ARGREG,
     IR_LOAD_ARGREG,
-    IR_DREF
+    IR_DREF,
+    IR_GVAR_DEF,
 } IRKind;
 
 struct IR{

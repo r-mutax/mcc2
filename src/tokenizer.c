@@ -283,3 +283,10 @@ char* get_token_string(Token* tok){
 bool is_type(){
     return token->kind == TK_INT;
 }
+
+Token* get_token(){
+    return token;
+}
+void set_token(Token* tok){
+    token = tok;
+}

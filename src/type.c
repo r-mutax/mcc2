@@ -79,7 +79,7 @@ void add_type(Node* node){
             }
             break;
         case ND_FUNCCALL:           // 関数呼び出し（parseで設定済)
-        case ND_LVAR:               // 変数
+        case ND_VAR:               // 変数
             node->type = node->ident->type;
             break;
 

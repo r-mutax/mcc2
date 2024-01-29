@@ -1,4 +1,5 @@
 #include "gen_ir.h"
+#include "ident.h"
 #include "error.h"
 #include <stdlib.h>
 
@@ -13,6 +14,16 @@ static void gen_lvar(Node* lvar);
 static long get_label();
 
 void gen_ir(Function* func){
+    Scope* scope = get_global_scope();
+    Ident* ident = scope->ident;
+    while(ident){
+        if(ident->kind == ID_GVAR){
+            IR* ir = new_IR(IR_GVAR_DEF);
+            ir->name = ident;
+        }
+        ident = ident->next;
+    }
+
     Function* cur = func;
     while(func){
         gen_function(func);
@@ -120,11 +131,16 @@ static void gen_stmt(Node* node){
 // 変数のアドレスを計算してスタックに積む
 static void gen_lvar(Node* node){
     switch(node->kind){
-        case ND_LVAR:
-            {
+        case ND_VAR:
+            if(node->ident->kind == ID_LVAR){
                 IR* ir = new_IR(IR_LVAR);
                 ir->address = node->ident->offset;
                 ir->size = node->ident->type->size;
+                return;
+            }
+            else if(node->ident->kind == ID_GVAR){
+                IR* ir = new_IR(IR_GVAR);
+                ir->name = node->ident;
                 return;
             }
         case ND_DREF:
@@ -145,7 +161,7 @@ static void gen_expr(Node* node){
             ir->val = node->val;
             return;
         }
-        case ND_LVAR:
+        case ND_VAR:
             gen_lvar(node);
             if(node->type->kind != TY_ARRAY){
                 new_IR(IR_LOAD);

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 /*
-    program = function*
+    program = ( function | declaration )*
     function = ident '(' (declspec ident)*'){' compound_stmt
     stmt = expr ';' |
             'return' expr ';' |
@@ -72,15 +72,21 @@ static Node* new_node_div(Node* lhs, Node* rhs);
 static Node* new_node_mul(Node* lhs, Node* rhs);
 static Node* new_node_mod(Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
-static Node* new_node_lvar(Ident* ident);
+static Node* new_node_var(Ident* ident);
+static bool is_function();
 
 Function* Program(){
-    Function head;
+    Function head = {};
     Function* cur = &head;
 
     while(!is_eof()){
-        cur->next = function();
-        cur = cur->next;
+        if(is_function()){
+            cur->next = function();
+            cur = cur->next;
+        } else {
+            Ident* ident = declaration();
+            ident->kind = ID_GVAR;
+        }
     }
 
     return head.next;
@@ -437,8 +443,8 @@ static Node* primary(){
         if(!ident){
             error_at(ident_token->pos, "Undefined Variable.");
         } else {
-            if(ident->kind == ID_LVAR){
-                Node* node = new_node(ND_LVAR, 0, 0);
+            if((ident->kind == ID_LVAR) || (ident->kind == ID_GVAR)){
+                Node* node = new_node(ND_VAR, 0, 0);
                 node->ident = ident;
                 node->type = ident->type;
                 return node;
@@ -480,9 +486,9 @@ static Node* new_node_num(int num){
     return result;
 }
 
-static Node* new_node_lvar(Ident* ident){
+static Node* new_node_var(Ident* ident){
     Node* result = calloc(1, sizeof(Node));
-    result->kind = ND_LVAR;
+    result->kind = ND_VAR;
     result->ident = ident;
 
     return result;
@@ -557,4 +563,25 @@ static Node* new_node_mul(Node* lhs, Node* rhs){
 static Node* new_node_mod(Node* lhs, Node* rhs){
     Node* result = new_node(ND_MOD, lhs, rhs);
     return result;
+}
+
+static bool is_function(){
+    Token* bkup = get_token();
+    bool retval = false;
+
+    // 型の読み取り
+    Type* ty = declspec();
+
+    // ポインタの読み取り
+    while(consume_token(TK_MUL)){
+        ;
+    }
+
+    expect_token(TK_IDENT);
+    if(consume_token(TK_L_PAREN)){
+        retval = true;
+    }
+
+    set_token(bkup);
+    return retval;
 }

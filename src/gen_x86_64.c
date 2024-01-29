@@ -18,6 +18,7 @@ void gen_x86(IR* ir){
         switch(ir->kind){
             case IR_FN_LABEL:
             {
+                fprintf(fp, "  .text\n");
                 char* str = get_token_string(ir->name->tok);
                 fprintf(fp, "%s:\n", str);
                 free(str);
@@ -48,6 +49,10 @@ void gen_x86(IR* ir){
             case IR_LVAR:
                 fprintf(fp, "  lea rax, [rbp - %d]\n", ir->address);
                 // fprintf(fp, "  mov rax, [rax]\n");
+                fprintf(fp, "  push rax\n");
+                break;
+            case IR_GVAR:
+                fprintf(fp, "  mov rax, OFFSET FLAT:%s\n", get_token_string(ir->name->tok));
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_LOAD:
@@ -173,6 +178,11 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  pop rax\n");
                 fprintf(fp, "  mov rax, [rax]\n");
                 fprintf(fp, "  push rax\n");
+                break;
+            case IR_GVAR_DEF:
+                fprintf(fp, "  .bss\n");
+                fprintf(fp, "%s:\n", get_token_string(ir->name->tok));
+                fprintf(fp, "  .zero %d\n", ir->name->type->size);
                 break;
             default:
                 unreachable();
