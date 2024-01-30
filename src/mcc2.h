@@ -9,6 +9,7 @@ typedef struct IR IR;
 typedef struct Parameter Parameter;
 typedef struct Scope Scope;
 typedef struct Type Type;
+typedef struct StringLiteral StringLiteral;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
@@ -16,6 +17,7 @@ extern Type* ty_int;
 typedef enum TokenKind {
     TK_NUM,                     // 数値
     TK_IDENT,
+    TK_STRING_LITERAL,          // 文字列リテラル
     TK_PLUS,                    // + 記号
     TK_MINUS,                   // - 記号
     TK_MUL,                     // *
@@ -83,8 +85,10 @@ typedef enum IdentKind {
 
 struct Ident {
     IdentKind   kind;
-    Token* tok;         // 宣言部分のトークンポインタ
-    int offset;         // ローカル変数ののオフセット
+    char* name;
+    Token* tok;             // 宣言部分のトークンポインタ
+    int offset;             // ローカル変数ののオフセット
+    int is_string_literal;  // 文字列リテラルか？のフラグ
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
@@ -191,6 +195,7 @@ typedef enum IRKind{
     IR_LOAD_ARGREG,
     IR_DREF,
     IR_GVAR_DEF,
+    IR_STRING_LITERAL_DEF,
 } IRKind;
 
 struct IR{
@@ -205,12 +210,14 @@ struct IR{
 // Scope : スコープを表現するもの
 //  int level       : スコープのレベル
 //  Ident* ident    : スコープ内に存在する識別子（typedef含む)
+//  StringLiteral*  : 文字列リテラルのテーブル。グローバルスコープでだけ意味がある。
 //  Scope* parent   : 親のスコープ。
 // 識別子の検索は、現在のスコープから親のスコープ側に上がっていく
 struct Scope {
-    int         level;
-    Ident*      ident;
-    Scope*      parent;
+    int             level;
+    Ident*          ident;
+    StringLiteral*  string_literal;
+    Scope*             parent;
 };
 
 enum TypeKind{
@@ -227,3 +234,10 @@ struct Type {
     int         array_len;
     Type*       ptr_to;
 };
+
+struct StringLiteral{
+    char*           name;
+    Token*          val;
+    StringLiteral*  next;
+};
+

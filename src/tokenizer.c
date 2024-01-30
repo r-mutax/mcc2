@@ -174,6 +174,17 @@ void tokenize(char* src){
             case ',':
                 cur = new_token(TK_CANMA, cur, p++);
                 break;
+            case '"':
+                {
+                    char* start = ++p;
+                    while(*p != '"'){
+                        p++;
+                    }
+                    cur = new_token(TK_STRING_LITERAL, cur, start);
+                    cur->len = p - start;
+                    p++;
+                }
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
@@ -229,6 +240,13 @@ bool consume_token(TokenKind kind){
 Token* consume_ident(){
     if(token->kind != TK_IDENT) return NULL;
 
+    Token* tok = token;
+    token = token->next;
+    return tok;
+}
+
+Token* consume_string_literal(){
+    if(token->kind != TK_STRING_LITERAL) return NULL;
     Token* tok = token;
     token = token->next;
     return tok;

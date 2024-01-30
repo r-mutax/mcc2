@@ -445,6 +445,15 @@ static Node* primary(){
         return node;
     }
 
+    Token* tok_str = consume_string_literal();
+    if(tok_str){
+        Ident* str_ident = register_string_literal(tok_str);
+        Node* node = new_node(ND_VAR, 0, 0);
+        node->ident = str_ident;
+        node->type = str_ident->type;
+        return node;
+    }
+
     Token* ident_token = consume_ident();
     if(ident_token){
         Ident* ident = find_ident(ident_token);

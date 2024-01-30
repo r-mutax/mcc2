@@ -10,6 +10,8 @@ bool consume_token(TokenKind kind);
 Token* consume_ident();
 Token* expect_ident();
 
+Token* consume_string_literal();
+
 int expect_num();
 
 bool is_eof();
