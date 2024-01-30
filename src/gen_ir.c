@@ -14,6 +14,7 @@ static void gen_lvar(Node* lvar);
 static long get_label();
 
 void gen_ir(Function* func){
+    // グローバル変数の出力
     Scope* scope = get_global_scope();
     Ident* ident = scope->ident;
     while(ident){

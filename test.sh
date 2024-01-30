@@ -135,5 +135,13 @@ assert 1 "int main(){ short a; a = 1; return a;}"
 assert 1 "int main(){ short a[3]; a[0] = 1; a[1] = 1; a[2] = 1; a[0] = 2; a[2] = 2; return a[1];}"
 assert 7 "short foo(short a, short b){ return a + b;} int main() {return foo(3, 4);}"
 
+# test string literal
+assert 1 'int main(){ char* a; a = "abc"; return 1;}'
+assert 97 'int main() { return "abc"[0]; }'
+assert 98 'int main() { return "abc"[1]; }'
+assert 99 'int main() { return "abc"[2]; }'
+assert 0 'int main() { return "abc"[3]; }'
+assert 4 'int main(){ return sizeof "abd" ;}'
+
 echo OK
 

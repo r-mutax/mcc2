@@ -199,9 +199,15 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_GVAR_DEF:
-                fprintf(fp, "  .bss\n");
-                fprintf(fp, "%s:\n", ir->name->name);
-                fprintf(fp, "  .zero %d\n", ir->name->type->size);
+                if(ir->name->is_string_literal){
+                    fprintf(fp, "  .data\n");
+                    fprintf(fp, "%s:\n", ir->name->name);
+                    fprintf(fp, "  .string \"%s\"\n", get_token_string(ir->name->tok));
+                } else {
+                    fprintf(fp, "  .bss\n");
+                    fprintf(fp, "%s:\n", ir->name->name);
+                    fprintf(fp, "  .zero %d\n", ir->name->type->size);
+                }
                 break;
             default:
                 unreachable();

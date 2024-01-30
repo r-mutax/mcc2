@@ -1,5 +1,7 @@
 #include "mcc2.h"
+#include "type.h"
 #include "utility.h"
+#include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -8,6 +10,10 @@
 static Scope global_scope = {};
 static Scope* cur_scope = &global_scope;
 static int stack_size = 0;
+
+static int string_literal_num = 0;
+
+
 
 Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     Ident* ident = calloc(1, sizeof(Ident));
@@ -29,6 +35,27 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
 
     ident->next = cur_scope->ident;
     cur_scope->ident = ident;
+    return ident;
+}
+
+Ident* register_string_literal(Token* tok){
+    StringLiteral* sl = calloc(1, sizeof(StringLiteral));
+    sl->name = calloc(1, sizeof(20));
+    sprintf(sl->name, ".LSTR%d", string_literal_num++);
+    sl->val = tok;
+
+    sl->next = global_scope.string_literal;
+    global_scope.string_literal = sl;
+
+    Ident* ident = calloc(1, sizeof(Ident));
+    ident->kind = ID_GVAR;
+    ident->name = sl->name;
+    ident->tok = sl->val;
+    ident->is_string_literal = 1;
+    ident->type = array_of(ty_char, sl->val->len + 1);
+
+    ident->next = global_scope.ident;
+    global_scope.ident = ident;
     return ident;
 }
 
