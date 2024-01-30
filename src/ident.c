@@ -1,4 +1,5 @@
 #include "mcc2.h"
+#include "utility.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -20,6 +21,7 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     }
 
     ident->kind = kind;
+    ident->name = strnewcpyn(tok->pos, tok->len);
     ident->tok = tok;
     ident->offset = stack_size;
     ident->type = ty;
@@ -34,9 +36,8 @@ Ident* find_ident(Token* tok){
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
         for(Ident* id = sc->ident; id; id = id->next){
             Token* lhs = tok;
-            Token* rhs = id->tok;
-            if((lhs->len == rhs->len)
-                  && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
+            if((lhs->len == strlen(id->name))
+                  && (!memcmp(lhs->pos, id->name, lhs->len))){
                 return id;
             }
         } 

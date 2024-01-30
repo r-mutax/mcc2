@@ -21,9 +21,8 @@ void gen_x86(IR* ir){
             case IR_FN_LABEL:
             {
                 fprintf(fp, "  .text\n");
-                char* str = get_token_string(ir->name->tok);
-                fprintf(fp, "%s:\n", str);
-                free(str);
+                //char* str = get_token_string(ir->name->name);
+                fprintf(fp, "%s:\n", ir->name->name);
             }
                 break;
             case IR_FN_START:
@@ -38,10 +37,9 @@ void gen_x86(IR* ir){
                 break;
             case IR_FN_CALL_NOARGS:
                 {
-                    char* str = get_token_string(ir->name->tok);
-                    fprintf(fp, "  call %s\n", str);
+                    //char* str = get_token_string(ir->name->name);
+                    fprintf(fp, "  call %s\n", ir->name->name);
                     fprintf(fp, "  push rax\n");
-                    free(str);
                     break;
                 }
             case IR_NUM:
@@ -54,7 +52,7 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_GVAR:
-                fprintf(fp, "  mov rax, OFFSET FLAT:%s\n", get_token_string(ir->name->tok));
+                fprintf(fp, "  mov rax, OFFSET FLAT:%s\n", ir->name->name);
                 fprintf(fp, "  push rax\n");
                 break;
             case IR_LOAD:
@@ -202,7 +200,7 @@ void gen_x86(IR* ir){
                 break;
             case IR_GVAR_DEF:
                 fprintf(fp, "  .bss\n");
-                fprintf(fp, "%s:\n", get_token_string(ir->name->tok));
+                fprintf(fp, "%s:\n", ir->name->name);
                 fprintf(fp, "  .zero %d\n", ir->name->type->size);
                 break;
             default:

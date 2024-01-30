@@ -83,6 +83,7 @@ typedef enum IdentKind {
 
 struct Ident {
     IdentKind   kind;
+    char* name;
     Token* tok;         // 宣言部分のトークンポインタ
     int offset;         // ローカル変数ののオフセット
 
