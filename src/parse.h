@@ -2,4 +2,4 @@
 
 #include "mcc2.h"
 
-Function* Program();
+void Program();
