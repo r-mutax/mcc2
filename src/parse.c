@@ -96,7 +96,20 @@ static void function(){
         return;
     }
 
-    Ident* func = declare_ident(tok, ID_FUNC, func_type);
+    // 前方宣言があるか検索
+    Ident* func = find_ident(tok);
+    bool has_forward_def = false;       // 前方宣言あるか？（パラメータ個数チェック用）
+    if(!func){
+        func = declare_ident(tok, ID_FUNC, func_type);
+    } else {
+        // ある場合は戻り値型がconflictしてないかチェック
+        if(!equal_type(func_type, func->type)){
+            error_at(tok->pos, "conflict definition type.");
+        }
+        has_forward_def = true;
+    }
+
+    // ここでスコープインして、仮引数は関数スコープ内で宣言するため、ローカル変数と同等に扱える。
     scope_in();
     expect_token(TK_L_PAREN);
 
@@ -113,6 +126,17 @@ static void function(){
         } while(consume_token(TK_CANMA));
         func->params = head.next;
         expect_token(TK_R_PAREN);
+    }
+
+    if(consume_token(TK_SEMICORON)){
+        // ここでセミコロンがあるなら前方宣言
+        scope_out();
+        return;
+    } else {
+        if(has_forward_def && func->funcbody){
+            // すでに定義された関数のbodyがあるのに、ここでも定義している
+            error_at(tok->pos, "Conflict function definition.");
+        }
     }
 
     expect_token(TK_L_BRACKET);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct Parameter Parameter;
@@ -91,7 +93,8 @@ struct Ident {
 
     Node* funcbody;         // 関数のbody
     Parameter* params;
-    int stack_size;
+    int stack_size;         // 関数で使用するスタックサイズ
+
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
     Type*  type;

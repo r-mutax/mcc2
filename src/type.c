@@ -97,3 +97,22 @@ void add_type(Node* node){
             break;
     }
 }
+
+bool equal_type(Type* ty1, Type* ty2){
+    if(ty1->size != ty2->size){
+        return false;
+    }
+
+    if(ty1->array_len != ty2->array_len){
+        return false;
+    }
+
+    if(ty1->kind != ty2->kind){
+        return false;
+    }
+
+    if(ty1->is_unsigned != ty2->is_unsigned){
+        return false;
+    }
+    return true;
+}

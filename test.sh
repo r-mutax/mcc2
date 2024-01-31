@@ -142,6 +142,7 @@ assert 98 'int main() { return "abc"[1]; }'
 assert 99 'int main() { return "abc"[2]; }'
 assert 0 'int main() { return "abc"[3]; }'
 assert 4 'int main(){ return sizeof "abd" ;}'
+assert 4 'int foo(); int main(){ return foo();} int foo() {return 4;}'
 
 echo OK
 
