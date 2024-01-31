@@ -44,7 +44,7 @@
     primary = '(' expr ')' | num | ident | ident '()'
 */
 
-static Function* function();
+static void function();
 static Node* stmt();
 static Node* compound_stmt();
 static Ident* declaration();
@@ -75,34 +75,41 @@ static Node* new_node_num(int num);
 static Node* new_node_var(Ident* ident);
 static bool is_function();
 
-Function* Program(){
-    Function head = {};
-    Function* cur = &head;
-
+void Program(){
     while(!is_eof()){
         if(is_function()){
-            cur->next = function();
-            cur = cur->next;
+            function();
         } else {
             Ident* ident = declaration();
             ident->kind = ID_GVAR;
         }
     }
 
-    return head.next;
+    return;
 }
 
-static Function* function(){
-    Function* func = calloc(1, sizeof(Function));
-    
+static void function(){    
     Type* func_type = declspec();
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
-        return NULL;
+        return;
     }
 
-    func->name = declare_ident(tok, ID_FUNC, func_type);
+    // 前方宣言があるか検索
+    Ident* func = find_ident(tok);
+    bool has_forward_def = false;       // 前方宣言あるか？（パラメータ個数チェック用）
+    if(!func){
+        func = declare_ident(tok, ID_FUNC, func_type);
+    } else {
+        // ある場合は戻り値型がconflictしてないかチェック
+        if(!equal_type(func_type, func->type)){
+            error_at(tok->pos, "conflict definition type.");
+        }
+        has_forward_def = true;
+    }
+
+    // ここでスコープインして、仮引数は関数スコープ内で宣言するため、ローカル変数と同等に扱える。
     scope_in();
     expect_token(TK_L_PAREN);
 
@@ -121,13 +128,24 @@ static Function* function(){
         expect_token(TK_R_PAREN);
     }
 
+    if(consume_token(TK_SEMICORON)){
+        // ここでセミコロンがあるなら前方宣言
+        scope_out();
+        return;
+    } else {
+        if(has_forward_def && func->funcbody){
+            // すでに定義された関数のbodyがあるのに、ここでも定義している
+            error_at(tok->pos, "Conflict function definition.");
+        }
+    }
+
     expect_token(TK_L_BRACKET);
-    func->stmts = compound_stmt();
+    func->funcbody = compound_stmt();
     func->stack_size = get_stack_size();
     scope_out();
-    add_type(func->stmts);   
+    add_type(func->funcbody);   
 
-    return func;
+    return;
 }
 
 static Node* stmt(){

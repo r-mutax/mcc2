@@ -20,9 +20,9 @@ int main(int argc, char **argv){
 
     // compile
     tokenize(argv[1]);
-    Function* func = Program();
+    Program();
 
-    gen_ir(func);
+    gen_ir();
     gen_x86(get_ir());
 
     return 0;

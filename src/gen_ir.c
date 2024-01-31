@@ -7,16 +7,24 @@ static long g_label = 0;
 static IR head;
 static IR* ir = &head;
 static IR* new_IR(IRKind kind);
-static void gen_function(Function* func);
+static void gen_datas(Ident* ident);
+static void gen_funcs(Ident* ident);
+static void gen_function(Ident* func);
 static void gen_stmt(Node* stmt);
 static void gen_expr(Node* node);
 static void gen_lvar(Node* lvar);
 static long get_label();
 
-void gen_ir(Function* func){
+void gen_ir(){
     // グローバル変数の出力
     Scope* scope = get_global_scope();
     Ident* ident = scope->ident;
+
+    gen_datas(ident);
+    gen_funcs(ident);
+}
+
+static void gen_datas(Ident* ident){
     while(ident){
         if(ident->kind == ID_GVAR){
             IR* ir = new_IR(IR_GVAR_DEF);
@@ -24,16 +32,20 @@ void gen_ir(Function* func){
         }
         ident = ident->next;
     }
+}
 
-    Function* cur = func;
-    while(func){
-        gen_function(func);
-        func = func->next;
+static void gen_funcs(Ident* ident){
+    while(ident){
+        if(ident->kind == ID_FUNC){
+            gen_function(ident);
+        }
+        ident = ident->next;
     }
 }
 
-static void gen_function(Function* func){
-    new_IR(IR_FN_LABEL)->name = func->name;
+
+static void gen_function(Ident* func){
+    new_IR(IR_FN_LABEL)->name = func;
     new_IR(IR_FN_START)->size = func->stack_size;
 
     Parameter* param = func->params;
@@ -46,11 +58,11 @@ static void gen_function(Function* func){
         ir2->val = i;
         ir2->size = param->ident->type->size;
         if(i >= 6){
-            error_at(func->name->tok->pos, "Functions with more than six arguments are not supported.");
+            error_at(func->tok->pos, "Functions with more than six arguments are not supported.");
         }
     }
 
-    Node* cur = func->stmts;
+    Node* cur = func->funcbody;
     while(cur){
         gen_stmt(cur);
         cur = cur->next;

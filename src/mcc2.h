@@ -1,12 +1,13 @@
 #pragma once
 
+#include <stdbool.h>
+
 typedef struct Token Token;
 typedef struct Node Node;
+typedef struct Parameter Parameter;
 typedef struct Ident Ident;
 typedef struct Stmt Stmt;
-typedef struct Function Function;
 typedef struct IR IR;
-typedef struct Parameter Parameter;
 typedef struct Scope Scope;
 typedef struct Type Type;
 typedef struct StringLiteral StringLiteral;
@@ -90,10 +91,19 @@ struct Ident {
     int offset;             // ローカル変数ののオフセット
     int is_string_literal;  // 文字列リテラルか？のフラグ
 
+    Node* funcbody;         // 関数のbody
+    Parameter* params;
+    int stack_size;         // 関数で使用するスタックサイズ
+
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
-    Type*   type;
+    Type*  type;
     Ident* next;
+};
+
+struct Parameter {
+    Ident*      ident;
+    Parameter* next;
 };
 
 typedef enum NodeKind {
@@ -147,19 +157,6 @@ struct Node {
     Node*       params;
 
     Node*       next;
-};
-
-struct Parameter {
-    Ident*      ident;
-    Parameter*  next;
-};
-
-struct Function {
-    Ident*      name;
-    Node*       stmts;
-    Parameter*  params;
-    int         stack_size;
-    Function*   next;
 };
 
 typedef enum IRKind{
