@@ -4,15 +4,41 @@
 #include <stdlib.h>
 
 char* user_input;
+char* filename;
 
 void error_at(char* loc, char* fmt, ...){
+
+    // 行頭を見つける
+    char *line = loc;
+    while (user_input < line && line[-1] != '\n')
+        line--;
+
+    // 行末を見つける
+    char *end = loc;
+    while (*end != '\n')
+        end++;
+
+    // 行数を数える
+    int line_num = 1;
+    for (char *p = user_input; p < line; p++){
+        if (*p == '\n'){
+            line_num++;
+        }
+    }
+
+    // エラー箇所を表示する
+    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);        
+    fprintf(stderr, "%.*s\n", (int)(end - line), line);
+
+    // 空白を表示する
+    int pos = loc - line + indent;
+    fprintf(stderr, "%*s", pos, " ");
+
+    // エラー箇所を示して、メッセージを表示する
+    fprintf(stderr, "^ ");
+
     va_list ap;
     va_start(ap, fmt);
-
-    int pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", pos, " ");
-    fprintf(stderr, "^ ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
