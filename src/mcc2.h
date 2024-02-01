@@ -53,6 +53,8 @@ typedef enum TokenKind {
     TK_R_BITSHIFT,              // >>
     TK_R_BITSHIFT_EQUAL,        // >>=
     TK_SEMICORON,               // ;
+    TK_DOT,                     // .
+    TK_DOT_DOT_DOT,             // ...
     TK_CORON,                   // :
     TK_CANMA,                   // ,
     TK_RETURN,                  // return
@@ -94,6 +96,7 @@ struct Ident {
     Node* funcbody;         // 関数のbody
     Parameter* params;
     int stack_size;         // 関数で使用するスタックサイズ
+    int is_var_params;      // 可変長引数受け取るか？
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
@@ -190,6 +193,7 @@ typedef enum IRKind{
     IR_JNZ,
     IR_STORE_ARGREG,
     IR_LOAD_ARGREG,
+    IR_SET_FLOAT_NUM,
     IR_DREF,
     IR_GVAR_DEF,
     IR_STRING_LITERAL_DEF,

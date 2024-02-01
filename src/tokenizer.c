@@ -185,6 +185,14 @@ void tokenize(char* src){
                     p++;
                 }
                 break;
+            case '.':
+                if(*(p+1) == '.' && *(p+2) == '.' ){
+                    cur = new_token(TK_DOT_DOT_DOT, cur, p);
+                    p += 3;
+                } else {
+                    cur = new_token(TK_DOT, cur, p++);
+                }
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
