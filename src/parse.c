@@ -117,12 +117,17 @@ static void function(){
         Parameter head = {};
         Parameter* cur = &head;
         do {
-            Type* arg_ty = declspec();
-            Token* tok = expect_ident();
-            Ident* ident = declare_ident(tok, ID_LVAR, arg_ty);
-            Parameter* param = calloc(1, sizeof(Parameter));
-            param->ident = ident;
-            cur = cur->next = param;
+            if(consume_token(TK_DOT_DOT_DOT)){
+                func->is_var_params = true;
+                break;
+            } else {
+                Type* arg_ty = declspec();
+                Token* tok = expect_ident();
+                Ident* ident = declare_ident(tok, ID_LVAR, arg_ty);
+                Parameter* param = calloc(1, sizeof(Parameter));
+                param->ident = ident;
+                cur = cur->next = param;
+            }
         } while(consume_token(TK_CANMA));
         func->params = head.next;
         expect_token(TK_R_PAREN);

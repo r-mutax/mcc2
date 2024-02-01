@@ -193,6 +193,9 @@ void gen_x86(IR* ir){
             case IR_LOAD_ARGREG:
                 fprintf(fp, "  pop %s\n", argreg64[ir->val]);
                 break;
+            case IR_SET_FLOAT_NUM:
+                fprintf(fp, "  mov eax, %d\n", ir->val);
+                break;
             case IR_DREF:
                 fprintf(fp, "  pop rax\n");
                 fprintf(fp, "  mov rax, [rax]\n");

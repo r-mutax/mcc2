@@ -36,7 +36,7 @@ static void gen_datas(Ident* ident){
 
 static void gen_funcs(Ident* ident){
     while(ident){
-        if(ident->kind == ID_FUNC){
+        if(ident->kind == ID_FUNC && ident->funcbody){
             gen_function(ident);
         }
         ident = ident->next;
@@ -204,6 +204,10 @@ static void gen_expr(Node* node){
                     IR* ir = new_IR(IR_LOAD_ARGREG);
                     ir->size = 8;
                     ir->val = nargs - 1;
+                }
+
+                if(node->ident->is_var_params){
+                    new_IR(IR_SET_FLOAT_NUM)->val = 0;
                 }
                 new_IR(IR_FN_CALL_NOARGS)->name = node->ident;
                 return;

@@ -4,7 +4,7 @@ assert() {
   input="$2"
 
   ./mcc2 "$input" > tmp.s
-  cc -o tmp -no-pie tmp.s
+  cc -o tmp -no-pie tmp.s -lc
   ./tmp
   actual="$?"
 
@@ -142,7 +142,10 @@ assert 98 'int main() { return "abc"[1]; }'
 assert 99 'int main() { return "abc"[2]; }'
 assert 0 'int main() { return "abc"[3]; }'
 assert 4 'int main(){ return sizeof "abd" ;}'
+
+# function definition
 assert 4 'int foo(); int main(){ return foo();} int foo() {return 4;}'
+assert 3 'int foo(int a, ...){ return 3; } int main(){ return foo(); }'
 
 echo OK
 
