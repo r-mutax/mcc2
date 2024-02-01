@@ -5,6 +5,7 @@
 #include "type.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /*
     program = ( function | declaration )*
