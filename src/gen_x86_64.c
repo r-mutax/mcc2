@@ -8,11 +8,24 @@
 static const char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static const char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+int depth = 0;
+FILE* fp;
 
-static void pop2();
+static void pop(char* reg);
+static void push(char* reg);
+
+static void pop(char* reg){
+    fprintf(fp, "  pop %s\n", reg);
+    --depth;
+}
+
+static void push(char* reg){
+    fprintf(fp, "  push %s\n", reg);
+    --depth;
+}
 
 void gen_x86(IR* ir){
-    FILE* fp = stdout;
+    fp = stdout;
 
     fprintf(fp, ".intel_syntax noprefix\n");
     fprintf(fp, ".global main\n");
@@ -26,37 +39,42 @@ void gen_x86(IR* ir){
             }
                 break;
             case IR_FN_START:
-                fprintf(fp, "  push rbp\n");
+                push("rbp");
                 fprintf(fp, "  mov rbp, rsp\n");
                 fprintf(fp, "  sub rsp, %d\n", ((ir->size + 15) / 16) * 16);
                 break;
             case IR_FN_END:
                 fprintf(fp, "  mov rsp, rbp\n");
-                fprintf(fp, "  pop rbp\n");
+                pop("rbp");
                 fprintf(fp, "  ret\n");
                 break;
             case IR_FN_CALL_NOARGS:
                 {
                     //char* str = get_token_string(ir->name->name);
+                    if(depth % 2){
+                        fprintf(fp, "  sub rsp, 8\n");
+                    }
                     fprintf(fp, "  call %s\n", ir->name->name);
-                    fprintf(fp, "  push rax\n");
+                    if(depth % 2){
+                        fprintf(fp, "  add rsp, 8\n");
+                    }
+                    push("rax");
                     break;
                 }
             case IR_NUM:
                 fprintf(fp, "  mov rax, %d\n", ir->val);
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_LVAR:
                 fprintf(fp, "  lea rax, [rbp - %d]\n", ir->address);
-                // fprintf(fp, "  mov rax, [rax]\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_GVAR:
                 fprintf(fp, "  mov rax, OFFSET FLAT:%s\n", ir->name->name);
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_LOAD:
-                fprintf(fp, "  pop rax\n");
+                pop("rax");
                 if(ir->size == 1){
                     fprintf(fp, "  movsx rax, BYTE PTR [rax]\n");
                 } else if(ir->size == 2){
@@ -64,11 +82,11 @@ void gen_x86(IR* ir){
                 } else if(ir->size == 8){
                     fprintf(fp, "  mov rax, [rax]\n");
                 }
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_ASSIGN:
-                fprintf(fp, "  pop rdi\n");
-                fprintf(fp, "  pop rax\n");
+                pop("rdi");
+                pop("rax");
 
                 if(ir->size == 1){
                     fprintf(fp, "  mov [rax], dil\n");
@@ -77,93 +95,107 @@ void gen_x86(IR* ir){
                 } else if(ir->size == 8){
                     fprintf(fp, "  mov [rax], rdi\n");
                 }
-                fprintf(fp, "  push rdi\n");
+                push("rdi");
                 break;
             case IR_ADD:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  add rax, rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_SUB:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  sub rax, rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_MUL:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  imul rax, rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_DIV:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  cqo\n");
                 fprintf(fp, "  idiv rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_MOD:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  cqo\n");
                 fprintf(fp, "  idiv rdi\n");
                 fprintf(fp, "  mov rax, rdx\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_EQUAL:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  cmp rax, rdi\n");
                 fprintf(fp, "  sete al\n");
                 fprintf(fp, "  movzb rax, al\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_NOT_EQUAL:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  cmp rax, rdi\n");
                 fprintf(fp, "  setne al\n");
                 fprintf(fp, "  movzb rax, al\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_LT:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  cmp rax, rdi\n");
                 fprintf(fp, "  setl al\n");
                 fprintf(fp, "  movzb rax, al\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_LE:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  cmp rax, rdi\n");
                 fprintf(fp, "  setle al\n");
                 fprintf(fp, "  movzb rax, al\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_BIT_AND:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  and rax, rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_BIT_XOR:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  xor rax, rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_BIT_OR:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  or rax, rdi\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_L_BIT_SHIFT:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  mov rcx, rdi\n");
                 fprintf(fp, "  sal rax, cl\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_R_BIT_SHIFT:
-                pop2(fp);
+                pop("rdi");
+                pop("rax");
                 fprintf(fp, "  mov rcx, rdi\n");
                 fprintf(fp, "  sar rax, cl\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_POP:
-                fprintf(fp, "  pop rax\n");
+                pop("rax");
                 break;
             case IR_LABEL:
                 fprintf(fp, ".L%d:\n", ir->val);
@@ -171,17 +203,17 @@ void gen_x86(IR* ir){
             case IR_JMP:
                 fprintf(fp, "  jmp .L%d\n", ir->val);
             case IR_JZ:
-                fprintf(fp, "  pop rax\n");
+                pop("rax");
                 fprintf(fp, "  cmp rax, 0\n");
                 fprintf(fp, "  je .L%d\n", ir->val);
                 break;
             case IR_JNZ:
-                fprintf(fp, "  pop rax\n");
+                pop("rax");
                 fprintf(fp, "  cmp rax, 0\n");
                 fprintf(fp, "  jne .L%d\n", ir->val);
                 break;
             case IR_STORE_ARGREG:
-                fprintf(fp, "  pop rax\n");
+                pop("rax");
                 if(ir->size == 1){
                     fprintf(fp, "  mov [rax], %s\n", argreg8[ir->val]);
                 } else if(ir->size == 2){
@@ -191,15 +223,15 @@ void gen_x86(IR* ir){
                 }
                 break;
             case IR_LOAD_ARGREG:
-                fprintf(fp, "  pop %s\n", argreg64[ir->val]);
+                pop((char*)argreg64[ir->val]);
                 break;
             case IR_SET_FLOAT_NUM:
                 fprintf(fp, "  mov eax, %d\n", ir->val);
                 break;
             case IR_DREF:
-                fprintf(fp, "  pop rax\n");
+                pop("rax");
                 fprintf(fp, "  mov rax, [rax]\n");
-                fprintf(fp, "  push rax\n");
+                push("rax");
                 break;
             case IR_GVAR_DEF:
                 if(ir->name->is_string_literal){
@@ -223,9 +255,4 @@ void gen_x86(IR* ir){
 
     // ひとまず、スタックトップの値をリターンすることにする
     //fprintf(fp, "  ret\n");
-}
-
-static void pop2(FILE* fp){
-    fprintf(fp, "  pop rdi\n");
-    fprintf(fp, "  pop rax\n");
 }
