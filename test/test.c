@@ -6,6 +6,7 @@ int funcA(int a, int b) {
 }
 
 int main(){
+    printf("adfafafa\n");
     func();
     funcA(3, 4);
     return 0;
