@@ -64,6 +64,15 @@ void tokenize(char* src){
                 if(*(p + 1) == '='){
                     cur = new_token(TK_DIV_EQUAL, cur, p);
                     p += 2;
+                } else if(*(p + 1) == '/') {
+                    p += 2;
+                    while(*p != '\n') ++p;
+                } else if(*(p + 1) == '*') {
+                    char* q = strstr(p + 2, "*/");
+                    if(q == 0) {
+                        error_at(p, "Block comment is not close.");
+                    }
+                    p = q + 2;
                 } else {
                     cur = new_token(TK_DIV, cur, p++);
                 }
