@@ -9,8 +9,8 @@ $(OBJS):
 
 test: mcc2
 	./mcc2 -c ./test/test.c > tmp.s
-	cc -o tmp -no-pie tmp.s -lc
-	ls -al
+	cc -o tmp2 -no-pie tmp.s -lc
+	cmp -l tmp tmp2
 	
 clean:
 	rm -f mcc2 src/*.o *~ tmp*
