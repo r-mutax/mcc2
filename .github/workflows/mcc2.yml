@@ -13,20 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Build mcc2
-        run: make
-      
-      - name: Upload mcc2 as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: mcc2-artifact
-          path: mcc2
-
-      - name: Download and use mcc2
-        uses: actions/download-artifact@v2
-        with:
-          name: mcc2-artifact
-      
-      -name: Execute test
-       run: ./mcc2
+      - run: make
+      - run: cat ./tmp.s
