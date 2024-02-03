@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/mcc2.yml'
       - 'src/*'
+      - 'test/test.c'
       - 'test.sh'
       - 'Makefile'
       - 'tmp'
