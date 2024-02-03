@@ -8,7 +8,8 @@ mcc2: $(OBJS)
 $(OBJS):
 
 test2: 
-	cc -o tmp -no-pie tmp3.s -lc
+	cc -S test/test.c
+	cc -o tmp -no-pie test.s -lc
 	./tmp
 
 test: mcc2
