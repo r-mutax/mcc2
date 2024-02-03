@@ -20,4 +20,4 @@ jobs:
         run: make test
       
       - name: test
-        run: ls -al
+        run: ./tmp
