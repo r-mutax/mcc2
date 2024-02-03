@@ -7,7 +7,7 @@ on:
       - 'src/*'
       - 'test.sh'
       - 'Makefile' 
-      - 'tmp'
+      - 'test/test.c'
 
 jobs:
   test:

@@ -1,3 +1,9 @@
+// test function define.
+int printf(char* fmt, ...);
+
+
 int main(){
-    return 0; 
+    printf("mcc2 test...\n\n");
+
+    return 0;
 }
