@@ -213,15 +213,18 @@ int test_type(){
 int test_primary(){
     printf("test of string literal..\n");
     char c;
-    c = "abc"[0]; assert(c, 97);
-    c = "abc"[1]; assert(c, 98);
-    c = "abc"[2]; assert(c, 99);
+    c = "abc"[0]; assert(c, 'a');
+    c = "abc"[1]; assert(c, 'b');
+    c = "abc"[2]; assert(c, 'c');
     c = "abc"[3]; assert(c, 0);
     assert(sizeof "abd", 4);
 
     printf("test of function call..\n");
     assert(add(3, 4), 7);
     assert(add(5, 6), 11);
+
+    printf("test of character riteral..\n");
+    assert('a', 97);
 }
 
 int test_pointer(){
