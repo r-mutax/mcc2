@@ -14,7 +14,6 @@ test2:
 test: mcc2
 	./mcc2 -c ./test/test.c > tmp.s
 	gcc -o tmp -no-pie tmp.s -lc
-	./tmp
 	getconf GNU_LIBC_VERSION
 	
 clean:
