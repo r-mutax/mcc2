@@ -15,7 +15,7 @@ test2:
 test: mcc2
 	./mcc2 -c ./test/test.c > tmp.s
 	cc -o tmp2 -no-pie tmp.s -lc
-	./tmp2
+	./tmp
 	
 clean:
 	rm -f mcc2 src/*.o *~ tmp*
