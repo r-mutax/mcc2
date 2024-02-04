@@ -17,7 +17,8 @@
             'for(' expr ';' expr ';)' stmt |
             '{' compound_stmt
     compound_stmt = stmt* | declaration* '}'
-    declaration = declspec ident ';'
+    declaration = declare '=' (expr)? ';'
+    declare = declspec ident
     declspec = 'int' '*' *
     expr = assign
     assign = cond_expr ( '=' assign
@@ -48,7 +49,8 @@
 static void function();
 static Node* stmt();
 static Node* compound_stmt();
-static Ident* declaration();
+static Node* declaration();
+static Ident* declare();
 static Type* declspec();
 static Node* expr();
 static Node* assign();
@@ -81,8 +83,9 @@ void Program(){
         if(is_function()){
             function();
         } else {
-            Ident* ident = declaration();
+            Ident* ident = declare();
             ident->kind = ID_GVAR;
+            expect_token(TK_SEMICORON);
         }
     }
 
@@ -122,9 +125,7 @@ static void function(){
                 func->is_var_params = true;
                 break;
             } else {
-                Type* arg_ty = declspec();
-                Token* tok = expect_ident();
-                Ident* ident = declare_ident(tok, ID_LVAR, arg_ty);
+                Ident* ident = declare();
                 Parameter* param = calloc(1, sizeof(Parameter));
                 param->ident = ident;
                 cur = cur->next = param;
@@ -206,7 +207,10 @@ static Node* compound_stmt(){
     Node* cur = &head;
     while(!consume_token(TK_R_BRACKET)){
         if(is_type()){
-            declaration();
+            Node* node = declaration();
+            if(node){
+                cur = cur->next = node;
+            }
         } else {
             cur->next = stmt();
             cur = cur->next;
@@ -217,8 +221,19 @@ static Node* compound_stmt(){
     return node;
 }
 
-static Ident* declaration()
-{
+static Node* declaration(){
+    Ident* ident = declare();
+
+    Node* node = NULL;
+    if(consume_token(TK_ASSIGN)){
+        node = new_node(ND_ASSIGN, new_node_var(ident), assign());
+    }
+
+    expect_token(TK_SEMICORON);
+    return node;
+}
+
+static Ident* declare(){
     Type* ty = declspec();
     Token* ident_tok = expect_ident();
     if(consume_token(TK_L_SQUARE_BRACKET)){
@@ -226,7 +241,6 @@ static Ident* declaration()
         ty = array_of(ty, len);
         expect_token(TK_R_SQUARE_BRACKET);
     }
-    expect_token(TK_SEMICORON);
 
     Ident* ident = declare_ident(ident_tok, ID_LVAR, ty);
     return ident;
