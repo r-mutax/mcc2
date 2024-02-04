@@ -15,6 +15,7 @@ test: mcc2
 	./mcc2 -c ./test/test.c > tmp.s
 	gcc -o tmp -no-pie tmp.s -lc
 	getconf GNU_LIBC_VERSION
+	./tmp
 	
 clean:
 	rm -f mcc2 src/*.o *~ tmp*
