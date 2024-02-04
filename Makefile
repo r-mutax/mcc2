@@ -8,13 +8,14 @@ mcc2: $(OBJS)
 $(OBJS):
 
 test2: 
-	cc -S test/test.c
+	gcc -S test/test.c
 	cc -o tmp -no-pie test.s -lc
 
 test: mcc2
 	./mcc2 -c ./test/test.c > tmp.s
-	cc -o tmp -no-pie tmp.s -lc
-	cc --version
+	gcc -o tmp -no-pie tmp.s -lc
+	./tmp
+	gcc --version
 	
 clean:
 	rm -f mcc2 src/*.o *~ tmp*
