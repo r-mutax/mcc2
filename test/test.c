@@ -225,6 +225,10 @@ int test_primary(){
 
     printf("test of character riteral..\n");
     assert('a', 97);
+
+    printf("test of initialize..\n");
+    int defini = 10;
+    assert(defini, 10);
 }
 
 int test_pointer(){
