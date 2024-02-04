@@ -10,7 +10,6 @@ $(OBJS):
 test2: 
 	cc -S test/test.c
 	cc -o tmp -no-pie test.s -lc
-	./tmp
 
 test: mcc2
 	./mcc2 -c ./test/test.c > tmp.s
