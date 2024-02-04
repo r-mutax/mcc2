@@ -5,14 +5,12 @@ on:
     paths:
       - '.github/workflows/mcc2.yml'
       - 'src/*'
-      - 'test.sh'
+      - 'test/*'
       - 'Makefile'
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - run: make
-      - run: sh ./test.sh
-
+      - run: make test
