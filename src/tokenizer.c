@@ -194,6 +194,17 @@ void tokenize(char* src){
                     p++;
                 }
                 break;
+            case '\'':
+                {
+                    char a = *(++p);
+                    cur = new_token(TK_NUM, cur, p);
+                    cur->val = a;
+                    while(*p != '\''){
+                       p++;
+                    }
+                    p++;
+                }
+                break;
             case '.':
                 if(*(p+1) == '.' && *(p+2) == '.' ){
                     cur = new_token(TK_DOT_DOT_DOT, cur, p);
