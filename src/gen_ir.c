@@ -135,6 +135,9 @@ static void gen_stmt(Node* node){
             }
             break;
         }
+        case ND_VOID_STMT:
+            // 空文なのでなにもしない
+            break;
         default:
             gen_expr(node);
             // スタックトップに値が残っているはずなので、消しておく

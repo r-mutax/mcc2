@@ -143,6 +143,14 @@ int test_statement(){
     }
     assert(cp, 5);
     assert(cp2, 10);
+
+    printf("test of void statement..\n");
+    ;;;
+    {
+        ;
+    }
+    if(1) ;
+    if(0) ; else ;
 }
 
 int test_variable(){
