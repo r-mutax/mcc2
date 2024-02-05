@@ -118,12 +118,17 @@ static void gen_stmt(Node* node){
             long l_start = get_label();
             long l_end = get_label();
 
-            gen_expr(node->init);
+            if(node->init){
+                gen_expr(node->init);
+            }
             new_IR(IR_LABEL)->val = l_start;
             gen_expr(node->cond);
             new_IR(IR_JZ)->val = l_end;
             gen_stmt(node->body);
-            gen_expr(node->incr);
+
+            if(node->incr){
+                gen_expr(node->incr);
+            }
             new_IR(IR_JMP)->val = l_start;
             new_IR(IR_LABEL)->val = l_end;
             break;

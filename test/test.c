@@ -94,6 +94,12 @@ int test_statement(){
     assert(for_a, 5);
     assert(for_b, 10);
 
+    int for_c = 0;
+    for(; for_c < 5;){ for_c += 1; }
+    assert(for_c, 5);
+
+    for(int for_d = 0; for_d < 5; ){ for_d += 1; }
+
     printf("test of if-statement...\n");
     int if_a;
     if_a = 0;

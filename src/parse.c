@@ -183,12 +183,37 @@ static Node* stmt(){
     } else if(consume_token(TK_FOR)){
         Node* node = new_node(ND_FOR, NULL, NULL);
         expect_token(TK_L_PAREN);
-        node->init = expr();
-        expect_token(TK_SEMICORON);
-        node->cond = expr();
-        expect_token(TK_SEMICORON);
-        node->incr = expr();
-        expect_token(TK_R_PAREN);
+
+        // 初期化式
+        if(consume_token(TK_SEMICORON)){
+           node->init = NULL; 
+        } else {
+            if(is_type()){
+                Ident* ident = declare();
+                if(consume_token(TK_ASSIGN)){
+                    node->init = new_node(ND_ASSIGN, new_node_var(ident), assign());
+                }
+            } else {
+                node->init = expr();
+            }
+            expect_token(TK_SEMICORON);
+        }
+
+        // 継続条件の式
+        if(consume_token(TK_SEMICORON)){
+           node->cond = new_node_num(1); 
+        } else {
+            node->cond = expr();
+            expect_token(TK_SEMICORON);
+        }
+
+        // イテレートの式
+        if(consume_token(TK_R_PAREN)){
+           node->incr = NULL; 
+        } else {
+            node->incr = expr();
+            expect_token(TK_R_PAREN);
+        }
         node->body = stmt();
         return node;
     } else if(consume_token(TK_L_BRACKET)){
