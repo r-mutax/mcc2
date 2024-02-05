@@ -138,7 +138,8 @@ typedef enum NodeKind {
     ND_BLOCK,
     ND_FUNCCALL,
     ND_ADDR,
-    ND_DREF
+    ND_DREF,
+    ND_VOID_STMT
 } NodeKind;
 
 struct Node {

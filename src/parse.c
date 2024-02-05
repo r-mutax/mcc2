@@ -193,6 +193,8 @@ static Node* stmt(){
         return node;
     } else if(consume_token(TK_L_BRACKET)){
         return compound_stmt();
+    } else if(consume_token(TK_SEMICORON)){
+        return new_node(ND_VOID_STMT, NULL, NULL);
     } else {
         Node* node = expr();
         expect_token(TK_SEMICORON);
