@@ -188,7 +188,14 @@ static Node* stmt(){
         if(consume_token(TK_SEMICORON)){
            node->init = NULL; 
         } else {
-            node->init = expr();
+            if(is_type()){
+                Ident* ident = declare();
+                if(consume_token(TK_ASSIGN)){
+                    node->init = new_node(ND_ASSIGN, new_node_var(ident), assign());
+                }
+            } else {
+                node->init = expr();
+            }
             expect_token(TK_SEMICORON);
         }
 
