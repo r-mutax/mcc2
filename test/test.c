@@ -157,6 +157,53 @@ int test_statement(){
     }
     if(1) ;
     if(0) ; else ;
+
+    printf("test of break statement..\n");
+    int break_1 = 0;
+    for(; break_1 < 5; break_1 += 1){
+        if(break_1 == 3){
+            break;
+        }
+    }
+    assert(break_1, 3);
+
+    int break_2 = 0;
+    while(1){
+        if(break_2 == 4) break;
+        break_2 += 1;
+    }
+    assert(break_2, 4);
+
+    int break_3_1 = 0;
+    int break_3_2 = 0;
+    for(; break_3_1 < 5; break_3_1 += 1){
+        for(break_3_2 = 0; break_3_2 < 5; break_3_2 += 1){
+            if(break_3_2 == 3) break;
+        }
+        assert(break_3_2, 3);
+    }
+    assert(break_3_1, 5);
+
+    printf("test of continue statement..\n");
+    int cont_1 = 0;
+    int cont_1_1 = 0;
+    for(;cont_1 < 5; cont_1 += 1){
+        continue;
+        cont_1_1 += 1;
+    }
+    assert(cont_1, 5);
+    assert(cont_1_1, 0);
+
+    int cont_2 = 0;
+    int cont_2_1 = 0;
+    while(cont_2 < 5){
+        cont_2 += 1;
+        continue;
+        cont_2_1 += 1;
+    }
+    assert(cont_1, 5);
+    assert(cont_1_1, 0);
+
 }
 
 int test_variable(){

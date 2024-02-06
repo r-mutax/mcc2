@@ -14,7 +14,7 @@
             'return' expr ';' |
             'if(' expr ')' stmt ('else' stmt)? |
             'while(' expr ')' stmt | 
-            'for(' expr ';' expr ';)' stmt |
+            'for(' (expr | declspec ident ('=' assign) ? )? ';' expr? '; expr? )' stmt |
             '{' compound_stmt
     compound_stmt = stmt* | declaration* '}'
     declaration = declare '=' (expr)? ';'
@@ -220,6 +220,10 @@ static Node* stmt(){
         return compound_stmt();
     } else if(consume_token(TK_SEMICORON)){
         return new_node(ND_VOID_STMT, NULL, NULL);
+    } else if(consume_token(TK_BREAK)){
+        return new_node(ND_BREAK, NULL, NULL);
+    } else if(consume_token(TK_CONTINUE)){
+        return new_node(ND_CONTINUE, NULL, NULL);
     } else {
         Node* node = expr();
         expect_token(TK_SEMICORON);
