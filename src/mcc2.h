@@ -59,6 +59,7 @@ typedef enum TokenKind {
     TK_CANMA,                   // ,
     TK_RETURN,                  // return
     TK_BREAK,                   // break
+    TK_CONTINUE,                // continue
     TK_SIZEOF,                  // sizeof
     TK_IF,
     TK_ELSE,
@@ -142,6 +143,7 @@ typedef enum NodeKind {
     ND_DREF,
     ND_VOID_STMT,
     ND_BREAK,
+    ND_CONTINUE,
 } NodeKind;
 
 struct Node {

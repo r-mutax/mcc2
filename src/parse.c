@@ -222,6 +222,8 @@ static Node* stmt(){
         return new_node(ND_VOID_STMT, NULL, NULL);
     } else if(consume_token(TK_BREAK)){
         return new_node(ND_BREAK, NULL, NULL);
+    } else if(consume_token(TK_CONTINUE)){
+        return new_node(ND_CONTINUE, NULL, NULL);
     } else {
         Node* node = expr();
         expect_token(TK_SEMICORON);

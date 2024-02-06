@@ -184,6 +184,26 @@ int test_statement(){
     }
     assert(break_3_1, 5);
 
+    printf("test of continue statement..\n");
+    int cont_1 = 0;
+    int cont_1_1 = 0;
+    for(;cont_1 < 5; cont_1 += 1){
+        continue;
+        cont_1_1 += 1;
+    }
+    assert(cont_1, 5);
+    assert(cont_1_1, 0);
+
+    int cont_2 = 0;
+    int cont_2_1 = 0;
+    while(cont_2 < 5){
+        cont_2 += 1;
+        continue;
+        cont_2_1 += 1;
+    }
+    assert(cont_1, 5);
+    assert(cont_1_1, 0);
+
 }
 
 int test_variable(){
