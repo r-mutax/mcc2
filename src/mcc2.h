@@ -58,6 +58,7 @@ typedef enum TokenKind {
     TK_CORON,                   // :
     TK_CANMA,                   // ,
     TK_RETURN,                  // return
+    TK_BREAK,                   // break
     TK_SIZEOF,                  // sizeof
     TK_IF,
     TK_ELSE,
@@ -139,7 +140,8 @@ typedef enum NodeKind {
     ND_FUNCCALL,
     ND_ADDR,
     ND_DREF,
-    ND_VOID_STMT
+    ND_VOID_STMT,
+    ND_BREAK,
 } NodeKind;
 
 struct Node {

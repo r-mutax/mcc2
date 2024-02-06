@@ -16,4 +16,5 @@ static KEYWORD_MAP keyword_map[] = {
     {   "short",        TK_SHORT    },
     {   "int",          TK_INT      },
     {   "sizeof",       TK_SIZEOF   },
+    {   "break",        TK_BREAK    },
 };

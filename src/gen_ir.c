@@ -7,6 +7,7 @@ static long g_label = 0;
 static IR head;
 static IR* ir = &head;
 static IR* new_IR(IRKind kind);
+static int g_break = -1;
 static void gen_datas(Ident* ident);
 static void gen_funcs(Ident* ident);
 static void gen_function(Ident* func);
@@ -102,19 +103,25 @@ static void gen_stmt(Node* node){
         }
         case ND_WHILE:
         {
+            long l_break_buf = g_break;
             long l_start = get_label();
             long l_end = get_label();
 
             new_IR(IR_LABEL)->val = l_start;
             gen_expr(node->cond);
             new_IR(IR_JZ)->val = l_end;
+
+            g_break = l_end;
             gen_stmt(node->body);
+            g_break = l_break_buf;
+
             new_IR(IR_JMP)->val = l_start;
             new_IR(IR_LABEL)->val = l_end;
             break;
         }
         case ND_FOR:
         {
+            long l_break_buf = g_break;
             long l_start = get_label();
             long l_end = get_label();
 
@@ -124,13 +131,17 @@ static void gen_stmt(Node* node){
             new_IR(IR_LABEL)->val = l_start;
             gen_expr(node->cond);
             new_IR(IR_JZ)->val = l_end;
+
+            g_break = l_end;
             gen_stmt(node->body);
+            g_break = l_break_buf;
 
             if(node->incr){
                 gen_expr(node->incr);
             }
             new_IR(IR_JMP)->val = l_start;
             new_IR(IR_LABEL)->val = l_end;
+
             break;
         }
         case ND_BLOCK:
@@ -140,6 +151,11 @@ static void gen_stmt(Node* node){
             }
             break;
         }
+        case ND_BREAK:
+            if(g_break != -1){
+                new_IR(IR_JMP)->val = g_break;
+            }
+            break;
         case ND_VOID_STMT:
             // 空文なのでなにもしない
             break;
