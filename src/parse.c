@@ -156,12 +156,15 @@ static void function(){
 }
 
 static Node* stmt(){
+    Token* tok = get_token();
     if(consume_token(TK_RETURN)){
         Node* node = new_node(ND_RETURN, expr(), NULL);
+        node->pos = tok;
         expect_token(TK_SEMICORON);
         return node;
     } else if(consume_token(TK_IF)){
         Node* node = new_node(ND_IF, NULL, NULL);
+        node->pos = tok;
         expect_token(TK_L_PAREN);
         node->cond = expr();
         expect_token(TK_R_PAREN);
@@ -175,6 +178,7 @@ static Node* stmt(){
         return node;
     } else if(consume_token(TK_WHILE)){
         Node* node = new_node(ND_WHILE, NULL, NULL);
+        node->pos = tok;
         expect_token(TK_L_PAREN);
         node->cond = expr();
         expect_token(TK_R_PAREN);
@@ -182,6 +186,7 @@ static Node* stmt(){
         return node;
     } else if(consume_token(TK_FOR)){
         Node* node = new_node(ND_FOR, NULL, NULL);
+        node->pos = tok;
         expect_token(TK_L_PAREN);
 
         // 初期化式
@@ -219,14 +224,21 @@ static Node* stmt(){
     } else if(consume_token(TK_L_BRACKET)){
         return compound_stmt();
     } else if(consume_token(TK_SEMICORON)){
-        return new_node(ND_VOID_STMT, NULL, NULL);
+        Node* node = new_node(ND_VOID_STMT, NULL, NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_BREAK)){
-        return new_node(ND_BREAK, NULL, NULL);
+        Node* node = new_node(ND_BREAK, NULL, NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_CONTINUE)){
-        return new_node(ND_CONTINUE, NULL, NULL);
+        Node* node = new_node(ND_CONTINUE, NULL, NULL);
+        node->pos = tok;
+        return node;
     } else {
         Node* node = expr();
         expect_token(TK_SEMICORON);
+        node->pos = tok;
         return node;        
     }
 }

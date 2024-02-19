@@ -79,6 +79,7 @@ int test_expression(){
     assert(- -10, 10);
     assert(- -+10, 10);
     assert(-10 + 20, 10);
+    return 0;
 }
 
 int test_statement(){
@@ -203,7 +204,7 @@ int test_statement(){
     }
     assert(cont_1, 5);
     assert(cont_1_1, 0);
-
+    return 0;
 }
 
 int test_variable(){
@@ -238,7 +239,7 @@ int test_variable(){
     assert(arr[3], 4);
 
     printf("test of assignment..\n");
-    
+    return 0;   
 }
 
 int test_type(){
@@ -268,7 +269,7 @@ int test_type(){
     assert(sizeof(iarr), 24);
     int* ip;
     assert(sizeof(ip), 8);
-
+    return 0;
 }
 
 int test_primary(){
@@ -290,6 +291,7 @@ int test_primary(){
     printf("test of initialize..\n");
     int defini = 10;
     assert(defini, 10);
+    return 0;
 }
 
 int test_pointer(){
@@ -300,6 +302,7 @@ int test_pointer(){
     *a = 15;
     assert(data, 15);
     assert(sizeof a, 8);
+    return 0;
 }
 
 int test_assignment(){
@@ -312,6 +315,7 @@ int test_assignment(){
     a = 13; a %= 5; assert(a, 3);
     a = 56; a >>= 3; assert(a, 7);
     a = 7; a <<= 3; assert(a, 56);
+    return 0;
 }
 
 int assert(int a, int b){
