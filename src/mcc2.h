@@ -8,6 +8,8 @@ typedef struct Parameter Parameter;
 typedef struct Ident Ident;
 typedef struct Stmt Stmt;
 typedef struct IR IR;
+typedef struct Reg Reg;
+typedef struct RealReg RealReg;
 typedef struct Scope Scope;
 typedef struct Type Type;
 typedef struct StringLiteral StringLiteral;
@@ -153,6 +155,7 @@ struct Node {
     int         val;
     Ident*      ident;
     Type*       type;
+    Token*      pos;
 
     Node*       cond;
     Node*       then;
@@ -167,11 +170,38 @@ struct Node {
     Node*       next;
 };
 
-typedef enum IRKind{
-    IR_NUM,
-    IR_LVAR,
-    IR_GVAR,
-    IR_ASSIGN,
+
+/*  
+    仮想レジスタ
+        int idx     : 実レジスタ割付番号
+                      この仮想レジスタ
+        int val     : レジスタが直値を扱う場合の数値
+        Ident* ident: レジスタに割り当てられた識別子
+                        ex) ラベル、変数、関数名...
+                            
+*/
+typedef enum RegKind {
+    REG_REG = 0,    // 普通のレジスタ
+    REG_IMM,        // 直値
+    REG_VAR,        // 変数
+    REG_ADDR,       // アドレスが入っているレジスタ
+    REG_STR,        // 文字列
+    REG_FNAME,      // 関数名
+} RegKind;
+
+struct Reg {
+    RegKind kind;
+    int idx;
+    int val;
+    Ident*  ident;
+    Reg*    addr;   // REG_ADDRのアドレスを格納しているところ
+    int     size;
+    char*   str;
+    char*   rreg;
+};
+
+typedef enum IRCmd{
+    // ARITHMETIC
     IR_ADD,
     IR_SUB,
     IR_MUL,
@@ -186,31 +216,76 @@ typedef enum IRKind{
     IR_BIT_OR,
     IR_L_BIT_SHIFT,
     IR_R_BIT_SHIFT,
-    IR_POP,
-    IR_LOAD,
-    IR_FN_START,
-    IR_FN_END,
-    IR_FN_LABEL,
-    IR_FN_CALL_NOARGS,
-    IR_LABEL,
-    IR_JMP,
-    IR_JZ,
-    IR_JNZ,
-    IR_STORE_ARGREG,
-    IR_LOAD_ARGREG,
-    IR_SET_FLOAT_NUM,
-    IR_DREF,
-    IR_GVAR_DEF,
-    IR_STRING_LITERAL_DEF,
-} IRKind;
+    IR_ASSIGN,
+    IR_FN_CALL,
+    IR_REL,
 
-struct IR{
-    IRKind kind;
+    // REGISTER OPERATION
+    IR_MOV,
+        // mov (null) s1 s2
+        //  s2 -> s1
+    IR_RELEASE_REG,
+        // relese all real register
+    IR_LEA,
+        // lea (null) s1 s2
+        //  write address of s2 to s1
+    IR_LOAD,
+        // load (null) s1 s2
+        //  [s2] -> s1 
+
+    // CONTROL
+    IR_RET,
+        // ret (null) s1 -> return s1
+        // ret (null) (null) -> return with void
+    IR_JNZ,
+        // jnz (null) s1 (imm)
+        //   s1 = 0 -> goto imm
+    IR_JZ,
+        // jz (null) s1 (imm)
+        //   s1 = 0 -> goto imm
+    IR_JMP,
+        // jmp (null) (imm)
+        //  jmp to (imm)
+    IR_LABEL,
+        // label (null) (imm)
+        //   .L(imm):
+
+    // DEFINITION
+    IR_FN_LABEL,
+        // fnlabel (null) (ident) (imm) 
+        // -> identという名前の関数の、プロローグを生成する。
+        //    immは確保するスタックのサイズ
+    IR_GVAR_LABEL,
+        // gvarlabel (null) (ident) (imm)
+        // -> identというグローバル変数を定義する
+        //    immグローバル変数のサイズ 
+    IR_STORE_ARG_REG,
+    IR_LOAD_ARG_REG,
+    IR_SET_FLOAT_NUM,
+
+    // DEBUG
+    IR_COMMENT,
+        // comment (string)
+        // stringをコメントとして出力する
+
+} IRCmd;
+
+/*
+    IC : レジスタマシンの中間コード
+        ICCmd cmd   : 命令の種別
+        Reg *t      : ターゲットレジスタ
+        Reg* s1     : ソースレジスタ1
+        Reg* s2     : ソースレジスタ2
+
+        演算はs1とs2に対して実施して、tに格納する。
+        tがNULLの場合は、s1を上書きする。
+*/
+struct IR {
+    IRCmd cmd;
     IR* next;
-    int val;
-    int address;
-    int size;
-    Ident*  name;
+    Reg*    t;
+    Reg*    s1;
+    Reg*    s2;
 };
 
 // Scope : スコープを表現するもの
