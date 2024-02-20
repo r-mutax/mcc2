@@ -63,6 +63,8 @@ typedef enum TokenKind {
     TK_BREAK,                   // break
     TK_CONTINUE,                // continue
     TK_SIZEOF,                  // sizeof
+    TK_SWITCH,
+    TK_CASE,
     TK_IF,
     TK_ELSE,
     TK_WHILE,
@@ -146,6 +148,8 @@ typedef enum NodeKind {
     ND_VOID_STMT,
     ND_BREAK,
     ND_CONTINUE,
+    ND_SWITCH,
+    ND_CASE,
 } NodeKind;
 
 struct Node {
@@ -163,6 +167,8 @@ struct Node {
     Node*       body;
     Node*       init;
     Node*       incr;
+
+    Node*       next_case;
 
     // 関数呼び出しの引数
     Node*       params;
@@ -246,6 +252,9 @@ typedef enum IRCmd{
     IR_JMP,
         // jmp (null) (imm)
         //  jmp to (imm)
+    IR_JE,
+        // je imm s1 s2
+        //  if s1 == s2, then go to imm
     IR_LABEL,
         // label (null) (imm)
         //   .L(imm):

@@ -18,4 +18,6 @@ static KEYWORD_MAP keyword_map[] = {
     {   "sizeof",       TK_SIZEOF   },
     {   "break",        TK_BREAK    },
     {   "continue",     TK_CONTINUE },
+    {   "switch",       TK_SWITCH   },
+    {   "case",         TK_CASE     },
 };

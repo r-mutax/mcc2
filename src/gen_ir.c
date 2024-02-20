@@ -156,6 +156,29 @@ static void gen_stmt(Node* node){
             new_IRLabel(l_end);
             break;
         }
+        case ND_SWITCH:{
+            long l_break_buf = g_break;
+            long l_end = get_label();
+
+            // caseのどこに飛ぶか？の分岐の部分
+            Reg* reg = gen_expr(node->cond);
+            for( Node* nc = node->next_case; nc; nc = nc->next_case){
+                nc->val = get_label();
+                new_IR(IR_JE, new_RegImm(nc->val), reg, gen_expr(nc->lhs));
+            }
+
+            // body
+            g_break = l_end;
+            gen_stmt(node->body);
+            g_break = l_break_buf;
+
+            new_IRLabel(l_end);
+            break;
+        }
+        case ND_CASE:{
+            new_IRLabel(node->val);
+            break;
+        }
         case ND_BREAK:
             if(g_break != -1){
                 new_IRJmp(g_break);

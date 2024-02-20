@@ -46,6 +46,8 @@
     primary = '(' expr ')' | num | ident | ident '()'
 */
 
+static Node* switch_node = NULL;
+
 static void function();
 static Node* stmt();
 static Node* compound_stmt();
@@ -68,6 +70,7 @@ static Node* mul();
 static Node* unary();
 static Node* postfix();
 static Node* primary();
+static Node* const_expr();
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_add(Node* lhs, Node* rhs);
 static Node* new_node_sub(Node* lhs, Node* rhs);
@@ -234,6 +237,32 @@ static Node* stmt(){
     } else if(consume_token(TK_CONTINUE)){
         Node* node = new_node(ND_CONTINUE, NULL, NULL);
         node->pos = tok;
+        return node;
+    } else if(consume_token(TK_SWITCH)){
+        Node* node = new_node(ND_SWITCH, NULL, NULL);
+        Node* switch_back = switch_node;
+        switch_node = node;
+
+        node->pos = tok;
+        expect_token(TK_L_PAREN);
+        node->cond = expr();
+        expect_token(TK_R_PAREN);
+        node->body = stmt();
+
+        switch_node = switch_back;
+        return node;
+    } else if(consume_token(TK_CASE)){
+        if(switch_node == NULL){
+            error_at(tok->pos, "case is not within a switch statement.");
+        }
+
+        Node* node = new_node(ND_CASE, NULL, NULL);
+        node->lhs = const_expr(); 
+        consume_token(TK_CORON);
+        node->pos = tok;
+
+        node->next_case = switch_node->next_case;
+        switch_node->next_case = node;
         return node;
     } else {
         Node* node = expr();
@@ -568,6 +597,15 @@ static Node* primary(){
     }
 
     return new_node_num(expect_num());
+}
+
+static Node* const_expr(){
+    Token* tok = get_token();
+    Node* node = expr();
+    if(node->kind != ND_NUM){
+        error_at(tok->pos, "expected constant expression.");
+    }
+    return node;
 }
 
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
