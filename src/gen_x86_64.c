@@ -386,6 +386,13 @@ void gen_x86(IR* ir){
                 fprintf(fp, "  je .L%d\n", ir->s2->val);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
+            case IR_JE:
+                activateRegLhs(ir->s1);
+                activateRegRhs(ir->s2);
+                fprintf(fp, "  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                fprintf(fp, "  je .L%d\n", ir->t->val);
+                freeReg(ir->s2);
+                break;
             case IR_JMP:
                 fprintf(fp, "  jmp .L%d\n", ir->s1->val);
                 break;

@@ -204,6 +204,22 @@ int test_statement(){
     }
     assert(cont_1, 5);
     assert(cont_1_1, 0);
+
+    printf("test of switch statement..\n");
+    int s1 = 0;
+    int s2 = 3;
+
+    switch(s1){
+        case 0:
+            s2 = 5;
+            break;
+        case 3:
+            s2 = 4;
+            break;
+    }
+    assert(s2, 5);
+
+
     return 0;
 }
 
