@@ -167,6 +167,12 @@ static void gen_stmt(Node* node){
                 new_IR(IR_JE, new_RegImm(nc->val), reg, gen_expr(nc->lhs));
             }
 
+            // default
+            if(node->default_label){
+                node->default_label->val = get_label();
+                new_IR(IR_JMP, NULL, new_RegImm(node->default_label->val), NULL);
+            }
+
             // body
             g_break = l_end;
             gen_stmt(node->body);
@@ -183,6 +189,9 @@ static void gen_stmt(Node* node){
             if(g_break != -1){
                 new_IRJmp(g_break);
             }
+            break;
+        case ND_DEFAULT:
+            new_IRLabel(node->val);
             break;
         case ND_CONTINUE:
             if(g_continue != -1){

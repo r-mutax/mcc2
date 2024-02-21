@@ -219,6 +219,30 @@ int test_statement(){
     }
     assert(s2, 5);
 
+    int s3 = 5;
+    switch(s2){
+        case 0:
+            s3 = 51;
+            break;
+        case 1:
+            s3 = 10;
+            break;
+        default:
+            s3 = 123;
+            break;
+    }
+    assert(s3, 123);
+
+    int s4 = 4;
+    switch(s2){
+        case 5:
+            s3 = 10;
+        case 10:
+            s4 = 12;
+            break;
+    }
+    assert(s3, 10);
+    assert(s4, 12);
 
     return 0;
 }

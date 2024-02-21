@@ -20,4 +20,5 @@ static KEYWORD_MAP keyword_map[] = {
     {   "continue",     TK_CONTINUE },
     {   "switch",       TK_SWITCH   },
     {   "case",         TK_CASE     },
+    {   "default",      TK_DEFAULT  },
 };
