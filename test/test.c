@@ -244,6 +244,9 @@ int test_statement(){
     assert(s3, 10);
     assert(s4, 12);
 
+    printf("test of label..\n");
+    LABEL_TEST:
+
     return 0;
 }
 

@@ -9,6 +9,7 @@
 
 static Scope global_scope = {};
 static Scope* cur_scope = &global_scope;
+static Scope* func_scope = NULL;
 static int stack_size = 0;
 
 static int string_literal_num = 0;
@@ -59,6 +60,14 @@ Ident* register_string_literal(Token* tok){
     return ident;
 }
 
+Label* register_label(Token* tok){
+    Label* label = calloc(1, sizeof(Label));
+    label->tok = tok;
+    label->next = func_scope->label;
+    func_scope->label = label;
+    return label;
+}
+
 Ident* find_ident(Token* tok){
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
         for(Ident* id = sc->ident; id; id = id->next){
@@ -81,11 +90,17 @@ void scope_in(){
     Scope* new_scope = calloc(1, sizeof(Scope));
     new_scope->level = cur_scope->level + 1;
     new_scope->parent = cur_scope;
+
+    if(cur_scope->level == 0){
+        func_scope = new_scope;
+    }
+
     cur_scope = new_scope;
 }
 
 void scope_out(){
     if(cur_scope->level == 0) return;
+    if(cur_scope->level == 1) func_scope = NULL;
 
     Scope* buf = cur_scope;
     cur_scope = cur_scope->parent;
@@ -93,6 +108,10 @@ void scope_out(){
     if(cur_scope == &global_scope){
         stack_size = 0;
     }
+}
+
+Scope* get_current_scope(){
+    return cur_scope;
 }
 
 Scope* get_global_scope(){

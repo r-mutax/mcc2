@@ -16,6 +16,7 @@ int expect_num();
 
 bool is_eof();
 bool is_type();
+bool is_label();
 char* get_token_string(Token* tok);
 
 Token* get_token();
