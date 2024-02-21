@@ -65,6 +65,7 @@ typedef enum TokenKind {
     TK_SIZEOF,                  // sizeof
     TK_SWITCH,
     TK_CASE,
+    TK_DEFAULT,
     TK_IF,
     TK_ELSE,
     TK_WHILE,
@@ -150,6 +151,7 @@ typedef enum NodeKind {
     ND_CONTINUE,
     ND_SWITCH,
     ND_CASE,
+    ND_DEFAULT,
 } NodeKind;
 
 struct Node {
@@ -169,6 +171,7 @@ struct Node {
     Node*       incr;
 
     Node*       next_case;
+    Node*       default_label;
 
     // 関数呼び出しの引数
     Node*       params;

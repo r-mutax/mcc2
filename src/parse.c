@@ -15,7 +15,10 @@
             'if(' expr ')' stmt ('else' stmt)? |
             'while(' expr ')' stmt | 
             'for(' (expr | declspec ident ('=' assign) ? )? ';' expr? '; expr? )' stmt |
-            '{' compound_stmt
+            '{' compound_stmt |
+            'switch(' expr ')' stmt |
+            'case' const_expr ':' |
+            'default:' | 
     compound_stmt = stmt* | declaration* '}'
     declaration = declare '=' (expr)? ';'
     declare = declspec ident
@@ -263,6 +266,16 @@ static Node* stmt(){
 
         node->next_case = switch_node->next_case;
         switch_node->next_case = node;
+        return node;
+    } else if(consume_token(TK_DEFAULT)){
+        Node* node = new_node(ND_DEFAULT, NULL, NULL);
+        node->pos;
+        consume_token(TK_CORON);
+
+        if(switch_node->default_label){
+            error_at(tok->pos, "multiple default label.");
+        }
+        switch_node->default_label = node;
         return node;
     } else {
         Node* node = expr();
