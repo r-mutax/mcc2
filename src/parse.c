@@ -140,6 +140,8 @@ static void function(){
         func->params = head.next;
         expect_token(TK_R_PAREN);
     }
+    
+    func->scope = get_current_scope();
 
     if(consume_token(TK_SEMICORON)){
         // ここでセミコロンがあるなら前方宣言
@@ -269,7 +271,7 @@ static Node* stmt(){
         return node;
     } else if(consume_token(TK_DEFAULT)){
         Node* node = new_node(ND_DEFAULT, NULL, NULL);
-        node->pos;
+        node->pos = tok;
         consume_token(TK_CORON);
 
         if(switch_node->default_label){
@@ -277,6 +279,14 @@ static Node* stmt(){
         }
         switch_node->default_label = node;
         return node;
+    } else if(is_label()){
+        Node* node = new_node(ND_LABEL, NULL, NULL);
+        node->pos = tok;
+        Token* tok = expect_ident();
+        expect_token(TK_CORON);
+        Label* label = register_label(tok);
+        node->label = label;
+        return  node;
     } else {
         Node* node = expr();
         expect_token(TK_SEMICORON);

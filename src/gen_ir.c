@@ -57,7 +57,6 @@ static void gen_funcs(Ident* ident){
 }
 
 static void gen_function(Ident* func){
-    fprintf(stderr, "%s : %d\n", func->name, func->stack_size);
     new_IR(IR_FN_LABEL, NULL, new_RegStr(func->name), new_RegImm(func->stack_size));
 
     // パラメータの展開
@@ -69,6 +68,12 @@ static void gen_function(Ident* func){
         if(i >= 6){
             error_at(func->tok->pos, "Functions with more than six arguments are not supported.");
         }
+    }
+
+    Scope* scope = func->scope;
+    for(Label* label = scope->label; label; label = label->next){
+        fprintf(stderr, "sldkfja;;\n");
+        label->no = get_label();
     }
 
     Node* cur = func->funcbody;
@@ -197,6 +202,9 @@ static void gen_stmt(Node* node){
             if(g_continue != -1){
                 new_IRJmp(g_continue);
             }
+            break;
+        case ND_LABEL:
+            new_IRLabel(node->label->no);
             break;
         case ND_BLOCK:
         {

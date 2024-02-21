@@ -332,6 +332,13 @@ bool is_type(){
          || token->kind == TK_CHAR;
 }
 
+bool is_label(){
+    if(token->kind == TK_IDENT && token->next->kind == TK_CORON){
+        return true;
+    }
+    return false;
+}
+
 Token* get_token(){
     return token;
 }

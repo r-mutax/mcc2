@@ -12,6 +12,7 @@ typedef struct Reg Reg;
 typedef struct RealReg RealReg;
 typedef struct Scope Scope;
 typedef struct Type Type;
+typedef struct Label Label;
 typedef struct StringLiteral StringLiteral;
 typedef enum TypeKind TypeKind;
 
@@ -99,6 +100,7 @@ struct Ident {
     Token* tok;             // 宣言部分のトークンポインタ
     int offset;             // ローカル変数ののオフセット
     int is_string_literal;  // 文字列リテラルか？のフラグ
+    Scope* scope;           // 関数スコープ
 
     Node* funcbody;         // 関数のbody
     Parameter* params;
@@ -152,6 +154,7 @@ typedef enum NodeKind {
     ND_SWITCH,
     ND_CASE,
     ND_DEFAULT,
+    ND_LABEL,
 } NodeKind;
 
 struct Node {
@@ -162,6 +165,7 @@ struct Node {
     Ident*      ident;
     Type*       type;
     Token*      pos;
+    Label*      label;
 
     Node*       cond;
     Node*       then;
@@ -300,6 +304,12 @@ struct IR {
     Reg*    s2;
 };
 
+struct Label {
+    int no;
+    Token* tok;
+    Label* next;
+};
+
 // Scope : スコープを表現するもの
 //  int level       : スコープのレベル
 //  Ident* ident    : スコープ内に存在する識別子（typedef含む)
@@ -311,6 +321,7 @@ struct Scope {
     Ident*          ident;
     StringLiteral*  string_literal;
     Scope*             parent;
+    Label*          label;
 };
 
 enum TypeKind{
