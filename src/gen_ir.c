@@ -72,8 +72,9 @@ static void gen_function(Ident* func){
 
     Scope* scope = func->scope;
     for(Label* label = scope->label; label; label = label->next){
-        fprintf(stderr, "sldkfja;;\n");
-        label->no = get_label();
+        if(label->labeld){
+            label->no = get_label();
+        }
     }
 
     Node* cur = func->funcbody;
@@ -205,6 +206,13 @@ static void gen_stmt(Node* node){
             break;
         case ND_LABEL:
             new_IRLabel(node->label->no);
+            break;
+        case ND_GOTO:
+            if(node->label->labeld){
+                new_IRJmp(node->label->no);
+            } else {
+                error_at(node->pos->pos, "Label don't defined.\n");
+            }
             break;
         case ND_BLOCK:
         {

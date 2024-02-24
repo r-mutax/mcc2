@@ -339,6 +339,14 @@ bool is_label(){
     return false;
 }
 
+bool is_equal_token(Token* lhs, Token* rhs){
+    if((lhs->len == rhs->len)
+        && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
+                return true;
+    }
+    return false;
+}
+
 Token* get_token(){
     return token;
 }

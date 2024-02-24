@@ -19,6 +19,7 @@
             'switch(' expr ')' stmt |
             'case' const_expr ':' |
             'default:' | 
+            'goto' ident ';' 
     compound_stmt = stmt* | declaration* '}'
     declaration = declare '=' (expr)? ';'
     declare = declspec ident
@@ -282,9 +283,25 @@ static Node* stmt(){
     } else if(is_label()){
         Node* node = new_node(ND_LABEL, NULL, NULL);
         node->pos = tok;
-        Token* tok = expect_ident();
+        Token* label_ident = expect_ident();
         expect_token(TK_CORON);
-        Label* label = register_label(tok);
+
+        Label* label = find_label(label_ident);
+        if(!label){
+            label = register_label(label_ident);
+        }
+        label->labeld = true;
+        node->label = label;
+        return  node;
+    } else if(consume_token(TK_GOTO)){
+        Node* node = new_node(ND_GOTO, NULL, NULL);
+        node->pos = tok;
+        
+        Token* label_ident = expect_ident();
+        Label* label = find_label(label_ident);
+        if(!label){
+            label = register_label(label_ident);
+        }
         node->label = label;
         return  node;
     } else {

@@ -67,6 +67,7 @@ typedef enum TokenKind {
     TK_SWITCH,
     TK_CASE,
     TK_DEFAULT,
+    TK_GOTO,
     TK_IF,
     TK_ELSE,
     TK_WHILE,
@@ -155,6 +156,7 @@ typedef enum NodeKind {
     ND_CASE,
     ND_DEFAULT,
     ND_LABEL,
+    ND_GOTO,
 } NodeKind;
 
 struct Node {
@@ -307,6 +309,7 @@ struct IR {
 struct Label {
     int no;
     Token* tok;
+    bool labeld;
     Label* next;
 };
 
