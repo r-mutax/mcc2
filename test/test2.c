@@ -1,1 +1,5 @@
-int main(){    while(1) 6;LABEL:    return 0; }
+int main(){
+    LABEL: 
+    goto LABEL;   
+    return 0; 
+}

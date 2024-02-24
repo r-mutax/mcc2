@@ -244,8 +244,15 @@ int test_statement(){
     assert(s3, 10);
     assert(s4, 12);
 
-    printf("test of label..\n");
-    LABEL_TEST:
+    printf("test of label and goto..\n");
+
+    int li = 0;
+    LABEL_TEST_HEAD:
+    li += 1;
+    if(li == 10) goto LABEL_TEST_END;
+    goto LABEL_TEST_HEAD;
+    LABEL_TEST_END:
+    assert(li, 10);
 
     return 0;
 }

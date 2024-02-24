@@ -1,6 +1,7 @@
 #include "mcc2.h"
 #include "type.h"
 #include "utility.h"
+#include "tokenizer.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -66,6 +67,15 @@ Label* register_label(Token* tok){
     label->next = func_scope->label;
     func_scope->label = label;
     return label;
+}
+
+Label* find_label(Token* tok){
+    for(Label* label = func_scope->label; label; label = label->next){
+        if(is_equal_token(label->tok, tok)){
+            return label;
+        }
+    }
+    return false;
 }
 
 Ident* find_ident(Token* tok){
