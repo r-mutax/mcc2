@@ -79,6 +79,13 @@ int test_expression(){
     assert(- -10, 10);
     assert(- -+10, 10);
     assert(-10 + 20, 10);
+    int u = 0;
+    ++u;
+    assert(u, 1);
+    assert(++u, 2);
+    --u;
+    assert(u, 1);
+    assert(--u, 0);
     return 0;
 }
 

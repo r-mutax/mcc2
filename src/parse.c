@@ -563,6 +563,12 @@ static Node* unary(){
         return new_node(ND_ADDR, unary(), NULL);
     } else if(consume_token(TK_MUL)){
         return new_node(ND_DREF, unary(), NULL);
+    } else if(consume_token(TK_PLUS_PLUS)){
+        Node* node = unary();
+        return new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+    } else if(consume_token(TK_MINUS_MINUS)){
+        Node* node = unary();
+        return new_node(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
     } else if(consume_token(TK_SIZEOF)){
         Node* node = unary();
         add_type(node);
