@@ -23,7 +23,9 @@ typedef enum TokenKind {
     TK_IDENT,
     TK_STRING_LITERAL,          // 文字列リテラル
     TK_PLUS,                    // + 記号
+    TK_PLUS_PLUS,               // ++
     TK_MINUS,                   // - 記号
+    TK_MINUS_MINUS,             // --
     TK_MUL,                     // *
     TK_DIV,                     // /
     TK_PERCENT,                 // %

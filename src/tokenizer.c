@@ -34,7 +34,8 @@ void tokenize(char* src){
                 break;
             case '+':
                 if(*(p + 1) == '+'){
-
+                    cur = new_token(TK_PLUS_PLUS, cur, p);
+                    p += 2;
                 } else if(*(p + 1) == '=') {
                     cur = new_token(TK_PLUS_EQUAL, cur, p);
                     p += 2;
@@ -44,7 +45,8 @@ void tokenize(char* src){
                 break;
             case '-':
                 if(*(p + 1) == '-'){
-
+                    cur = new_token(TK_MINUS_MINUS, cur, p);
+                    p += 2;
                 } else if(*(p + 1) == '=') {
                     cur = new_token(TK_MINUS_EQUAL, cur, p);
                     p += 2;
