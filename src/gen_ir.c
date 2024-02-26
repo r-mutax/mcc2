@@ -290,6 +290,11 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_LOAD, NULL, ret, gen_expr(node->lhs));
             return ret;
         }
+        case ND_COMMA:
+        {
+            gen_expr(node->lhs);
+            return gen_expr(node->rhs);
+        }
         case ND_ASSIGN:
         {
             if(node->lhs->type->kind == TY_ARRAY){
@@ -346,32 +351,6 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_MOV, NULL, ret, gen_expr(node->rhs));            
             new_IRLabel(l_end);
             return ret;
-        }
-        case ND_POSTFIX_INC:
-        {
-            // 評価結果をロードしておく
-            Reg* regvar = gen_expr(node->lhs);
-            Reg* reg = new_Reg();
-            new_IR(IR_MOV, NULL, reg, regvar);
-
-            // インクリメントする
-            new_IR(IR_ADD, NULL, regvar, new_RegImm(1));
-            new_IR(IR_ASSIGN, NULL, gen_lvar(node->lhs), regvar);
-
-            return reg;
-        }
-        case ND_POSTFIX_DEC:
-        {
-            // 評価結果をロードしておく
-            Reg* regvar = gen_expr(node->lhs);
-            Reg* reg = new_Reg();
-            new_IR(IR_MOV, NULL, reg, regvar);
-
-            // インクリメントする
-            new_IR(IR_SUB, NULL, regvar, new_RegImm(1));
-            new_IR(IR_ASSIGN, NULL, gen_lvar(node->lhs), regvar);
-
-            return reg;
         }
         default:
             break;

@@ -1,5 +1,8 @@
+int assert(int a, int b);
+
 int main(){
     int pi = 0;
-    pi++;
+    assert(pi++, 0);
+
     return 0; 
 }
