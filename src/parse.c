@@ -590,6 +590,17 @@ static Node* postfix(){
             expect_token(TK_R_SQUARE_BRACKET);
             continue;
         }
+
+        if(consume_token(TK_PLUS_PLUS)){
+            node = new_node(ND_POSTFIX_INC, node, NULL);
+            continue;
+        }
+
+        if(consume_token(TK_MINUS_MINUS)){
+            node = new_node(ND_POSTFIX_DEC, node, NULL);
+            continue;
+        }
+
         return node;
     }
 }

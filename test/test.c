@@ -86,6 +86,14 @@ int test_expression(){
     --u;
     assert(u, 1);
     assert(--u, 0);
+
+    int pi = 0;
+    assert(pi++, 0);
+    assert(pi, 1);
+
+    int pd = 0;
+    assert(pd--, 0);
+    assert(pd, -1);
     return 0;
 }
 

@@ -334,8 +334,11 @@ void gen_x86(IR* ir){
                 }
                 
                 freeReg(ir->s2);
-                activateRegLhs(ir->t);
-                fprintf(fp, "  mov %s, [%s]\n", ir->t->rreg, ir->s1->rreg);
+
+                if(ir->t){
+                    activateRegLhs(ir->t);
+                    fprintf(fp, "  mov %s, [%s]\n", ir->t->rreg, ir->s1->rreg);
+                }
                 freeReg(ir->s1);
                 break;
             case IR_FN_CALL:
