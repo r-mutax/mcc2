@@ -94,6 +94,20 @@ int test_expression(){
     int pd = 0;
     assert(pd--, 0);
     assert(pd, -1);
+
+    int idlist[10];
+    for(int i = 0; i < 10; ++i){
+        idlist[i] = i;
+    }
+
+    int* incp = idlist;
+    incp++;
+    assert(*incp, 1);
+    assert(*(++incp), 2);
+    incp--;
+    assert(*incp, 1);
+    assert(*(--incp), 0);
+
     return 0;
 }
 

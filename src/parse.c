@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
     program = ( function | declaration )*
@@ -83,6 +84,8 @@ static Node* new_node_mul(Node* lhs, Node* rhs);
 static Node* new_node_mod(Node* lhs, Node* rhs);
 static Node* new_node_num(int num);
 static Node* new_node_var(Ident* ident);
+static Node* new_inc(Node* var);
+static Node* new_dec(Node* var);
 static bool is_function();
 
 void Program(){
@@ -592,12 +595,12 @@ static Node* postfix(){
         }
 
         if(consume_token(TK_PLUS_PLUS)){
-            node = new_node(ND_POSTFIX_INC, node, NULL);
+            node = new_inc(node);
             continue;
         }
 
         if(consume_token(TK_MINUS_MINUS)){
-            node = new_node(ND_POSTFIX_DEC, node, NULL);
+            node = new_dec(node);
             continue;
         }
 
@@ -756,6 +759,46 @@ static Node* new_node_mul(Node* lhs, Node* rhs){
 static Node* new_node_mod(Node* lhs, Node* rhs){
     Node* result = new_node(ND_MOD, lhs, rhs);
     return result;
+}
+
+static Node* new_inc(Node* var){
+    Token tok;
+    tok.pos = "tmp";
+    tok.len = 3;
+    tok.kind = TK_IDENT;
+    scope_in();
+    Type* ty = calloc(1, sizeof(Type));
+    memcpy(ty, var->type, sizeof(Type));
+
+    Ident* tmp = declare_ident(&tok, ID_LVAR, ty);
+
+    Node* node_tmp = new_node_var(tmp);
+    Node* node_assign = new_node(ND_ASSIGN, node_tmp, var);
+    Node* node_inc = new_node(ND_ASSIGN, var, new_node_add(var, new_node_num(1)));
+    Node* node = new_node(ND_COMMA, node_assign, new_node(ND_COMMA, node_inc, node_tmp));
+
+    scope_out();
+    return node;
+}
+
+static Node* new_dec(Node* var){
+    Token tok;
+    tok.pos = "tmp";
+    tok.len = 3;
+    tok.kind = TK_IDENT;
+    scope_in();
+    Type* ty = calloc(1, sizeof(Type));
+    memcpy(ty, var->type, sizeof(Type));
+
+    Ident* tmp = declare_ident(&tok, ID_LVAR, ty);
+
+    Node* node_tmp = new_node_var(tmp);
+    Node* node_assign = new_node(ND_ASSIGN, node_tmp, var);
+    Node* node_inc = new_node(ND_ASSIGN, var, new_node_sub(var, new_node_num(1)));
+    Node* node = new_node(ND_COMMA, node_assign, new_node(ND_COMMA, node_inc, node_tmp));
+
+    scope_out();
+    return node;
 }
 
 static bool is_function(){

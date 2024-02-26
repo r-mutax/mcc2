@@ -35,10 +35,15 @@ Type* new_type(TypeKind kind, int size){
 }
 
 void add_type(Node* node){
-    if(node == NULL || node->type){
+    if(node == NULL){
         return;
     }
 
+    add_type(node->params);
+
+    if(node->type){
+        return;
+    }
     add_type(node->lhs);
     add_type(node->rhs);
     add_type(node->cond);
@@ -47,8 +52,9 @@ void add_type(Node* node){
     add_type(node->body);
     add_type(node->init);
     add_type(node->incr);
-    add_type(node->params);
     add_type(node->next);
+
+
 
     switch(node->kind){
         case ND_NUM:
@@ -85,6 +91,9 @@ void add_type(Node* node){
         case ND_FUNCCALL:           // 関数呼び出し（parseで設定済)
         case ND_VAR:               // 変数
             node->type = node->ident->type;
+            break;
+        case ND_COMMA:
+            node->type = node->lhs->type;
             break;
 
         // 文 -> 文は評価しても値を返さない＝型がない
