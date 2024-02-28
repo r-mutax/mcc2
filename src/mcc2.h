@@ -12,6 +12,7 @@ typedef struct Reg Reg;
 typedef struct RealReg RealReg;
 typedef struct Scope Scope;
 typedef struct Type Type;
+typedef struct Member Member;
 typedef struct Label Label;
 typedef struct StringLiteral StringLiteral;
 typedef enum TypeKind TypeKind;
@@ -77,6 +78,7 @@ typedef enum TokenKind {
     TK_INT,                     // "int"
     TK_CHAR,                    // "char"
     TK_SHORT,                   // "short"
+    TK_STRUCT,                  //  "struct"
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -160,6 +162,7 @@ typedef enum NodeKind {
     ND_DEFAULT,
     ND_LABEL,
     ND_GOTO,
+    ND_MEMBER,
 } NodeKind;
 
 struct Node {
@@ -335,14 +338,22 @@ enum TypeKind{
     TY_POINTER,
     TY_ARRAY,
     TY_FUNC,
+    TY_STRUCT,
+};
+
+struct Member {
+    Ident* ident;
+    Member* next;
 };
 
 struct Type {
     TypeKind    kind;
+    char*       name;
     int         size;
     int         is_unsigned;
     int         array_len;
     Type*       ptr_to;
+    Member*     member;         // 構造体 or 共用体のメンバー
 };
 
 struct StringLiteral{

@@ -329,7 +329,8 @@ char* get_token_string(Token* tok){
 }
 
 bool is_type(){
-    return token->kind == TK_INT
+    return token->kind == TK_STRUCT
+         || token->kind == TK_INT
          || token->kind == TK_SHORT
          || token->kind == TK_CHAR;
 }

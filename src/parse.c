@@ -59,6 +59,8 @@ static Node* compound_stmt();
 static Node* declaration();
 static Ident* declare();
 static Type* declspec();
+static Member* struct_member();
+static Type* struct_spec();
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -94,6 +96,7 @@ void Program(){
             function();
         } else {
             Ident* ident = declare();
+            register_ident(ident);
             ident->kind = ID_GVAR;
             expect_token(TK_SEMICORON);
         }
@@ -136,6 +139,7 @@ static void function(){
                 break;
             } else {
                 Ident* ident = declare();
+                register_ident(ident);
                 Parameter* param = calloc(1, sizeof(Parameter));
                 param->ident = ident;
                 cur = cur->next = param;
@@ -207,6 +211,7 @@ static Node* stmt(){
         } else {
             if(is_type()){
                 Ident* ident = declare();
+                register_ident(ident);
                 if(consume_token(TK_ASSIGN)){
                     node->init = new_node(ND_ASSIGN, new_node_var(ident), assign());
                 }
@@ -338,6 +343,7 @@ static Node* compound_stmt(){
 
 static Node* declaration(){
     Ident* ident = declare();
+    register_ident(ident);
 
     Node* node = NULL;
     if(consume_token(TK_ASSIGN)){
@@ -357,8 +363,7 @@ static Ident* declare(){
         expect_token(TK_R_SQUARE_BRACKET);
     }
 
-    Ident* ident = declare_ident(ident_tok, ID_LVAR, ty);
-    return ident;
+    return make_ident(ident_tok, ID_LVAR, ty);
 }
 
 static Type* declspec(){
@@ -369,7 +374,10 @@ static Type* declspec(){
         ty = ty_char;
     } else if(consume_token(TK_SHORT)){
         ty = ty_short;
+    } else if(consume_token(TK_STRUCT)){
+        ty = struct_spec();
     } else {
+        fprintf(stderr, "%d\n", get_token()->kind);
         unreachable();
     }
 
@@ -377,6 +385,45 @@ static Type* declspec(){
         ty = pointer_to(ty);
     }
     return ty;
+}
+
+static Member* struct_member(){
+    Member head;
+    Member* cur = &head;
+    do {
+        cur = cur->next = calloc(1, sizeof(Member));
+        cur->ident = declare();
+        expect_token(TK_SEMICORON);
+    } while(!consume_token(TK_R_BRACKET));
+    return head.next;
+}
+
+static Type* struct_spec(){
+    Token* tok = consume_ident();
+    if(tok){
+        // 名前付き構造体
+    } else {
+        // 無名構造体
+        Type* ty = new_type(TY_STRUCT, 0);
+        scope_in();
+        expect_token(TK_L_BRACKET);
+        ty->member = struct_member();
+        scope_out();
+
+        int offset = 0;
+        for(Member* cur = ty->member; cur; cur = cur->next){
+            cur->ident->offset = offset;
+            offset += cur->ident->type->size;
+        }
+        ty->size = offset;
+        ty->name = "__unnamed_struct";
+        // TODO
+        // done : 作ったメンバのオフセットを調整（構造体先頭からのオフセットにする）
+        // done : 構造体のサイズ調整
+        // 構造体の型をTypeに登録する -> unnamed_なので登録しない
+        // この変数を登録する
+        return ty;
+    }
 }
 
 static Node* expr(){
@@ -601,6 +648,23 @@ static Node* postfix(){
 
         if(consume_token(TK_MINUS_MINUS)){
             node = new_dec(node);
+            continue;
+        }
+
+        if(consume_token(TK_DOT)){
+            add_type(node);
+
+            node = new_node(ND_MEMBER, node, NULL);
+            
+            // find a member
+            Token* tok = expect_ident();
+            Ident* ident = get_member(node->lhs->type, tok);
+            if(!ident){
+                error_at(tok->pos, "Not a member.\n");
+            }
+
+            node->type = ident->type;
+            node->val = ident->offset;
             continue;
         }
 

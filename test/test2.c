@@ -1,8 +1,10 @@
-int assert(int a, int b);
-
 int main(){
-    int pi = 0;
-    assert(pi++, 0);
+    struct {
+        short a;
+        char b;
+    } c;
 
-    return 0; 
+    c.a = 12;
+
+    return c.a; 
 }
