@@ -1,9 +1,10 @@
 int main(){
-    struct {
+    struct abc{
         short a;
         char b;
-    } c;
+    } d;
 
+    struct abc c;
     c.a = 12;
 
     return c.a; 

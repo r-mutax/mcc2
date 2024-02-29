@@ -3,6 +3,7 @@
 #include "ident.h"
 #include "error.h"
 #include "type.h"
+#include "utility.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -89,6 +90,14 @@ static Node* new_node_var(Ident* ident);
 static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
 static bool is_function();
+
+Token unnamed_struct_token = {
+    TK_IDENT,
+    "__unnamed_struct",
+    0,
+    sizeof("__unnamed_struct"),
+    NULL,
+};
 
 void Program(){
     while(!is_eof()){
@@ -402,13 +411,30 @@ static Type* struct_spec(){
     Token* tok = consume_ident();
     if(tok){
         // 名前付き構造体
+        Type* ty = find_struct_type(tok);
+        fprintf(stderr, "%d\n", ty);
+
+        if(!ty){
+            // まだ登録されていない構造体
+            ty = new_type(TY_STRUCT, 0);
+            expect_token(TK_L_BRACKET);
+            ty->member = struct_member();
+
+            int offset = 0;
+            for(Member* cur = ty->member; cur; cur = cur->next){
+                cur->ident->offset = offset;
+                offset += cur->ident->type->size;
+            }
+            ty->size = offset;
+            ty->name = tok;
+            register_struct_type(ty);
+        }
+        return ty;
     } else {
         // 無名構造体
         Type* ty = new_type(TY_STRUCT, 0);
-        scope_in();
         expect_token(TK_L_BRACKET);
         ty->member = struct_member();
-        scope_out();
 
         int offset = 0;
         for(Member* cur = ty->member; cur; cur = cur->next){
@@ -416,7 +442,7 @@ static Type* struct_spec(){
             offset += cur->ident->type->size;
         }
         ty->size = offset;
-        ty->name = "__unnamed_struct";
+        ty->name = &unnamed_struct_token;
         // TODO
         // done : 作ったメンバのオフセットを調整（構造体先頭からのオフセットにする）
         // done : 構造体のサイズ調整

@@ -329,8 +329,9 @@ struct Scope {
     int             level;
     Ident*          ident;
     StringLiteral*  string_literal;
-    Scope*             parent;
+    Scope*          parent;
     Label*          label;
+    Type*           struct_type;
 };
 
 enum TypeKind{
@@ -348,12 +349,13 @@ struct Member {
 
 struct Type {
     TypeKind    kind;
-    char*       name;
+    Token*      name;
     int         size;
     int         is_unsigned;
     int         array_len;
     Type*       ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー
+    Type*       next;
 };
 
 struct StringLiteral{

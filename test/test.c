@@ -386,6 +386,16 @@ int test_type(){
     struct_array[5].s = 235;
     assert(struct_array[5].c, 10);
     assert(struct_array[5].s, 235);    
+
+    struct abc_struct {
+        int a;
+        short s;
+    } abc_struct_1;
+    struct abc_struct abc_struct_2;
+    abc_struct_2.a = 10;
+    abc_struct_2.s = 34;
+    assert(abc_struct_2.a, 10);
+    assert(abc_struct_2.s, 34);
 }
 
 int test_primary(){

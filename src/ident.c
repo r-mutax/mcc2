@@ -68,6 +68,11 @@ void register_ident(Ident* ident){
     cur_scope->ident = ident;
 }
 
+void register_struct_type(Type* type){
+    type->next = cur_scope->struct_type;
+    cur_scope->struct_type = type;
+}
+
 Ident* register_string_literal(Token* tok){
     StringLiteral* sl = calloc(1, sizeof(StringLiteral));
     sl->name = calloc(1, sizeof(20));
@@ -119,6 +124,18 @@ Ident* find_ident(Token* tok){
 
     return NULL;
 }
+
+Type* find_struct_type(Token* tok){
+    for(Scope* sc = cur_scope; sc; sc = sc->parent){
+        for(Type* ty = sc->struct_type; ty; ty = ty->next){
+            if(is_equal_token(ty->name, tok)){
+                return ty;
+            }
+        } 
+    }
+    return NULL;
+}
+
 
 int get_stack_size(){
     return stack_size;
