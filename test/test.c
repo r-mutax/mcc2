@@ -396,6 +396,10 @@ int test_type(){
     abc_struct_2.s = 34;
     assert(abc_struct_2.a, 10);
     assert(abc_struct_2.s, 34);
+
+    struct struct_decl{
+        int sss;
+    };
 }
 
 int test_primary(){
