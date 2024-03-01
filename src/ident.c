@@ -40,6 +40,39 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     return ident;
 }
 
+// Identの作成
+Ident* make_ident(Token* tok, IdentKind kind, Type* ty){
+    Ident* ident = calloc(1, sizeof(Ident));
+    
+    ident->kind = kind;
+    ident->name = strnewcpyn(tok->pos, tok->len);
+    ident->tok = tok;
+    ident->offset = 0;
+    ident->type = ty;
+    return ident;
+}
+
+void register_ident(Ident* ident){
+    Type* ty = ident->type;
+    if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
+        if(ty->kind == TY_ARRAY){
+            stack_size += ty->size * ty->array_len;    
+        } else {
+            stack_size += ty->size;
+        }
+    }
+
+    ident->offset = stack_size;
+
+    ident->next = cur_scope->ident;
+    cur_scope->ident = ident;
+}
+
+void register_struct_type(Type* type){
+    type->next = cur_scope->struct_type;
+    cur_scope->struct_type = type;
+}
+
 Ident* register_string_literal(Token* tok){
     StringLiteral* sl = calloc(1, sizeof(StringLiteral));
     sl->name = calloc(1, sizeof(20));
@@ -91,6 +124,18 @@ Ident* find_ident(Token* tok){
 
     return NULL;
 }
+
+Type* find_struct_type(Token* tok){
+    for(Scope* sc = cur_scope; sc; sc = sc->parent){
+        for(Type* ty = sc->struct_type; ty; ty = ty->next){
+            if(is_equal_token(ty->name, tok)){
+                return ty;
+            }
+        } 
+    }
+    return NULL;
+}
+
 
 int get_stack_size(){
     return stack_size;

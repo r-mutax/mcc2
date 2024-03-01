@@ -1,10 +1,12 @@
 #include "mcc2.h"
+#include "type.h"
+#include "tokenizer.h"
 #include <stdlib.h>
 
 Type* ty_char;
 Type* ty_int;
 Type* ty_short;
-Type* new_type(TypeKind kind, int size);
+
 
 void ty_init(){
     ty_char = new_type(TY_INT, 1);
@@ -125,3 +127,13 @@ bool equal_type(Type* ty1, Type* ty2){
     }
     return true;
 }
+
+Ident* get_member(Type* type, Token* tok){
+    for(Member* member = type->member; member; member =member->next){
+        if(is_equal_token(member->ident->tok, tok)){
+            return member->ident;
+        }
+    }
+    return NULL;
+}
+

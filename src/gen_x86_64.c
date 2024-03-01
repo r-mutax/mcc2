@@ -163,6 +163,7 @@ void gen_x86(IR* ir){
     while(ir){
         switch(ir->cmd){
             case IR_FN_LABEL:
+                fprintf(stderr, "%d\n", ir->s2->val);
                 fprintf(fp, "  .text\n");
                 fprintf(fp, "%s:\n", ir->s1->str);
                 push("rbp");

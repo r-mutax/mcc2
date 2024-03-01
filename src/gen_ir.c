@@ -242,7 +242,14 @@ static Reg* gen_lvar(Node*  node){
         }
             return new_RegVar(node->ident);
         case ND_DREF:
-            return gen_expr(node->lhs);            
+            return gen_expr(node->lhs);
+        case ND_MEMBER:
+        {
+            Reg* base_reg = gen_lvar(node->lhs);
+            base_reg->size = node->type->size;
+            new_IR(IR_ADD, NULL, base_reg, new_RegImm(node->val));
+            return base_reg;
+        }
         default:
             error_at(node->ident->tok->pos, "Not a lhs.\n");
             break;
@@ -256,9 +263,10 @@ static Reg* gen_expr(Node* node){
             return new_RegImm(node->val);
         }
         case ND_VAR:
+        case ND_MEMBER:
         {
             Reg* regvar = gen_lvar(node);
-            if(node->ident->type->kind != TY_ARRAY){
+            if(node->type->kind != TY_ARRAY){
                 Reg* reg = new_Reg();
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;

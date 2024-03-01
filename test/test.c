@@ -349,6 +349,57 @@ int test_type(){
     int* ip;
     assert(sizeof(ip), 8);
     return 0;
+
+    printf("test of struct..\n");
+    struct {
+        char c;
+        short s;
+        int i;
+    } test_strcut;
+    test_strcut.c = 1;
+    test_strcut.s = 2;
+    test_strcut.i = 3;
+    assert(test_strcut.c, 1);
+    assert(test_strcut.s, 2);
+    assert(test_strcut.i, 3);
+
+    printf("test of struct of struct..\n");
+    struct {
+        struct {
+            char c;
+            short s;
+            int i;
+        } ss;
+    } test_struct_struct;
+    test_struct_struct.ss.c = 8;
+    test_struct_struct.ss.s = 9;
+    test_struct_struct.ss.i = 10;
+    assert(test_struct_struct.ss.c, 1);
+    assert(test_struct_struct.ss.s, 2);
+    assert(test_struct_struct.ss.i, 3);
+
+    struct {
+        char c;
+        short s;
+    } struct_array[10];
+    struct_array[5].c = 10;
+    struct_array[5].s = 235;
+    assert(struct_array[5].c, 10);
+    assert(struct_array[5].s, 235);    
+
+    struct abc_struct {
+        int a;
+        short s;
+    } abc_struct_1;
+    struct abc_struct abc_struct_2;
+    abc_struct_2.a = 10;
+    abc_struct_2.s = 34;
+    assert(abc_struct_2.a, 10);
+    assert(abc_struct_2.s, 34);
+
+    struct struct_decl{
+        int sss;
+    };
 }
 
 int test_primary(){
