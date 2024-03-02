@@ -113,9 +113,22 @@ int test_expression(){
 
 int test_statement(){
     printf("test of while-statement...\n");
-    int while_a; while_a = 0;    
+    int while_a; while_a = 0;
     while(while_a < 3) while_a = while_a + 1;
     assert(while_a, 3);
+
+    printf("test of do-while-statement...\n");
+    int do_while_a; do_while_a = 0;
+    do {
+        do_while_a = do_while_a + 1;
+    } while(do_while_a < 3);
+    assert(do_while_a, 3);
+
+    do_while_a = 0;
+    do {
+        do_while_a = do_while_a + 1;
+    } while(0);
+    assert(do_while_a, 1);
 
     printf("test of for-statement...\n");
     int for_a; for_a = 0;

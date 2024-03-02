@@ -75,6 +75,7 @@ typedef enum TokenKind {
     TK_ELSE,
     TK_WHILE,
     TK_FOR,
+    TK_DO,                      // "do"
     TK_INT,                     // "int"
     TK_CHAR,                    // "char"
     TK_SHORT,                   // "short"
@@ -149,6 +150,7 @@ typedef enum NodeKind {
     ND_IF,
     ND_IF_ELSE,
     ND_WHILE,
+    ND_DO_WHILE,
     ND_FOR,
     ND_BLOCK,
     ND_FUNCCALL,
