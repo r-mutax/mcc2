@@ -155,15 +155,24 @@ static void emit_binop(char* op, Reg* t, Reg* s1, Reg* s2){
     freeReg(s2);
 }
 
+void open_output_file(char* filename){
+    fp = fopen(filename, "w");
+    if(fp == NULL){
+        error("cannot open file: %s", filename);
+    }
+}
+
+void close_output_file(){
+    fclose(fp);
+}
+
 void gen_x86(IR* ir){
-    fp = stdout;
     fprintf(fp, ".intel_syntax noprefix\n");
     fprintf(fp, ".global main\n");
 
     while(ir){
         switch(ir->cmd){
             case IR_FN_LABEL:
-                fprintf(stderr, "%d\n", ir->s2->val);
                 fprintf(fp, "  .text\n");
                 fprintf(fp, "%s:\n", ir->s1->str);
                 push("rbp");
