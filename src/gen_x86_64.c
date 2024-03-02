@@ -183,6 +183,16 @@ void gen_x86(IR* ir){
                 push("r14");
                 push("r15");
                 break;
+            case IR_FN_END_LABEL:
+                fprintf(fp, "ret_%s:\n", ir->s1->str);
+                pop("r15");
+                pop("r14");
+                pop("r13");
+                pop("r12");
+                fprintf(fp, "  mov rsp, rbp\n");
+                pop("rbp");
+                fprintf(fp, "  ret\n");
+                break;
             case IR_STORE_ARG_REG:
 
                 if(ir->s1->ident->type->size == 1){
@@ -206,13 +216,7 @@ void gen_x86(IR* ir){
                     activateRegLhs(ir->s1);
                     fprintf(fp, "  mov rax, %s\n", ir->s1->rreg);
                 }
-                pop("r15");
-                pop("r14");
-                pop("r13");
-                pop("r12");
-                fprintf(fp, "  mov rsp, rbp\n");
-                pop("rbp");
-                fprintf(fp, "  ret\n");
+                fprintf(fp, "  jmp ret_%s\n", ir->s2->str);
                 break;
             case IR_GVAR_LABEL:
             {

@@ -8,6 +8,7 @@
 static long g_label = 0;
 static long g_break = -1;
 static long g_continue = -1;
+static Reg* func_name_str = NULL;
 static void gen_datas(Ident* ident);
 static void gen_funcs(Ident* ident);
 static void gen_function(Ident* func);
@@ -57,7 +58,8 @@ static void gen_funcs(Ident* ident){
 }
 
 static void gen_function(Ident* func){
-    new_IR(IR_FN_LABEL, NULL, new_RegStr(func->name), new_RegImm(func->stack_size));
+    func_name_str = new_RegStr(func->name);
+    new_IR(IR_FN_LABEL, NULL, func_name_str, new_RegImm(func->stack_size));
 
     // パラメータの展開
     Parameter* param = func->params;
@@ -82,6 +84,8 @@ static void gen_function(Ident* func){
         gen_stmt(cur);
         cur = cur->next;
     }
+
+    new_IR(IR_FN_END_LABEL, NULL, func_name_str, NULL);
 }
 
 static void gen_stmt(Node* node){
@@ -90,7 +94,7 @@ static void gen_stmt(Node* node){
     }
     switch(node->kind){
         case ND_RETURN:
-            new_IR(IR_RET, NULL, gen_expr(node->lhs), NULL);
+            new_IR(IR_RET, NULL, gen_expr(node->lhs), func_name_str);
             break;
         case ND_IF:
         {
