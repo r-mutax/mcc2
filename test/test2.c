@@ -7,5 +7,5 @@ int main(){
     struct abc c;
     c.a = 12;
 
-    return c.a; 
+    return c.a;
 }

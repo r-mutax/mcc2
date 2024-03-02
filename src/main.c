@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "error.h"
 #include "type.h"
@@ -10,6 +11,7 @@
 #include "parse.h"
 #include "gen_ir.h"
 #include "gen_x86_64.h"
+#include <bits/getopt_core.h>
 
 char* read_file(char* path){
 
@@ -41,15 +43,35 @@ char* get_filename(char* path){
     return buf;
 }
 
+void analy_opt(int argc, char** argv){
+    int opt;
+    while((opt = getopt(argc, argv, "c:o:")) != -1){
+        switch(opt){
+            case 'c':
+                user_input = read_file(optarg);
+                filename = get_filename(optarg);
+                break;
+            case 'o':
+                if(optarg != NULL)
+                    open_output_file(optarg);
+                else{
+                    fprintf(stderr, "output file name is not specified.\n");
+                    exit(1);
+                }
+                break;
+            default:
+                error("invalid option.");
+        }
+    }
+}
+
 int main(int argc, char **argv){
 
-    if(argv[1][0] == '-' && argv[1][1] == 'c'){
-        user_input = read_file(argv[2]);
-        filename = get_filename(argv[2]);
+    if(argc > 2){
+        analy_opt(argc, argv);
     } else {
-        user_input = argv[1];
+        user_input = read_file(argv[1]);
     }
-
     // initialize
     ty_init();
 
@@ -59,6 +81,8 @@ int main(int argc, char **argv){
 
     gen_ir();
     gen_x86(get_ir());
+
+    close_output_file();
 
     return 0;
 }

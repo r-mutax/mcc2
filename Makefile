@@ -8,12 +8,12 @@ mcc2: $(OBJS)
 $(OBJS):
 
 test: mcc2
-	./mcc2 -c ./test/test.c > tmp.s
+	./mcc2 -c ./test/test.c -o ./tmp.s
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
 test2: mcc2
-	./mcc2 -c ./test/test2.c > tmp.s
+	./mcc2 -c ./test/test2.c -o ./tmp.s
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
