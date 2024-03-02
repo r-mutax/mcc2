@@ -278,9 +278,10 @@ typedef enum IRCmd{
 
     // DEFINITION
     IR_FN_LABEL,
-        // fnlabel (null) (ident) (imm) 
+        // fnlabel (null) (ident) (imm)
         // -> identという名前の関数の、プロローグを生成する。
         //    immは確保するスタックのサイズ
+    IR_FN_END_LABEL,
     IR_GVAR_LABEL,
         // gvarlabel (null) (ident) (imm)
         // -> identというグローバル変数を定義する
