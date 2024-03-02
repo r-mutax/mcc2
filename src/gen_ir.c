@@ -63,7 +63,7 @@ static void gen_function(Ident* func){
     Parameter* param = func->params;
     for(int i = 0;
         param; ++i, param = param->next){
-        
+
         new_IR(IR_STORE_ARG_REG, NULL, new_RegVar(param->ident), new_RegImm(i));
         if(i >= 6){
             error_at(func->tok->pos, "Functions with more than six arguments are not supported.");
@@ -131,6 +131,24 @@ static void gen_stmt(Node* node){
             g_continue = l_continue_buf;
 
             new_IRJmp(l_start);
+            new_IRLabel(l_end);
+            break;
+        }
+        case ND_DO_WHILE:
+        {
+            long l_break_buf = g_break;
+            long l_continue_buf = g_continue;
+            long l_start = get_label();
+            long l_end = get_label();
+
+            new_IRLabel(l_start);
+            g_continue = l_start;
+            g_break = l_end;
+            gen_stmt(node->body);
+            g_break = l_break_buf;
+            g_continue = l_continue_buf;
+
+            new_IR(IR_JNZ, NULL, gen_expr(node->cond), new_RegImm(l_start));
             new_IRLabel(l_end);
             break;
         }

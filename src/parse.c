@@ -15,13 +15,13 @@
     stmt = expr ';' |
             'return' expr ';' |
             'if(' expr ')' stmt ('else' stmt)? |
-            'while(' expr ')' stmt | 
+            'while(' expr ')' stmt |
             'for(' (expr | declspec ident ('=' assign) ? )? ';' expr? '; expr? )' stmt |
             '{' compound_stmt |
             'switch(' expr ')' stmt |
             'case' const_expr ':' |
-            'default:' | 
-            'goto' ident ';' 
+            'default:' |
+            'goto' ident ';'
     compound_stmt = stmt* | declaration* '}'
     declaration = declare '=' (expr)? ';'
     declare = declspec ident
@@ -115,7 +115,7 @@ void Program(){
     return;
 }
 
-static void function(){    
+static void function(){
     Type* func_type = declspec();
     Token* tok = consume_ident();
     if(!tok){
@@ -211,6 +211,16 @@ static Node* stmt(){
         expect_token(TK_R_PAREN);
         node->body = stmt();
         return node;
+    } else if(consume_token(TK_DO)){
+        Node* node = new_node(ND_DO_WHILE, NULL, NULL);
+        node->pos = tok;
+        node->body = stmt();
+        expect_token(TK_WHILE);
+        expect_token(TK_L_PAREN);
+        node->cond = expr();
+        expect_token(TK_R_PAREN);
+        expect_token(TK_SEMICORON);
+        return node;
     } else if(consume_token(TK_FOR)){
         Node* node = new_node(ND_FOR, NULL, NULL);
         node->pos = tok;
@@ -218,7 +228,7 @@ static Node* stmt(){
 
         // 初期化式
         if(consume_token(TK_SEMICORON)){
-           node->init = NULL; 
+            node->init = NULL;
         } else {
             if(is_type()){
                 Type* ty = declspec();
@@ -235,7 +245,7 @@ static Node* stmt(){
 
         // 継続条件の式
         if(consume_token(TK_SEMICORON)){
-           node->cond = new_node_num(1); 
+            node->cond = new_node_num(1);
         } else {
             node->cond = expr();
             expect_token(TK_SEMICORON);
@@ -243,7 +253,7 @@ static Node* stmt(){
 
         // イテレートの式
         if(consume_token(TK_R_PAREN)){
-           node->incr = NULL; 
+            node->incr = NULL;
         } else {
             node->incr = expr();
             expect_token(TK_R_PAREN);

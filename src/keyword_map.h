@@ -23,4 +23,5 @@ static KEYWORD_MAP keyword_map[] = {
     {   "default",      TK_DEFAULT  },
     {   "goto",         TK_GOTO     },
     {   "struct",       TK_STRUCT   },
+    {   "do",           TK_DO       },
 };
