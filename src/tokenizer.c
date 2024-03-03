@@ -1,5 +1,6 @@
 #include "tokenizer.h"
 #include "error.h"
+#include "file.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -7,13 +8,20 @@
 #include "keyword_map.h"
 
 Token* token;
+SrcFile* cur_file;
 
+static void tokenize(char* src);
 static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
 
-void tokenize(char* src){
+void tokenize_file(char* filepath){
+    SrcFile* file = read_file(filepath);
+    tokenize(file->body);
+}
+
+static void tokenize(char* src){
     char* p = src;
     Token head = {};
     Token* cur = &head;
@@ -297,6 +305,7 @@ static Token* new_token(TokenKind kind, Token* cur, char* p){
     Token* tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->pos = p;
+    tok->file = cur_file;
     cur->next = tok;
     return tok;
 }

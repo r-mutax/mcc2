@@ -3,7 +3,7 @@
 #include "mcc2.h"
 #include <stdbool.h>
 
-void tokenize(char* src);
+void tokenize_file(char* path);
 void expect_token(TokenKind kind);
 bool consume_token(TokenKind kind);
 

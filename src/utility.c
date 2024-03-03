@@ -48,16 +48,16 @@ void printline(char* loc){
     while (*end != '\n')
         end++;
 
-    // 行数を数える
-    int line_num = 1;
-    for (char *p = user_input; p < line; p++){
-        if (*p == '\n'){
-            line_num++;
-        }
-    }
+    // // 行数を数える
+    // int line_num = 1;
+    // for (char *p = user_input; p < line; p++){
+    //     if (*p == '\n'){
+    //         line_num++;
+    //     }
+    // }
 
     // エラー箇所を表示する
-    int indent = fprintf(fp, "%s:%d: ", filename, line_num);        
+    // int indent = fprintf(fp, "%s:%d: ", filename, line_num);
     fprintf(fp, "%.*s\n", (int)(end - line), line);
 
 }
