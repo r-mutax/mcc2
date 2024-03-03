@@ -60,7 +60,6 @@ int main(int argc, char **argv){
     
     Token* tok = tokenize(filename);
     parse(tok);
-    Program();
 
     gen_ir();
     gen_x86(get_ir());

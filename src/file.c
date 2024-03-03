@@ -8,7 +8,6 @@
 
 SrcFile* read_file(char* path){
 
-    fprintf(stderr, path);
     FILE *fp = fopen(path, "r");
     if(!fp){
         error("invalid file path.");

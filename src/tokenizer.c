@@ -22,10 +22,6 @@ Token* tokenize(char* path){
     return tok;
 }
 
-void set_token(Token* tok){
-    token = tok;
-}
-
 static Token* scan(char* src){
     char* p = src;
     Token head = {};
@@ -253,58 +249,6 @@ static Token* scan(char* src){
     return head.next;
 }
 
-void expect_token(TokenKind kind){
-    if(token->kind != kind){
-        error_at(token->pos, "error: unexpected token.\n");
-    }
-
-    token = token->next;
-}
-
-int expect_num(){
-    if(token->kind != TK_NUM){
-        error_at(token->pos, "error: not a number.\n", token->pos);
-    }
-
-    int result = token->val;
-    token = token->next;
-    return result;
-}
-
-bool consume_token(TokenKind kind){
-    if(token->kind != kind){
-        return false;
-    }
-    token = token->next;
-    return true;
-}
-
-Token* consume_ident(){
-    if(token->kind != TK_IDENT) return NULL;
-
-    Token* tok = token;
-    token = token->next;
-    return tok;
-}
-
-Token* consume_string_literal(){
-    if(token->kind != TK_STRING_LITERAL) return NULL;
-    Token* tok = token;
-    token = token->next;
-    return tok;
-}
-
-Token* expect_ident(){
-    Token* tok = consume_ident();
-    if(tok == NULL){
-        error_at(token->pos, "error: not a ident.\n", token->pos);
-    }
-    return tok;
-}
-
-bool is_eof(){
-    return token->kind == TK_EOF;
-}
 
 static Token* new_token(TokenKind kind, Token* cur, char* p){
     Token* tok = calloc(1, sizeof(Token));
@@ -335,27 +279,6 @@ static TokenKind check_keyword(char* p, int len){
     return TK_IDENT;
 }
 
-char* get_token_string(Token* tok){
-    char* str = calloc(1, sizeof(char) * tok->len);
-    memcpy(str, tok->pos, tok->len);
-    return str;
-}
-
-bool is_type(){
-    return token->kind == TK_STRUCT
-        || token->kind == TK_UNION
-        || token->kind == TK_INT
-        || token->kind == TK_SHORT
-        || token->kind == TK_CHAR;
-}
-
-bool is_label(){
-    if(token->kind == TK_IDENT && token->next->kind == TK_COLON){
-        return true;
-    }
-    return false;
-}
-
 bool is_equal_token(Token* lhs, Token* rhs){
     if((lhs->len == rhs->len)
         && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
@@ -364,7 +287,8 @@ bool is_equal_token(Token* lhs, Token* rhs){
     return false;
 }
 
-Token* get_token(){
-    return token;
+char* get_token_string(Token* tok){
+    char* str = calloc(1, sizeof(char) * tok->len);
+    memcpy(str, tok->pos, tok->len);
+    return str;
 }
-
