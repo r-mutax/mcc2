@@ -26,7 +26,7 @@
     declaration = declare '=' (expr)? ';'
     declare = declspec ident
     declspec = 'int' '*' *
-    expr = assign
+    expr = assign (',' assign)*
     assign = cond_expr ( '=' assign
                         | '+=' assign
                         | '-=' assign
@@ -467,7 +467,11 @@ static Type* struct_spec(){
 }
 
 static Node* expr(){
-    return assign();
+    Node* node = assign();
+    while(consume_token(TK_COMMA)){
+        node = new_node(ND_COMMA, node, assign());
+    }
+    return node;
 }
 
 static Node* assign(){
@@ -694,7 +698,7 @@ static Node* postfix(){
             add_type(node);
 
             node = new_node(ND_MEMBER, node, NULL);
-            
+
             // find a member
             Token* tok = expect_ident();
             Ident* ident = get_member(node->lhs->type, tok);
