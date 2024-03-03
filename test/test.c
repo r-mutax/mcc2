@@ -71,7 +71,12 @@ int test_expression(){
     assert(0 || 5, 1);
     assert(0 || 0, 0);
 
-    printf("test of ternary operator...\n");
+    printf("test of comma operator...\n");
+    assert(3, (4, 3));
+    assert(4, (3, 4));
+    assert(5, (3, 4, 5));
+
+    printf("test of condition operator...\n");
     assert(1 ? 6 : 3, 6);
     assert(0 ? 6 : 3, 3);
 

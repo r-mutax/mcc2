@@ -26,7 +26,7 @@
     declaration = declare '=' (expr)? ';'
     declare = declspec ident
     declspec = 'int' '*' *
-    expr = assign
+    expr = assign (',' assign)*
     assign = cond_expr ( '=' assign
                         | '+=' assign
                         | '-=' assign
@@ -155,7 +155,7 @@ static void function(){
                 param->ident = ident;
                 cur = cur->next = param;
             }
-        } while(consume_token(TK_CANMA));
+        } while(consume_token(TK_COMMA));
         func->params = head.next;
         expect_token(TK_R_PAREN);
     }
@@ -294,7 +294,7 @@ static Node* stmt(){
 
         Node* node = new_node(ND_CASE, NULL, NULL);
         node->lhs = const_expr(); 
-        consume_token(TK_CORON);
+        consume_token(TK_COLON);
         node->pos = tok;
 
         node->next_case = switch_node->next_case;
@@ -303,7 +303,7 @@ static Node* stmt(){
     } else if(consume_token(TK_DEFAULT)){
         Node* node = new_node(ND_DEFAULT, NULL, NULL);
         node->pos = tok;
-        consume_token(TK_CORON);
+        consume_token(TK_COLON);
 
         if(switch_node->default_label){
             error_at(tok->pos, "multiple default label.");
@@ -314,7 +314,7 @@ static Node* stmt(){
         Node* node = new_node(ND_LABEL, NULL, NULL);
         node->pos = tok;
         Token* label_ident = expect_ident();
-        expect_token(TK_CORON);
+        expect_token(TK_COLON);
 
         Label* label = find_label(label_ident);
         if(!label){
@@ -326,7 +326,6 @@ static Node* stmt(){
     } else if(consume_token(TK_GOTO)){
         Node* node = new_node(ND_GOTO, NULL, NULL);
         node->pos = tok;
-        
         Token* label_ident = expect_ident();
         Label* label = find_label(label_ident);
         if(!label){
@@ -338,7 +337,7 @@ static Node* stmt(){
         Node* node = expr();
         expect_token(TK_SEMICORON);
         node->pos = tok;
-        return node;        
+        return node;
     }
 }
 
@@ -468,12 +467,15 @@ static Type* struct_spec(){
 }
 
 static Node* expr(){
-    return assign();
+    Node* node = assign();
+    while(consume_token(TK_COMMA)){
+        node = new_node(ND_COMMA, node, assign());
+    }
+    return node;
 }
 
 static Node* assign(){
     Node* node = cond_expr();
-    
     if(consume_token(TK_ASSIGN)){
         node = new_node(ND_ASSIGN, node, assign());
     } else if(consume_token(TK_PLUS_EQUAL)){
@@ -490,7 +492,7 @@ static Node* assign(){
         node = new_node(ND_ASSIGN, node, new_node(ND_L_BITSHIFT, node, assign()));
     } else if(consume_token(TK_R_BITSHIFT_EQUAL)){
         node = new_node(ND_ASSIGN, node, new_node(ND_R_BITSHIFT, node, assign()));
-    } 
+    }
     return node;
 }
 
@@ -501,7 +503,7 @@ static Node* cond_expr(){
         Node* cnode = new_node(ND_COND_EXPR, NULL, NULL);
         cnode->cond = node;
         cnode->lhs = expr();
-        expect_token(TK_CORON);
+        expect_token(TK_COLON);
         cnode->rhs = cond_expr();
         node = cnode;
     }
@@ -696,7 +698,7 @@ static Node* postfix(){
             add_type(node);
 
             node = new_node(ND_MEMBER, node, NULL);
-            
+
             // find a member
             Token* tok = expect_ident();
             Ident* ident = get_member(node->lhs->type, tok);
@@ -750,7 +752,7 @@ static Node* primary(){
                         Node* nd_param = &head;
                         do{
                             nd_param = nd_param->next = assign();
-                        } while(consume_token(TK_CANMA));
+                        } while(consume_token(TK_COMMA));
                         expect_token(TK_R_PAREN);
                         node->params = head.next;
                     }
