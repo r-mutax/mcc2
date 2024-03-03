@@ -2,3 +2,4 @@ mcc2
 tmp
 tmp.s
 src/*.o
+src/*.d
