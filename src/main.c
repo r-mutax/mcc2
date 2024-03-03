@@ -57,7 +57,6 @@ int main(int argc, char **argv){
     }
 
     // compile
-    
     Token* tok = tokenize(filename);
     parse(tok);
 

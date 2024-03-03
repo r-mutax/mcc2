@@ -87,6 +87,7 @@ typedef enum TokenKind {
     TK_SHORT,                   // "short"
     TK_STRUCT,                  //  "struct"
     TK_UNION,                   // "union"
+    TK_NEWLINE,                 // "\n"
     TK_EOF                      // 終端記号
 } TokenKind;
 

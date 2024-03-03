@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
+#include <stdio.h>
 #include "keyword_map.h"
 
 Token* token;
@@ -15,10 +15,20 @@ static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
+Token* delete_newline_token(Token* tok);
 
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
     Token* tok = scan(file->body);
+    tok = delete_newline_token(tok);
+
+    Token* cur = tok;
+    while(cur){
+        if(cur->kind == TK_NEWLINE){
+            printf("NEWLINE\n");
+        }
+        cur = cur->next;
+    }
     return tok;
 }
 
@@ -224,6 +234,9 @@ static Token* scan(char* src){
                     cur = new_token(TK_DOT, cur, p++);
                 }
                 break;
+            case '\n':
+                cur = new_token(TK_NEWLINE, cur, p++);
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
@@ -291,4 +304,18 @@ char* get_token_string(Token* tok){
     char* str = calloc(1, sizeof(char) * tok->len);
     memcpy(str, tok->pos, tok->len);
     return str;
+}
+
+Token* delete_newline_token(Token* tok){
+    Token head;
+    head.next = tok;
+    Token* cur = &head;
+    while(cur->next){
+        if(cur->next->kind == TK_NEWLINE){
+            cur->next = cur->next->next;
+        } else {
+            cur = cur->next;
+        }
+    }
+    return head.next;
 }
