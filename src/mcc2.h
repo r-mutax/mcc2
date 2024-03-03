@@ -15,9 +15,15 @@ typedef struct Type Type;
 typedef struct Member Member;
 typedef struct Label Label;
 typedef struct StringLiteral StringLiteral;
+typedef struct SrcFile SrcFile;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
+
+struct SrcFile{
+    char*   name;
+    char*   body;
+};
 
 typedef enum TokenKind {
     TK_NUM,                     // 数値
@@ -81,12 +87,14 @@ typedef enum TokenKind {
     TK_SHORT,                   // "short"
     TK_STRUCT,                  //  "struct"
     TK_UNION,                   // "union"
+    TK_NEWLINE,                 // "\n"
     TK_EOF                      // 終端記号
 } TokenKind;
 
 struct Token {
     TokenKind   kind;   // トークンの種類
     char*       pos;    // 位置
+    SrcFile*    file;   // ファイル
     int         val;
     int         len;
     Token*      next;   // 次のトークン

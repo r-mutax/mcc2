@@ -3,22 +3,6 @@
 #include "mcc2.h"
 #include <stdbool.h>
 
-void tokenize(char* src);
-void expect_token(TokenKind kind);
-bool consume_token(TokenKind kind);
-
-Token* consume_ident();
-Token* expect_ident();
-
-Token* consume_string_literal();
-
-int expect_num();
-
-bool is_eof();
-bool is_type();
-bool is_label();
+Token* tokenize(char* path);
 bool is_equal_token(Token* lhs, Token* rhs);
 char* get_token_string(Token* tok);
-
-Token* get_token();
-void set_token(Token* tok);

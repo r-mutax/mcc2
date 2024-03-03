@@ -1,11 +1,15 @@
 CFLAGS=-std=c11 -g -static
 SRCS=$(wildcard ./src/*.c)
 OBJS=$(SRCS:.c=.o)
+DEPS=$(SRCS:.c=.d)
 
 mcc2: $(OBJS)
 	$(CC) -o mcc2 $(OBJS) $(LDFLAGS)
 
-$(OBJS):
+%.o: %.c
+	$(CC) -c $(CFLAGS) -MD -o $@ $<
+
+-include $(DEPS)
 
 test: mcc2
 	./mcc2 -c ./test/test.c -o ./tmp.s
@@ -18,6 +22,6 @@ test2: mcc2
 	./tmp
 
 clean:
-	rm -f mcc2 src/*.o *~ tmp*
+	rm -f mcc2 src/*.o *~ tmp* src/*.d
 
 .PHONY: test clean

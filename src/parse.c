@@ -53,7 +53,9 @@
 */
 
 static Node* switch_node = NULL;
+static Token* token = NULL;
 
+static void Program();
 static void function();
 static Node* stmt();
 static Node* compound_stmt();
@@ -91,13 +93,35 @@ static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
 static bool is_function();
 
+// ----------------------------------------
+// トークン操作
+void expect_token(TokenKind kind);
+bool consume_token(TokenKind kind);
+Token* consume_ident();
+Token* expect_ident();
+Token* consume_string_literal();
+int expect_num();
+bool is_eof();
+bool is_type();
+bool is_label();
+Token* get_token();
+void set_token(Token* tok);
+
+
 Token unnamed_struct_token = {
     TK_IDENT,
     "__unnamed_struct",
+    NULL,
     0,
     sizeof("__unnamed_struct"),
     NULL,
 };
+
+void parse(Token* tok){
+    token = tok;
+    Program();
+    return;
+}
 
 void Program(){
     while(!is_eof()){
@@ -956,4 +980,83 @@ static bool is_function(){
 
     set_token(bkup);
     return retval;
+}
+
+// ----------------------------
+// トークン操作
+void expect_token(TokenKind kind){
+    if(token->kind != kind){
+        error_at(token->pos, "error: unexpected token.\n");
+    }
+
+    token = token->next;
+}
+
+int expect_num(){
+    if(token->kind != TK_NUM){
+        error_at(token->pos, "error: not a number.\n", token->pos);
+    }
+
+    int result = token->val;
+    token = token->next;
+    return result;
+}
+
+bool consume_token(TokenKind kind){
+    if(token->kind != kind){
+        return false;
+    }
+    token = token->next;
+    return true;
+}
+
+Token* consume_ident(){
+    if(token->kind != TK_IDENT) return NULL;
+
+    Token* tok = token;
+    token = token->next;
+    return tok;
+}
+
+Token* consume_string_literal(){
+    if(token->kind != TK_STRING_LITERAL) return NULL;
+    Token* tok = token;
+    token = token->next;
+    return tok;
+}
+
+Token* expect_ident(){
+    Token* tok = consume_ident();
+    if(tok == NULL){
+        error_at(token->pos, "error: not a ident.\n", token->pos);
+    }
+    return tok;
+}
+
+bool is_eof(){
+    return token->kind == TK_EOF;
+}
+
+
+bool is_type(){
+    return token->kind == TK_STRUCT
+        || token->kind == TK_UNION
+        || token->kind == TK_INT
+        || token->kind == TK_SHORT
+        || token->kind == TK_CHAR;
+}
+
+bool is_label(){
+    if(token->kind == TK_IDENT && token->next->kind == TK_COLON){
+        return true;
+    }
+    return false;
+}
+
+Token* get_token(){
+    return token;
+}
+
+void set_token(Token* tok){
+    token = tok;
 }

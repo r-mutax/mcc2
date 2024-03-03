@@ -2,4 +2,5 @@
 
 #include "mcc2.h"
 
-void Program();
+void parse(Token* tok);
+

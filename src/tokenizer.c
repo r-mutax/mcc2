@@ -1,19 +1,32 @@
 #include "tokenizer.h"
 #include "error.h"
+#include "file.h"
+#include "preprocess.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
+#include <stdio.h>
 #include "keyword_map.h"
 
 Token* token;
+SrcFile* cur_file;
 
+static Token* scan(char* src);
 static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
+Token* delete_newline_token(Token* tok);
 
-void tokenize(char* src){
+Token* tokenize(char* path){
+    SrcFile* file = read_file(path);
+    Token* tok = scan(file->body);
+    tok = preprocess(tok);
+    tok = delete_newline_token(tok);
+    return tok;
+}
+
+static Token* scan(char* src){
     char* p = src;
     Token head = {};
     Token* cur = &head;
@@ -215,6 +228,9 @@ void tokenize(char* src){
                     cur = new_token(TK_DOT, cur, p++);
                 }
                 break;
+            case '\n':
+                cur = new_token(TK_NEWLINE, cur, p++);
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
@@ -237,66 +253,15 @@ void tokenize(char* src){
         }
     }
 
-    token = head.next;
+    return head.next;
 }
 
-void expect_token(TokenKind kind){
-    if(token->kind != kind){
-        error_at(token->pos, "error: unexpected token.\n");
-    }
-
-    token = token->next;
-}
-
-int expect_num(){
-    if(token->kind != TK_NUM){
-        error_at(token->pos, "error: not a number.\n", token->pos);
-    }
-
-    int result = token->val;
-    token = token->next;
-    return result;
-}
-
-bool consume_token(TokenKind kind){
-    if(token->kind != kind){
-        return false;
-    }
-    token = token->next;
-    return true;
-}
-
-Token* consume_ident(){
-    if(token->kind != TK_IDENT) return NULL;
-
-    Token* tok = token;
-    token = token->next;
-    return tok;
-}
-
-Token* consume_string_literal(){
-    if(token->kind != TK_STRING_LITERAL) return NULL;
-    Token* tok = token;
-    token = token->next;
-    return tok;
-}
-
-Token* expect_ident(){
-    Token* tok = consume_ident();
-    if(tok == NULL){
-        error_at(token->pos, "error: not a ident.\n", token->pos);
-    }
-    return tok;
-}
-
-bool is_eof(){
-    return token->kind == TK_EOF;
-}
 
 static Token* new_token(TokenKind kind, Token* cur, char* p){
     Token* tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->pos = p;
+    tok->file = cur_file;
     cur->next = tok;
     return tok;
 }
@@ -321,27 +286,6 @@ static TokenKind check_keyword(char* p, int len){
     return TK_IDENT;
 }
 
-char* get_token_string(Token* tok){
-    char* str = calloc(1, sizeof(char) * tok->len);
-    memcpy(str, tok->pos, tok->len);
-    return str;
-}
-
-bool is_type(){
-    return token->kind == TK_STRUCT
-        || token->kind == TK_UNION
-        || token->kind == TK_INT
-        || token->kind == TK_SHORT
-        || token->kind == TK_CHAR;
-}
-
-bool is_label(){
-    if(token->kind == TK_IDENT && token->next->kind == TK_COLON){
-        return true;
-    }
-    return false;
-}
-
 bool is_equal_token(Token* lhs, Token* rhs){
     if((lhs->len == rhs->len)
         && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
@@ -350,9 +294,22 @@ bool is_equal_token(Token* lhs, Token* rhs){
     return false;
 }
 
-Token* get_token(){
-    return token;
+char* get_token_string(Token* tok){
+    char* str = calloc(1, sizeof(char) * tok->len);
+    memcpy(str, tok->pos, tok->len);
+    return str;
 }
-void set_token(Token* tok){
-    token = tok;
+
+Token* delete_newline_token(Token* tok){
+    Token head;
+    head.next = tok;
+    Token* cur = &head;
+    while(cur->next){
+        if(cur->next->kind == TK_NEWLINE){
+            cur->next = cur->next->next;
+        } else {
+            cur = cur->next;
+        }
+    }
+    return head.next;
 }
