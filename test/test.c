@@ -148,6 +148,13 @@ int test_statement(){
 
     for(int for_d = 0; for_d < 5; ){ for_d += 1; }
 
+    int for_null = 0;
+    for(;;){
+        for_null += 1;
+        if(for_null == 5) break;
+    }
+    assert(for_null, 5);
+
     printf("test of if-statement...\n");
     int if_a;
     if_a = 0;
