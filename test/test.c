@@ -438,6 +438,7 @@ int test_type(){
     assert(test_union.c, 3);
     assert(test_union.s, 3);
     assert(test_union.i, 3);
+    assert(sizeof(test_union), 8);
 }
 
 int test_primary(){
