@@ -10,18 +10,23 @@
 Token* token;
 SrcFile* cur_file;
 
-static void tokenize(char* src);
+static Token* scan(char* src);
 static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
 
-void tokenize_file(char* filepath){
-    SrcFile* file = read_file(filepath);
-    tokenize(file->body);
+Token* tokenize(char* path){
+    SrcFile* file = read_file(path);
+    Token* tok = scan(file->body);
+    return tok;
 }
 
-static void tokenize(char* src){
+void set_token(Token* tok){
+    token = tok;
+}
+
+static Token* scan(char* src){
     char* p = src;
     Token head = {};
     Token* cur = &head;
@@ -245,7 +250,7 @@ static void tokenize(char* src){
         }
     }
 
-    token = head.next;
+    return head.next;
 }
 
 void expect_token(TokenKind kind){
@@ -362,6 +367,4 @@ bool is_equal_token(Token* lhs, Token* rhs){
 Token* get_token(){
     return token;
 }
-void set_token(Token* tok){
-    token = tok;
-}
+

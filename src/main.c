@@ -57,7 +57,9 @@ int main(int argc, char **argv){
     }
 
     // compile
-    tokenize_file(filename);
+    
+    Token* tok = tokenize(filename);
+    parse(tok);
     Program();
 
     gen_ir();

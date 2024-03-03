@@ -99,6 +99,12 @@ Token unnamed_struct_token = {
     NULL,
 };
 
+void parse(Token* tok){
+    set_token(tok);
+    Program();
+    return;
+}
+
 void Program(){
     while(!is_eof()){
         if(is_function()){

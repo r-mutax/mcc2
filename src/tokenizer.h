@@ -3,6 +3,9 @@
 #include "mcc2.h"
 #include <stdbool.h>
 
+Token* tokenize(char* path);
+void set_token(Token* tok);
+
 void tokenize_file(char* path);
 void expect_token(TokenKind kind);
 bool consume_token(TokenKind kind);
