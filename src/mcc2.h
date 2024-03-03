@@ -61,8 +61,8 @@ typedef enum TokenKind {
     TK_SEMICORON,               // ;
     TK_DOT,                     // .
     TK_DOT_DOT_DOT,             // ...
-    TK_CORON,                   // :
-    TK_CANMA,                   // ,
+    TK_COLON,                   // :
+    TK_COMMA,                   // ,
     TK_RETURN,                  // return
     TK_BREAK,                   // break
     TK_CONTINUE,                // continue

@@ -145,7 +145,7 @@ void tokenize(char* src){
                 cur = new_token(TK_QUESTION, cur, p++);
                 break;
             case ':':
-                cur = new_token(TK_CORON, cur, p++);
+                cur = new_token(TK_COLON, cur, p++);
                 break;
             case '<':
                 if(*(p + 1) == '='){
@@ -183,7 +183,7 @@ void tokenize(char* src){
                 cur = new_token(TK_SEMICORON, cur, p++);
                 break;
             case ',':
-                cur = new_token(TK_CANMA, cur, p++);
+                cur = new_token(TK_COMMA, cur, p++);
                 break;
             case '"':
                 {
@@ -330,13 +330,13 @@ char* get_token_string(Token* tok){
 
 bool is_type(){
     return token->kind == TK_STRUCT
-         || token->kind == TK_INT
-         || token->kind == TK_SHORT
-         || token->kind == TK_CHAR;
+        || token->kind == TK_INT
+        || token->kind == TK_SHORT
+        || token->kind == TK_CHAR;
 }
 
 bool is_label(){
-    if(token->kind == TK_IDENT && token->next->kind == TK_CORON){
+    if(token->kind == TK_IDENT && token->next->kind == TK_COLON){
         return true;
     }
     return false;
