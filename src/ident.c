@@ -68,9 +68,9 @@ void register_ident(Ident* ident){
     cur_scope->ident = ident;
 }
 
-void register_struct_type(Type* type){
-    type->next = cur_scope->struct_type;
-    cur_scope->struct_type = type;
+void register_struct_or_union_type(Type* type){
+    type->next = cur_scope->struct_or_union_type;
+    cur_scope->struct_or_union_type = type;
 }
 
 Ident* register_string_literal(Token* tok){
@@ -116,22 +116,22 @@ Ident* find_ident(Token* tok){
         for(Ident* id = sc->ident; id; id = id->next){
             Token* lhs = tok;
             if((lhs->len == strlen(id->name))
-                  && (!memcmp(lhs->pos, id->name, lhs->len))){
+                    && (!memcmp(lhs->pos, id->name, lhs->len))){
                 return id;
             }
-        } 
+        }
     }
 
     return NULL;
 }
 
-Type* find_struct_type(Token* tok){
+Type* find_struct_or_union_type(Token* tok){
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
-        for(Type* ty = sc->struct_type; ty; ty = ty->next){
+        for(Type* ty = sc->struct_or_union_type; ty; ty = ty->next){
             if(is_equal_token(ty->name, tok)){
                 return ty;
             }
-        } 
+        }
     }
     return NULL;
 }

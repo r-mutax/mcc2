@@ -202,7 +202,7 @@ void tokenize(char* src){
                     cur = new_token(TK_NUM, cur, p);
                     cur->val = a;
                     while(*p != '\''){
-                       p++;
+                        p++;
                     }
                     p++;
                 }
@@ -224,10 +224,9 @@ void tokenize(char* src){
                 } else if(is_ident1(c)){
                     char* s = p;
                     p++;
-                    while(is_ident2(*p)) { 
+                    while(is_ident2(*p)) {
                         p++;
                     }
-                    
                     cur = new_token(check_keyword(s, p - s), cur, s);
                     cur->len = p - s;
                 } else {
@@ -330,6 +329,7 @@ char* get_token_string(Token* tok){
 
 bool is_type(){
     return token->kind == TK_STRUCT
+        || token->kind == TK_UNION
         || token->kind == TK_INT
         || token->kind == TK_SHORT
         || token->kind == TK_CHAR;

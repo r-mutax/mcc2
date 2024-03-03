@@ -80,6 +80,7 @@ typedef enum TokenKind {
     TK_CHAR,                    // "char"
     TK_SHORT,                   // "short"
     TK_STRUCT,                  //  "struct"
+    TK_UNION,                   // "union"
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -194,14 +195,13 @@ struct Node {
 };
 
 
-/*  
+/*
     仮想レジスタ
         int idx     : 実レジスタ割付番号
                       この仮想レジスタ
         int val     : レジスタが直値を扱う場合の数値
         Ident* ident: レジスタに割り当てられた識別子
                         ex) ラベル、変数、関数名...
-                            
 */
 typedef enum RegKind {
     REG_REG = 0,    // 普通のレジスタ
@@ -254,7 +254,7 @@ typedef enum IRCmd{
         //  write address of s2 to s1
     IR_LOAD,
         // load (null) s1 s2
-        //  [s2] -> s1 
+        //  [s2] -> s1
 
     // CONTROL
     IR_RET,
@@ -334,7 +334,7 @@ struct Scope {
     StringLiteral*  string_literal;
     Scope*          parent;
     Label*          label;
-    Type*           struct_type;
+    Type*           struct_or_union_type;
 };
 
 enum TypeKind{
@@ -343,6 +343,7 @@ enum TypeKind{
     TY_ARRAY,
     TY_FUNC,
     TY_STRUCT,
+    TY_UMION,
 };
 
 struct Member {

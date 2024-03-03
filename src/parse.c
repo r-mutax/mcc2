@@ -25,7 +25,7 @@
     compound_stmt = stmt* | declaration* '}'
     declaration = declare '=' (expr)? ';'
     declare = declspec ident
-    declspec = 'int' '*' *
+    declspec = 'int' '*' * | 'char' '*' * | 'short' '*' * | 'struct' ident | 'union' ident
     expr = assign (',' assign)*
     assign = cond_expr ( '=' assign
                         | '+=' assign
@@ -60,8 +60,8 @@ static Node* compound_stmt();
 static Node* declaration();
 static Ident* declare(Type* ty);
 static Type* declspec();
-static Member* struct_member();
-static Type* struct_spec();
+static Member* struct_or_union_member();
+static Type* struct_or_union_spec(bool is_union);
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -159,7 +159,7 @@ static void function(){
         func->params = head.next;
         expect_token(TK_R_PAREN);
     }
-    
+
     func->scope = get_current_scope();
 
     if(consume_token(TK_SEMICORON)){
@@ -370,6 +370,11 @@ static Node* declaration(){
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
 
+    if(ty->kind == TY_UMION && consume_token(TK_SEMICORON)){
+        // 共用体の登録を行う
+        return new_node(ND_VOID_STMT, NULL, NULL);
+    }
+
     Ident* ident = declare(ty);
     register_ident(ident);
 
@@ -403,7 +408,9 @@ static Type* declspec(){
     } else if(consume_token(TK_SHORT)){
         ty = ty_short;
     } else if(consume_token(TK_STRUCT)){
-        ty = struct_spec();
+        ty = struct_or_union_spec(false);
+    } else if(consume_token(TK_UNION)){
+        ty = struct_or_union_spec(true);
     } else {
         fprintf(stderr, "%d\n", get_token()->kind);
         unreachable();
@@ -415,7 +422,7 @@ static Type* declspec(){
     return ty;
 }
 
-static Member* struct_member(){
+static Member* struct_or_union_member(){
     Member head;
     Member* cur = &head;
     do {
@@ -427,40 +434,62 @@ static Member* struct_member(){
     return head.next;
 }
 
-static Type* struct_spec(){
+static Type* struct_or_union_spec(bool is_union){
     Token* tok = consume_ident();
     if(tok){
         // 名前付き構造体
-        Type* ty = find_struct_type(tok);
+        Type* ty = find_struct_or_union_type(tok);
 
         if(!ty){
             // まだ登録されていない構造体
-            ty = new_type(TY_STRUCT, 0);
+            ty = new_type(is_union ? TY_UMION : TY_STRUCT, 0);
             expect_token(TK_L_BRACKET);
-            ty->member = struct_member();
+            ty->member = struct_or_union_member();
 
-            int offset = 0;
-            for(Member* cur = ty->member; cur; cur = cur->next){
-                cur->ident->offset = offset;
-                offset += cur->ident->type->size;
+            if(is_union){
+                int max_size = 0;
+                for(Member* cur = ty->member; cur; cur = cur->next){
+                    cur->ident->offset = 0;
+                    if(max_size < cur->ident->type->size){
+                        max_size = cur->ident->type->size;
+                    }
+                }
+                ty->size = max_size;
+            } else {
+                int offset = 0;
+                for(Member* cur = ty->member; cur; cur = cur->next){
+                    cur->ident->offset = offset;
+                    offset += cur->ident->type->size;
+                }
+                ty->size = offset;
             }
-            ty->size = offset;
             ty->name = tok;
-            register_struct_type(ty);
+            register_struct_or_union_type(ty);
         }
         return ty;
     } else {
         // 無名構造体
-        Type* ty = new_type(TY_STRUCT, 0);
+        Type* ty = new_type(is_union ? TY_UMION : TY_STRUCT, 0);
         expect_token(TK_L_BRACKET);
-        ty->member = struct_member();
+        ty->member = struct_or_union_member();
 
-        int offset = 0;
-        for(Member* cur = ty->member; cur; cur = cur->next){
-            cur->ident->offset = offset;
-            offset += cur->ident->type->size;
-        }
-        ty->size = offset;
+            if(is_union){
+                int max_size = 0;
+                for(Member* cur = ty->member; cur; cur = cur->next){
+                    cur->ident->offset = 0;
+                    if(max_size < cur->ident->type->size){
+                        max_size = cur->ident->type->size;
+                    }
+                }
+                ty->size = max_size;
+            } else {
+                int offset = 0;
+                for(Member* cur = ty->member; cur; cur = cur->next){
+                    cur->ident->offset = offset;
+                    offset += cur->ident->type->size;
+                }
+                ty->size = offset;
+            }
         ty->name = &unnamed_struct_token;
         return ty;
     }
