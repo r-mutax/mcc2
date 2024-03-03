@@ -425,6 +425,19 @@ int test_type(){
     struct struct_decl{
         int sss;
     };
+
+    printf("test of union..\n");
+    union {
+        char c;
+        short s;
+        int i;
+    } test_union;
+    test_union.c = 1;
+    test_union.s = 2;
+    test_union.i = 3;
+    assert(test_union.c, 3);
+    assert(test_union.s, 3);
+    assert(test_union.i, 3);
 }
 
 int test_primary(){

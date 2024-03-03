@@ -1,5 +1,11 @@
 int main(){
     int a = 10;
+    union {
+        int i;
+        char c;
+    } u;
+    
+    u.i = 10;
 
-    return 5;
+    return u.c;
 }
