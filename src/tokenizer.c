@@ -1,6 +1,7 @@
 #include "tokenizer.h"
 #include "error.h"
 #include "file.h"
+#include "preprocess.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -20,15 +21,8 @@ Token* delete_newline_token(Token* tok);
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
     Token* tok = scan(file->body);
+    tok = preprocess(tok);
     tok = delete_newline_token(tok);
-
-    Token* cur = tok;
-    while(cur){
-        if(cur->kind == TK_NEWLINE){
-            printf("NEWLINE\n");
-        }
-        cur = cur->next;
-    }
     return tok;
 }
 
