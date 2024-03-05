@@ -26,14 +26,23 @@ char* get_filename(char* path){
 
 void analy_opt(int argc, char** argv){
     int opt;
-    while((opt = getopt(argc, argv, "c:o:")) != -1){
+    while((opt = getopt(argc, argv, "c:o:i:")) != -1){
         switch(opt){
             case 'c':
                 filename = optarg;
                 break;
+            case 'i':
+                if(optarg != NULL) {
+                    add_include_path(optarg);
+                } else {
+                    fprintf(stderr, "include path is not specified.\n");
+                    exit(1);
+                }
+                break;
             case 'o':
-                if(optarg != NULL)
+                if(optarg != NULL) {
                     open_output_file(optarg);
+                }
                 else{
                     fprintf(stderr, "output file name is not specified.\n");
                     exit(1);
