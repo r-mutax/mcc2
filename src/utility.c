@@ -4,8 +4,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-extern char* user_input;
-extern char* filename;
 extern FILE* fp;
 
 char* strnewcpyn(char* src, int n){
@@ -37,8 +35,12 @@ char* format_string(const char* format, ...) {
     return buffer;
 }
 
-void printline(char* loc){
+void printline(Token* tok){
     // 行頭を見つける
+    char* user_input = tok->file->body;
+    char* filename = tok->file->name;
+    char* loc = tok->pos;
+
     char *line = loc;
     while (user_input < line && line[-1] != '\n')
         line--;
@@ -48,16 +50,16 @@ void printline(char* loc){
     while (*end != '\n')
         end++;
 
-    // // 行数を数える
-    // int line_num = 1;
-    // for (char *p = user_input; p < line; p++){
-    //     if (*p == '\n'){
-    //         line_num++;
-    //     }
-    // }
+    // 行数を数える
+    int line_num = 1;
+    for (char *p = user_input; p < line; p++){
+        if (*p == '\n'){
+            line_num++;
+        }
+    }
 
     // エラー箇所を表示する
-    // int indent = fprintf(fp, "%s:%d: ", filename, line_num);
+    int indent = fprintf(fp, "%s:%d: ", filename, line_num);
     fprintf(fp, "%.*s\n", (int)(end - line), line);
 
 }

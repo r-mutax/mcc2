@@ -1,3 +1,7 @@
 {
-    "github.copilot.chat.localeOverride": "ja"
+    "github.copilot.chat.localeOverride": "ja",
+    "files.associations": {
+        "stdlib.h": "c",
+        "*.tcc": "c"
+    }
 }

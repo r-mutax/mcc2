@@ -16,10 +16,13 @@ static Token* new_token(TokenKind kind, Token* cur, char* p);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
+static TokenKind check_preprocess_keyword(char* p, int len);
 Token* delete_newline_token(Token* tok);
 
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
+    cur_file = file;
+
     Token* tok = scan(file->body);
     tok = preprocess(tok);
     tok = delete_newline_token(tok);
@@ -85,7 +88,7 @@ static Token* scan(char* src){
                 } else if(*(p + 1) == '*') {
                     char* q = strstr(p + 2, "*/");
                     if(q == 0) {
-                        error_at(p, "Block comment is not close.");
+                        // error_at(p, "Block comment is not close.");
                     }
                     p = q + 2;
                 } else {
@@ -151,7 +154,7 @@ static Token* scan(char* src){
                     p += 2;
                 } else {
                     // まだ使えないから
-                    error_at(p, "error: unexpected token.\n");
+                    // error_at(p, "error: unexpected token.\n");
                 }
                 break;
             case '?':
@@ -231,6 +234,31 @@ static Token* scan(char* src){
             case '\n':
                 cur = new_token(TK_NEWLINE, cur, p++);
                 break;
+            case '#':
+                {
+                    if(*(p+1) == '#'){
+                        cur = new_token(TK_HASH_HASH, cur, p);
+                        p += 2;
+                    } else if(is_ident1(*(p+1))){
+                        char* hash = p;
+                        char* s = p + 1;
+                        p += 2;
+                        while(is_ident2(*p)) {
+                            p++;
+                        }
+                        TokenKind kind = check_preprocess_keyword(s, p - s);
+                        if(kind == TK_IDENT){
+                            cur = new_token(TK_HASH, cur, hash);
+                            cur = new_token(TK_IDENT, cur, s);
+                            cur->len = p - s;
+                        } else {
+                            cur = new_token(kind, cur, s);
+                            cur->len = hash - s;
+                        }
+                    } else {
+                        cur = new_token(TK_HASH, cur, p++);
+                    }
+                }
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
@@ -247,7 +275,7 @@ static Token* scan(char* src){
                     cur->len = p - s;
                 } else {
                     // 想定外のトークンが来た
-                    error_at(p, "error: unexpected token.\n");
+                    // error_at(p, "error: unexpected token.\n");
                 }
                 break;
         }
@@ -286,6 +314,18 @@ static TokenKind check_keyword(char* p, int len){
     return TK_IDENT;
 }
 
+static TokenKind check_preprocess_keyword(char* p, int len){
+    for(int i = 0; i < sizeof(preprocess_keyword_map) / sizeof(KEYWORD_MAP); i++){
+        if(len == strlen(preprocess_keyword_map[i].keyword)
+            && (!memcmp(p, preprocess_keyword_map[i].keyword, len))){
+            return preprocess_keyword_map[i].kind;
+        }
+    }
+
+    // keyword_mapになかった場合、トークンは識別子
+    return TK_IDENT;
+}
+
 bool is_equal_token(Token* lhs, Token* rhs){
     if((lhs->len == rhs->len)
         && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
@@ -312,4 +352,11 @@ Token* delete_newline_token(Token* tok){
         }
     }
     return head.next;
+}
+
+Token* next_newline(Token* tok){
+    while(tok->kind != TK_NEWLINE){
+        tok = tok->next;
+    }
+    return tok;
 }

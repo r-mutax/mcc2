@@ -16,9 +16,15 @@ typedef struct Member Member;
 typedef struct Label Label;
 typedef struct StringLiteral StringLiteral;
 typedef struct SrcFile SrcFile;
+typedef struct IncludePath IncludePath;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
+
+struct IncludePath {
+    char* path;
+    IncludePath* next;
+};
 
 struct SrcFile{
     char*   name;
@@ -88,6 +94,11 @@ typedef enum TokenKind {
     TK_STRUCT,                  //  "struct"
     TK_UNION,                   // "union"
     TK_NEWLINE,                 // "\n"
+
+    // preprocess
+    TK_INCLUDE,                 // #include
+    TK_HASH,
+    TK_HASH_HASH,
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -229,6 +240,7 @@ struct Reg {
     int     size;
     char*   str;
     char*   rreg;
+    Token*  tok;
 };
 
 typedef enum IRCmd{
