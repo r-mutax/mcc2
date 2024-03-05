@@ -155,7 +155,7 @@ static void function(){
     } else {
         // ある場合は戻り値型がconflictしてないかチェック
         if(!equal_type(func_type, func->type)){
-            error_at(tok->pos, "conflict definition type.");
+            error_at(tok, "conflict definition type.");
         }
         has_forward_def = true;
     }
@@ -193,7 +193,7 @@ static void function(){
     } else {
         if(has_forward_def && func->funcbody){
             // すでに定義された関数のbodyがあるのに、ここでも定義している
-            error_at(tok->pos, "Conflict function definition.");
+            error_at(tok, "Conflict function definition.");
         }
     }
 
@@ -313,7 +313,7 @@ static Node* stmt(){
         return node;
     } else if(consume_token(TK_CASE)){
         if(switch_node == NULL){
-            error_at(tok->pos, "case is not within a switch statement.");
+            error_at(tok, "case is not within a switch statement.");
         }
 
         Node* node = new_node(ND_CASE, NULL, NULL);
@@ -330,7 +330,7 @@ static Node* stmt(){
         consume_token(TK_COLON);
 
         if(switch_node->default_label){
-            error_at(tok->pos, "multiple default label.");
+            error_at(tok, "multiple default label.");
         }
         switch_node->default_label = node;
         return node;
@@ -756,7 +756,7 @@ static Node* postfix(){
             Token* tok = expect_ident();
             Ident* ident = get_member(node->lhs->type, tok);
             if(!ident){
-                error_at(tok->pos, "Not a member.\n");
+                error_at(tok, "Not a member.\n");
             }
 
             node->type = ident->type;
@@ -788,7 +788,7 @@ static Node* primary(){
     if(ident_token){
         Ident* ident = find_ident(ident_token);
         if(!ident){
-            error_at(ident_token->pos, "Undefined Variable.");
+            error_at(ident_token, "Undefined Variable.");
         } else {
             if((ident->kind == ID_LVAR) || (ident->kind == ID_GVAR)){
                 Node* node = new_node(ND_VAR, 0, 0);
@@ -823,7 +823,7 @@ static Node* const_expr(){
     Token* tok = get_token();
     Node* node = expr();
     if(node->kind != ND_NUM){
-        error_at(tok->pos, "expected constant expression.");
+        error_at(tok, "expected constant expression.");
     }
     return node;
 }
@@ -986,7 +986,7 @@ static bool is_function(){
 // トークン操作
 void expect_token(TokenKind kind){
     if(token->kind != kind){
-        error_at(token->pos, "error: unexpected token.\n");
+        error_at(token, "error: unexpected token.\n");
     }
 
     token = token->next;
@@ -994,7 +994,7 @@ void expect_token(TokenKind kind){
 
 int expect_num(){
     if(token->kind != TK_NUM){
-        error_at(token->pos, "error: not a number.\n", token->pos);
+        error_at(token, "error: not a number.\n", token->pos);
     }
 
     int result = token->val;
@@ -1028,7 +1028,7 @@ Token* consume_string_literal(){
 Token* expect_ident(){
     Token* tok = consume_ident();
     if(tok == NULL){
-        error_at(token->pos, "error: not a ident.\n", token->pos);
+        error_at(token, "error: not a ident.\n", token->pos);
     }
     return tok;
 }

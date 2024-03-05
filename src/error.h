@@ -1,7 +1,6 @@
 #pragma once
-extern char* user_input;
-extern char* filename;
+#include "mcc2.h"
 
-void error_at(char* loc, char* fmt, ...);
+void error_at(Token* tok, char* fmt, ...);
 void error(char* fmt, ...);
 void unreachable();

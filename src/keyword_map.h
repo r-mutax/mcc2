@@ -26,3 +26,7 @@ static KEYWORD_MAP keyword_map[] = {
     {   "union",        TK_UNION    },
     {   "do",           TK_DO       },
 };
+
+static KEYWORD_MAP preprocess_keyword_map[] = {
+    {   "include",      TK_INCLUDE  },
+};

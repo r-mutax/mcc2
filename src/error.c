@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char* user_input;
-char* filename;
-
-void error_at(char* loc, char* fmt, ...){
+void error_at(Token* tok, char* fmt, ...){
+    char* user_input = tok->file->body;
+    char* filename = tok->file->name;
+    char* loc = tok->pos;
 
     // 行頭を見つける
     char *line = loc;
@@ -27,7 +27,7 @@ void error_at(char* loc, char* fmt, ...){
     }
 
     // エラー箇所を表示する
-    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);        
+    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
     fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
     // 空白を表示する

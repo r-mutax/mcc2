@@ -435,12 +435,11 @@ void gen_x86(IR* ir){
                 break;
             case IR_COMMENT:
                 fprintf(fp, "#");
-                printline(ir->s1->str);
+                printline(ir->s1->tok);
                 break;
             default:
                 unreachable();
         }
         ir = ir->next;
     }
-    
 }

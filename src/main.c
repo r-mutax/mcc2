@@ -8,12 +8,14 @@
 #include "error.h"
 #include "type.h"
 #include "tokenizer.h"
+#include "preprocess.h"
 #include "parse.h"
 #include "file.h"
 #include "gen_ir.h"
 #include "gen_x86_64.h"
 #include <bits/getopt_core.h>
 
+static char* filename = NULL;
 
 char* get_filename(char* path){
     char* yen_pos = strrchr(path, '/');
@@ -55,6 +57,10 @@ int main(int argc, char **argv){
         fprintf(stderr, "file name is not specified.\n");
         exit(1);
     }
+
+    // get directry name of filename
+    char* dir = get_dirname(filename);
+    add_include_path(dir);
 
     // compile
     Token* tok = tokenize(filename);

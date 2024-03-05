@@ -28,6 +28,7 @@ static Reg* new_RegVar(Ident* ident);
 static Reg* new_RegStr(char* str);
 static Reg* new_RegAddr(Reg* reg, int size);
 static Reg* new_RegFname(Ident* ident);
+static Reg* new_RegToken(Token* tok);
 static Reg* gen_expr(Node* node);
 
 void gen_ir(){
@@ -68,7 +69,7 @@ static void gen_function(Ident* func){
 
         new_IR(IR_STORE_ARG_REG, NULL, new_RegVar(param->ident), new_RegImm(i));
         if(i >= 6){
-            error_at(func->tok->pos, "Functions with more than six arguments are not supported.");
+            error_at(func->tok, "Functions with more than six arguments are not supported.");
         }
     }
 
@@ -90,7 +91,7 @@ static void gen_function(Ident* func){
 
 static void gen_stmt(Node* node){
     if(node->pos){
-        new_IR(IR_COMMENT, NULL, new_RegStr(node->pos->pos), NULL);
+        new_IR(IR_COMMENT, NULL, new_RegToken(node->pos), NULL);
     }
     switch(node->kind){
         case ND_RETURN:
@@ -233,7 +234,7 @@ static void gen_stmt(Node* node){
             if(node->label->labeld){
                 new_IRJmp(node->label->no);
             } else {
-                error_at(node->pos->pos, "Label don't defined.\n");
+                error_at(node->pos, "Label don't defined.\n");
             }
             break;
         case ND_BLOCK:
@@ -273,7 +274,7 @@ static Reg* gen_lvar(Node*  node){
             return base_reg;
         }
         default:
-            error_at(node->ident->tok->pos, "Not a lhs.\n");
+            error_at(node->ident->tok, "Not a lhs.\n");
             break;
     }
     return NULL;
@@ -415,13 +416,13 @@ static Reg* gen_expr(Node* node){
         case ND_LT:
             {
                 ret = new_Reg();
-                new_IR(IR_LT, ret, r1, r2);            
+                new_IR(IR_LT, ret, r1, r2);
             }
             break;
         case ND_LE:
             {
                 ret = new_Reg();
-                new_IR(IR_LE, ret, r1, r2);            
+                new_IR(IR_LE, ret, r1, r2);
             }
             break;
         case ND_BIT_AND:
@@ -515,5 +516,12 @@ static Reg* new_RegFname(Ident* ident){
     Reg* reg = new_Reg();
     reg->kind = REG_FNAME;
     reg->ident = ident;
+    return reg;
+}
+
+static Reg* new_RegToken(Token* tok){
+    Reg* reg = new_Reg();
+    reg->kind = REG_STR;
+    reg->tok = tok;
     return reg;
 }
