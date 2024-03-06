@@ -17,7 +17,7 @@ test: mcc2
 	./tmp
 
 test2: mcc2
-	./mcc2 -c ./test/test2.c -o ./tmp.s
+	./mcc2 -c ./test/test2.c -o ./tmp.s -i ./test/testinc
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
