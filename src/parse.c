@@ -61,7 +61,8 @@ static Node* stmt();
 static Node* compound_stmt();
 static Node* declaration();
 static Ident* declare(Type* ty);
-static Type* declspec();
+static Type* declspec(StorageClassKind* sck);
+static void count_decl_spec(int* type_flg, int flg, Token* tok);
 static Member* struct_or_union_member();
 static Type* struct_or_union_spec(bool is_union);
 static Node* expr();
@@ -128,7 +129,8 @@ void Program(){
         if(is_function()){
             function();
         } else {
-            Type* ty = declspec();
+            StorageClassKind sck = 0;
+            Type* ty = declspec(&sck);
             Ident* ident = declare(ty);
             register_ident(ident);
             ident->kind = ID_GVAR;
@@ -140,7 +142,8 @@ void Program(){
 }
 
 static void function(){
-    Type* func_type = declspec();
+    StorageClassKind sck = 0;
+    Type* func_type = declspec(&sck);
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
@@ -172,7 +175,8 @@ static void function(){
                 func->is_var_params = true;
                 break;
             } else {
-                Type* ty = declspec();
+                StorageClassKind sck = 0;
+                Type* ty = declspec(&sck);
                 Ident* ident = declare(ty);
                 register_ident(ident);
                 Parameter* param = calloc(1, sizeof(Parameter));
@@ -255,7 +259,8 @@ static Node* stmt(){
             node->init = NULL;
         } else {
             if(is_type()){
-                Type* ty = declspec();
+                StorageClassKind sck = 0;
+                Type* ty = declspec(&sck);
                 Ident* ident = declare(ty);
                 register_ident(ident);
                 if(consume_token(TK_ASSIGN)){
@@ -387,14 +392,15 @@ static Node* compound_stmt(){
 }
 
 static Node* declaration(){
-    Type* ty = declspec();
+    StorageClassKind sck = 0;
+    Type* ty = declspec(&sck);
 
     if(ty->kind == TY_STRUCT && consume_token(TK_SEMICORON)){
         // 構造体の登録を行う
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
 
-    if(ty->kind == TY_UMION && consume_token(TK_SEMICORON)){
+    if(ty->kind == TY_UNION && consume_token(TK_SEMICORON)){
         // 共用体の登録を行う
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
@@ -412,6 +418,9 @@ static Node* declaration(){
 }
 
 static Ident* declare(Type* ty){
+    while(consume_token(TK_MUL)){
+        ty = pointer_to(ty);
+    }
 
     Token* ident_tok = expect_ident();
     if(consume_token(TK_L_SQUARE_BRACKET)){
@@ -423,26 +432,74 @@ static Ident* declare(Type* ty){
     return make_ident(ident_tok, ID_LVAR, ty);
 }
 
-static Type* declspec(){
-    Type* ty;
-    if(consume_token(TK_INT)){
-        ty = ty_int;
-    } else if(consume_token(TK_CHAR)){
-        ty = ty_char;
-    } else if(consume_token(TK_SHORT)){
-        ty = ty_short;
-    } else if(consume_token(TK_STRUCT)){
-        ty = struct_or_union_spec(false);
-    } else if(consume_token(TK_UNION)){
-        ty = struct_or_union_spec(true);
-    } else {
-        fprintf(stderr, "%d\n", get_token()->kind);
-        unreachable();
+
+static void count_decl_spec(int* type_flg, int flg, Token* tok){
+    // error check
+    int target = 0;
+    switch(flg){
+        case K_LONG:
+            // 'long' keyword can use up to 2 times in declaration.
+            // ex) long long int
+            target = *type_flg & (K_LONG << 1);
+            break;
+        default:
+            target = *type_flg & flg;
+            break;
     }
 
-    while(consume_token(TK_MUL)){
-        ty = pointer_to(ty);
+    if(target){
+        error_at(tok, "duplicate type keyword.\n");
     }
+
+    *type_flg += flg;
+}
+
+static Type* declspec(StorageClassKind* sck){
+
+    int type_flg = 0;
+    Type* ty = 0;
+    while(is_type()){
+        Token* tok = get_token();
+        if(consume_token(TK_STRUCT) || consume_token(TK_UNION)){
+            if(ty || type_flg){
+                error_at(tok, "duplicate type keyword.\n");
+            }
+            ty = struct_or_union_spec(tok->kind == TK_UNION);
+            type_flg += K_USER;
+            continue;
+        }
+
+        if(consume_token(TK_CHAR))
+            count_decl_spec(&type_flg, K_CHAR, tok);
+        if(consume_token(TK_SHORT))
+            count_decl_spec(&type_flg, K_SHORT, tok);
+        if(consume_token(TK_INT))
+            count_decl_spec(&type_flg, K_INT, tok);
+    }
+
+    if(!ty){
+        switch(type_flg){
+            case K_CHAR:
+            case K_SIGNED + K_CHAR:
+                ty = ty_char;
+                break;
+            case K_SHORT:
+            case K_SHORT + K_INT:
+            case K_SIGNED + K_SHORT:
+            case K_SIGNED + K_SHORT + K_INT:
+                ty = ty_short;
+                break;
+            case K_INT:
+            case K_SIGNED:
+            case K_SIGNED + K_INT:
+                ty = ty_int;
+                break;
+            default:
+                error_at(get_token(), "Invalid type.\n");
+                break;
+        }
+    }
+
     return ty;
 }
 
@@ -451,7 +508,8 @@ static Member* struct_or_union_member(){
     Member* cur = &head;
     do {
         cur = cur->next = calloc(1, sizeof(Member));
-        Type* ty = declspec();
+        StorageClassKind sck = 0;
+        Type* ty = declspec(&sck);
         cur->ident = declare(ty);
         expect_token(TK_SEMICORON);
     } while(!consume_token(TK_R_BRACKET));
@@ -466,7 +524,7 @@ static Type* struct_or_union_spec(bool is_union){
 
         if(!ty){
             // まだ登録されていない構造体
-            ty = new_type(is_union ? TY_UMION : TY_STRUCT, 0);
+            ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
             expect_token(TK_L_BRACKET);
             ty->member = struct_or_union_member();
 
@@ -493,7 +551,7 @@ static Type* struct_or_union_spec(bool is_union){
         return ty;
     } else {
         // 無名構造体
-        Type* ty = new_type(is_union ? TY_UMION : TY_STRUCT, 0);
+        Type* ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
         expect_token(TK_L_BRACKET);
         ty->member = struct_or_union_member();
 
@@ -966,7 +1024,8 @@ static bool is_function(){
     bool retval = false;
 
     // 型の読み取り
-    Type* ty = declspec();
+    StorageClassKind sck = 0;
+    Type* ty = declspec(&sck);
 
     // ポインタの読み取り
     while(consume_token(TK_MUL)){
