@@ -400,7 +400,7 @@ static Node* declaration(){
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
 
-    if(ty->kind == TY_UMION && consume_token(TK_SEMICORON)){
+    if(ty->kind == TY_UNION && consume_token(TK_SEMICORON)){
         // 共用体の登録を行う
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
@@ -524,7 +524,7 @@ static Type* struct_or_union_spec(bool is_union){
 
         if(!ty){
             // まだ登録されていない構造体
-            ty = new_type(is_union ? TY_UMION : TY_STRUCT, 0);
+            ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
             expect_token(TK_L_BRACKET);
             ty->member = struct_or_union_member();
 
@@ -551,7 +551,7 @@ static Type* struct_or_union_spec(bool is_union){
         return ty;
     } else {
         // 無名構造体
-        Type* ty = new_type(is_union ? TY_UMION : TY_STRUCT, 0);
+        Type* ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
         expect_token(TK_L_BRACKET);
         ty->member = struct_or_union_member();
 

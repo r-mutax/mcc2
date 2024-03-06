@@ -363,7 +363,7 @@ enum TypeKind{
     TY_ARRAY,
     TY_FUNC,
     TY_STRUCT,
-    TY_UMION,
+    TY_UNION,
 };
 
 struct Member {
