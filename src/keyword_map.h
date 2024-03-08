@@ -25,6 +25,9 @@ static KEYWORD_MAP keyword_map[] = {
     {   "struct",       TK_STRUCT   },
     {   "union",        TK_UNION    },
     {   "do",           TK_DO       },
+    {   "const",        TK_CONST    },
+    {   "restrict",     TK_RESTRICT },
+    {   "volatile",     TK_VOLATILE },
 };
 
 static KEYWORD_MAP preprocess_keyword_map[] = {

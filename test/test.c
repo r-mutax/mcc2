@@ -439,6 +439,12 @@ int test_type(){
     assert(test_union.s, 3);
     assert(test_union.i, 3);
     assert(sizeof(test_union), 8);
+
+    printf("test of type qualifier..\n");
+    const int const_a = 0;
+    volatile int volatile_b = 0;
+    // restrict int restrict_c = 0;
+    // restrictキーワードはインテリセンスで怒られるので…
 }
 
 int test_primary(){

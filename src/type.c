@@ -2,6 +2,7 @@
 #include "type.h"
 #include "tokenizer.h"
 #include <stdlib.h>
+#include <string.h>
 
 Type* ty_char;
 Type* ty_int;
@@ -12,6 +13,13 @@ void ty_init(){
     ty_char = new_type(TY_INT, 1);
     ty_short = new_type(TY_INT, 2);
     ty_int = new_type(TY_INT, 8);
+}
+
+Type* copy_type(Type* type){
+    Type* new_type = calloc(1, sizeof(Type));
+    memcpy(new_type, type, sizeof(Type));
+    return new_type;
+
 }
 
 Type* pointer_to(Type* base){
