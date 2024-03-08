@@ -258,6 +258,7 @@ static Token* scan(char* src){
                         cur = new_token(TK_HASH, cur, p++);
                     }
                 }
+                break;
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
