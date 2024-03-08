@@ -158,7 +158,7 @@ static void function(){
     } else {
         // ある場合は戻り値型がconflictしてないかチェック
         if(!equal_type(func_type, func->type)){
-            error_at(tok, "conflict definition type.");
+            error_tok(tok, "conflict definition type.");
         }
         has_forward_def = true;
     }
@@ -197,7 +197,7 @@ static void function(){
     } else {
         if(has_forward_def && func->funcbody){
             // すでに定義された関数のbodyがあるのに、ここでも定義している
-            error_at(tok, "Conflict function definition.");
+            error_tok(tok, "Conflict function definition.");
         }
     }
 
@@ -318,7 +318,7 @@ static Node* stmt(){
         return node;
     } else if(consume_token(TK_CASE)){
         if(switch_node == NULL){
-            error_at(tok, "case is not within a switch statement.");
+            error_tok(tok, "case is not within a switch statement.");
         }
 
         Node* node = new_node(ND_CASE, NULL, NULL);
@@ -335,7 +335,7 @@ static Node* stmt(){
         consume_token(TK_COLON);
 
         if(switch_node->default_label){
-            error_at(tok, "multiple default label.");
+            error_tok(tok, "multiple default label.");
         }
         switch_node->default_label = node;
         return node;
@@ -448,7 +448,7 @@ static void count_decl_spec(int* type_flg, int flg, Token* tok){
     }
 
     if(target){
-        error_at(tok, "duplicate type keyword.\n");
+        error_tok(tok, "duplicate type keyword.\n");
     }
 
     *type_flg += flg;
@@ -465,7 +465,7 @@ static Type* declspec(StorageClassKind* sck){
         Token* tok = get_token();
         if(consume_token(TK_STRUCT) || consume_token(TK_UNION)){
             if(ty || type_flg){
-                error_at(tok, "duplicate type keyword.\n");
+                error_tok(tok, "duplicate type keyword.\n");
             }
             ty = struct_or_union_spec(tok->kind == TK_UNION);
             type_flg += K_USER;
@@ -473,19 +473,19 @@ static Type* declspec(StorageClassKind* sck){
         }
 
         if(consume_token(TK_CONST)){
-            if(is_const) error_at(tok, "duplicate type keyword.\n");
+            if(is_const) error_tok(tok, "duplicate type keyword.\n");
             is_const = true;
             continue;
         }
 
         if(consume_token(TK_RESTRICT)){
-            if(is_restrict) error_at(tok, "duplicate type keyword.\n");
+            if(is_restrict) error_tok(tok, "duplicate type keyword.\n");
             is_restrict = true;
             continue;
         }
 
         if(consume_token(TK_VOLATILE)){
-            if(is_volatile) error_at(tok, "duplicate type keyword.\n");
+            if(is_volatile) error_tok(tok, "duplicate type keyword.\n");
             is_volatile = true;
             continue;
         }
@@ -516,7 +516,7 @@ static Type* declspec(StorageClassKind* sck){
                 ty = ty_int;
                 break;
             default:
-                error_at(get_token(), "Invalid type.\n");
+                error_tok(get_token(), "Invalid type.\n");
                 break;
         }
     }
@@ -638,7 +638,7 @@ static Node* assign(){
 
     if(node->kind == ND_ASSIGN){
         if(node->lhs->type->is_const){
-            error_at(tok, "cannot assign to const.");
+            error_tok(tok, "cannot assign to const.");
         }
     }
 
@@ -852,7 +852,7 @@ static Node* postfix(){
             Token* tok = expect_ident();
             Ident* ident = get_member(node->lhs->type, tok);
             if(!ident){
-                error_at(tok, "Not a member.\n");
+                error_tok(tok, "Not a member.\n");
             }
 
             node->type = ident->type;
@@ -884,7 +884,7 @@ static Node* primary(){
     if(ident_token){
         Ident* ident = find_ident(ident_token);
         if(!ident){
-            error_at(ident_token, "Undefined Variable.");
+            error_tok(ident_token, "Undefined Variable.");
         } else {
             if((ident->kind == ID_LVAR) || (ident->kind == ID_GVAR)){
                 Node* node = new_node(ND_VAR, 0, 0);
@@ -919,7 +919,7 @@ static Node* const_expr(){
     Token* tok = get_token();
     Node* node = expr();
     if(node->kind != ND_NUM){
-        error_at(tok, "expected constant expression.");
+        error_tok(tok, "expected constant expression.");
     }
     return node;
 }
@@ -1083,7 +1083,7 @@ static bool is_function(){
 // トークン操作
 void expect_token(TokenKind kind){
     if(token->kind != kind){
-        error_at(token, "error: unexpected token.\n");
+        error_tok(token, "error: unexpected token.\n");
     }
 
     token = token->next;
@@ -1091,7 +1091,7 @@ void expect_token(TokenKind kind){
 
 int expect_num(){
     if(token->kind != TK_NUM){
-        error_at(token, "error: not a number.\n", token->pos);
+        error_tok(token, "error: not a number.\n", token->pos);
     }
 
     int result = token->val;
@@ -1125,7 +1125,7 @@ Token* consume_string_literal(){
 Token* expect_ident(){
     Token* tok = consume_ident();
     if(tok == NULL){
-        error_at(token, "error: not a ident.\n", token->pos);
+        error_tok(token, "error: not a ident.\n", token->pos);
     }
     return tok;
 }

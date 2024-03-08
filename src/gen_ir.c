@@ -69,7 +69,7 @@ static void gen_function(Ident* func){
 
         new_IR(IR_STORE_ARG_REG, NULL, new_RegVar(param->ident), new_RegImm(i));
         if(i >= 6){
-            error_at(func->tok, "Functions with more than six arguments are not supported.");
+            error_tok(func->tok, "Functions with more than six arguments are not supported.");
         }
     }
 
@@ -234,7 +234,7 @@ static void gen_stmt(Node* node){
             if(node->label->labeld){
                 new_IRJmp(node->label->no);
             } else {
-                error_at(node->pos, "Label don't defined.\n");
+                error_tok(node->pos, "Label don't defined.\n");
             }
             break;
         case ND_BLOCK:
@@ -274,7 +274,7 @@ static Reg* gen_lvar(Node*  node){
             return base_reg;
         }
         default:
-            error_at(node->ident->tok, "Not a lhs.\n");
+            error_tok(node->ident->tok, "Not a lhs.\n");
             break;
     }
     return NULL;
