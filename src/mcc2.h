@@ -93,6 +93,9 @@ typedef enum TokenKind {
     TK_SHORT,                   // "short"
     TK_STRUCT,                  //  "struct"
     TK_UNION,                   // "union"
+    TK_CONST,                   // const
+    TK_RESTRICT,                // restrict
+    TK_VOLATILE,                // volatile
     TK_NEWLINE,                 // "\n"
 
     // preprocess
@@ -398,6 +401,7 @@ struct Type {
     int         size;
     int         is_unsigned;
     int         array_len;
+    bool        is_const;
     Type*       ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー
     Type*       next;

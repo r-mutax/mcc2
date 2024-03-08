@@ -457,6 +457,9 @@ static void count_decl_spec(int* type_flg, int flg, Token* tok){
 static Type* declspec(StorageClassKind* sck){
 
     int type_flg = 0;
+    bool is_const = false;
+    bool is_restrict = false;
+    bool is_volatile = false;
     Type* ty = 0;
     while(is_type()){
         Token* tok = get_token();
@@ -466,6 +469,24 @@ static Type* declspec(StorageClassKind* sck){
             }
             ty = struct_or_union_spec(tok->kind == TK_UNION);
             type_flg += K_USER;
+            continue;
+        }
+
+        if(consume_token(TK_CONST)){
+            if(is_const) error_at(tok, "duplicate type keyword.\n");
+            is_const = true;
+            continue;
+        }
+
+        if(consume_token(TK_RESTRICT)){
+            if(is_restrict) error_at(tok, "duplicate type keyword.\n");
+            is_restrict = true;
+            continue;
+        }
+
+        if(consume_token(TK_VOLATILE)){
+            if(is_volatile) error_at(tok, "duplicate type keyword.\n");
+            is_volatile = true;
             continue;
         }
 
@@ -498,6 +519,12 @@ static Type* declspec(StorageClassKind* sck){
                 error_at(get_token(), "Invalid type.\n");
                 break;
         }
+    }
+
+    ty = copy_type(ty);
+    
+    if(is_const){
+        ty->is_const = true;
     }
 
     return ty;
@@ -587,6 +614,10 @@ static Node* expr(){
 
 static Node* assign(){
     Node* node = cond_expr();
+    add_type(node);
+
+    Token* tok = get_token();
+
     if(consume_token(TK_ASSIGN)){
         node = new_node(ND_ASSIGN, node, assign());
     } else if(consume_token(TK_PLUS_EQUAL)){
@@ -604,6 +635,13 @@ static Node* assign(){
     } else if(consume_token(TK_R_BITSHIFT_EQUAL)){
         node = new_node(ND_ASSIGN, node, new_node(ND_R_BITSHIFT, node, assign()));
     }
+
+    if(node->kind == ND_ASSIGN){
+        if(node->lhs->type->is_const){
+            error_at(tok, "cannot assign to const.");
+        }
+    }
+
     return node;
 }
 
@@ -1100,6 +1138,9 @@ bool is_eof(){
 bool is_type(){
     return token->kind == TK_STRUCT
         || token->kind == TK_UNION
+        || token->kind == TK_CONST
+        || token->kind == TK_VOLATILE
+        || token->kind == TK_RESTRICT
         || token->kind == TK_INT
         || token->kind == TK_SHORT
         || token->kind == TK_CHAR;
