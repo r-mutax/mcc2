@@ -91,6 +91,7 @@ typedef enum TokenKind {
     TK_INT,                     // "int"
     TK_CHAR,                    // "char"
     TK_SHORT,                   // "short"
+    TK_LONG,                    // "long" 
     TK_STRUCT,                  //  "struct"
     TK_UNION,                   // "union"
     TK_CONST,                   // const

@@ -5,6 +5,7 @@
 extern Type* ty_int;
 extern Type* ty_char;
 extern Type* ty_short;
+extern Type* ty_long;
 
 void ty_init();
 Type* copy_type(Type* type);

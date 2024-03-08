@@ -496,6 +496,8 @@ static Type* declspec(StorageClassKind* sck){
             count_decl_spec(&type_flg, K_SHORT, tok);
         if(consume_token(TK_INT))
             count_decl_spec(&type_flg, K_INT, tok);
+        if(consume_token(TK_LONG))
+            count_decl_spec(&type_flg, K_LONG, tok);
     }
 
     if(!ty){
@@ -514,6 +516,12 @@ static Type* declspec(StorageClassKind* sck){
             case K_SIGNED:
             case K_SIGNED + K_INT:
                 ty = ty_int;
+                break;
+            case K_LONG:
+            case K_LONG + K_INT:
+            case K_SIGNED + K_LONG:
+            case K_SIGNED + K_LONG + K_INT:
+                ty = ty_long;
                 break;
             default:
                 error_tok(get_token(), "Invalid type.\n");
@@ -1142,6 +1150,7 @@ bool is_type(){
         || token->kind == TK_VOLATILE
         || token->kind == TK_RESTRICT
         || token->kind == TK_INT
+        || token->kind == TK_LONG
         || token->kind == TK_SHORT
         || token->kind == TK_CHAR;
 }
