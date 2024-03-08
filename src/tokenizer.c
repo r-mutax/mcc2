@@ -263,6 +263,7 @@ static Token* scan(char* src){
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p);
                     cur->val = strtol(p, &p, 10);
+                    cur->len = p - cur->pos;
                 } else if(isspace(c)){
                     p++;
                 } else if(is_ident1(c)){
@@ -359,4 +360,11 @@ Token* next_newline(Token* tok){
         tok = tok->next;
     }
     return tok;
+}
+
+Token* copy_token(Token* tok){
+    Token* new = calloc(1, sizeof(Token));
+    memcpy(new, tok, sizeof(Token));
+    new->next = NULL;
+    return new;
 }
