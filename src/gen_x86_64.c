@@ -9,11 +9,13 @@
 
 static const char *rreg8[] = {"r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
 static const char *rreg16[] = {"r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
+static const char *rreg32[] = {"r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
 static const char *rreg64[] = {"r10", "r11", "r12", "r13", "r14", "r15"};
 static Reg* realReg[6] = { } ;
 
 static const char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static const char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
+static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
 FILE* fp;
@@ -199,6 +201,8 @@ void gen_x86(IR* ir){
                     fprintf(fp, "  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg8[ir->s2->val]);
                 } else if(ir->s1->ident->type->size == 2){
                     fprintf(fp, "  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg16[ir->s2->val]);
+                } else if(ir->s1->ident->type->size == 4){
+                    fprintf(fp, "  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg32[ir->s2->val]);
                 } else if(ir->s1->ident->type->size == 8){
                     fprintf(fp, "  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg64[ir->s2->val]);
                 }
@@ -343,6 +347,8 @@ void gen_x86(IR* ir){
                     fprintf(fp, "  mov [%s], %s\n", ir->s1->rreg, rreg8[ir->s2->idx]);
                 } else if(ir->s1->size == 2){
                     fprintf(fp, "  mov [%s], %s\n", ir->s1->rreg, rreg16[ir->s2->idx]);
+                } else if(ir->s1->size == 4){
+                    fprintf(fp, "  mov [%s], %s\n", ir->s1->rreg, rreg32[ir->s2->idx]);
                 } else if(ir->s1->size == 8){
                     fprintf(fp, "  mov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
                 }
@@ -428,6 +434,9 @@ void gen_x86(IR* ir){
                 } else if(ir->s2->size == 2){
                     fprintf(fp, "  mov %s, 0\n", ir->s1->rreg);
                     fprintf(fp, "  mov %s, [%s]\n", rreg16[ir->s1->idx], ir->s2->rreg);
+                 } else if(ir->s2->size == 4){
+                    fprintf(fp, "  mov %s, 0\n", ir->s1->rreg);
+                    fprintf(fp, "  mov %s, [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
                 } else if(ir->s2->size == 8){
                     fprintf(fp, "  mov %s, [%s]\n", ir->s1->rreg, ir->s2->rreg);
                 }

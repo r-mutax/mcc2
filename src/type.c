@@ -7,12 +7,14 @@
 Type* ty_char;
 Type* ty_int;
 Type* ty_short;
+Type* ty_long;
 
 
 void ty_init(){
     ty_char = new_type(TY_INT, 1);
     ty_short = new_type(TY_INT, 2);
-    ty_int = new_type(TY_INT, 8);
+    ty_int = new_type(TY_INT, 4);
+    ty_long = new_type(TY_INT, 8);
 }
 
 Type* copy_type(Type* type){

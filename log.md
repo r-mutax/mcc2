@@ -17,4 +17,5 @@
 - これは昨日だけど、型指定子を読めるようにした。constだけ対応している。Type.is_constを追加して、is_constへのassignをエラーにした。
 - 日記書く習慣がなかなかないから書き忘れてしまう。
 - error_tok()とerror_at_src()を用意して、tokenize中はerror_at_src()でエラーを出すようにした。従来のTokenでerror出す関数はerror_tok()にした。
+- long型を追加した。
 

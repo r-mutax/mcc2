@@ -332,7 +332,7 @@ int test_variable(){
 
     printf("test of array..\n");
     int arr[11];
-    assert(sizeof(arr), 88);
+    assert(sizeof(arr), 44);
     *arr = 5;
     assert(*arr, 5);
 
@@ -368,12 +368,20 @@ int test_type(){
     printf("test of int type..\n");
     int i; i = 17;
     assert(i, 17);
-    assert(sizeof(i), 8);
+    assert(sizeof(i), 4);
     int iarr[3];
-    assert(sizeof(iarr), 24);
+    assert(sizeof(iarr), 12);
     int* ip;
     assert(sizeof(ip), 8);
-    return 0;
+
+    printf("test of long type..\n");
+    long l; l = 17;
+    assert(l, 17);
+    assert(sizeof(l), 8);
+    long larr[3];
+    assert(sizeof(larr), 24);
+    long* lp;
+    assert(sizeof(lp), 8);
 
     printf("test of struct..\n");
     struct {
@@ -399,9 +407,9 @@ int test_type(){
     test_struct_struct.ss.c = 8;
     test_struct_struct.ss.s = 9;
     test_struct_struct.ss.i = 10;
-    assert(test_struct_struct.ss.c, 1);
-    assert(test_struct_struct.ss.s, 2);
-    assert(test_struct_struct.ss.i, 3);
+    assert(test_struct_struct.ss.c, 8);
+    assert(test_struct_struct.ss.s, 9);
+    assert(test_struct_struct.ss.i, 10);
 
     struct {
         char c;
@@ -438,7 +446,7 @@ int test_type(){
     assert(test_union.c, 3);
     assert(test_union.s, 3);
     assert(test_union.i, 3);
-    assert(sizeof(test_union), 8);
+    assert(sizeof(test_union), 4);
 
     printf("test of type qualifier..\n");
     const int const_a = 0;
