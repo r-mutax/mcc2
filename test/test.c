@@ -505,12 +505,14 @@ int test_assignment(){
     return 0;
 }
 
+#define TEST_MACRO_2 1 + 2
 int test_preprocess()
 {
     printf("test of preprocess..\n");
     int a = 0;
     a = TEST_MACRO;
     assert(a, 123);
+    assert(TEST_MACRO_2, 3);
     return 0;
 }
 
