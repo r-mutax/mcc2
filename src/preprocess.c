@@ -8,7 +8,14 @@
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;
 
+Macro* macros = NULL;
+
 static char* find_include_file(char* filename);
+static void add_macro(Token* name, Token* value);
+static Macro* find_macro(Token* name);
+
+// for debug
+static void print_macros();
 
 Token* preprocess(Token* token){
     Token head = {};
@@ -19,7 +26,6 @@ Token* preprocess(Token* token){
             case TK_INCLUDE:
                 {
                     char* filepath = get_token_string(cur->next->next);
-                    fprintf(stderr, "include: %s\n", filepath);
                     char* path = find_include_file(filepath);
                     if(!path){
                         error("file not found: %s", filepath);
@@ -40,6 +46,35 @@ Token* preprocess(Token* token){
                     tail->next = newline->next;
                     continue;
                 }
+                break;
+            case TK_DEFINE:
+                {
+                    Token* defsymbol = cur->next->next;
+                    Token* defvalue = NULL;
+                    if(defsymbol->next->kind == TK_NEWLINE){
+                        // 今は空マクロは非対応
+                        error("macro definition is empty");
+                    } else {
+                        defvalue = defsymbol->next;
+                    }
+                    add_macro(defsymbol, defvalue);
+                    Token* newline = next_newline(defvalue);
+                    cur->next = newline->next;
+                    continue;
+                }
+                break;
+            case TK_IDENT:
+                {
+                    Token* ident = cur->next;
+                    Macro* m = find_macro(ident);
+                    if(m){
+                        Token* value = copy_token(m->value);
+                        value->next = cur->next->next;
+                        cur->next = value;
+                    }                    
+                }
+                break;
+            default:
                 break;
         }
         cur = cur->next;
@@ -72,4 +107,32 @@ static char* find_include_file(char* filename){
     }
 
     return NULL;
+}
+
+static void add_macro(Token* name, Token* value){
+    Macro* m = malloc(sizeof(Macro));
+    m->name = copy_token(name);
+    m->value = copy_token(value);
+    m->next = macros;
+    macros = m;
+}
+
+static Macro* find_macro(Token* name){
+    Macro* m;
+    for(m = macros; m; m = m->next){
+        if(is_equal_token(m->name, name)){
+            return m;
+        }
+    }
+    return NULL;
+}
+
+// for debug
+static void print_macros(){
+    Macro* m;
+    for(m = macros; m; m = m->next){
+        fprintf(stderr, "macro: %s\n", get_token_string(m->name));
+        fprintf(stderr, "value: %s\n", get_token_string(m->value));
+        fprintf(stderr, "\n");
+    }
 }

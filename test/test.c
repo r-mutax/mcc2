@@ -1,3 +1,6 @@
+// macro
+#define TEST_MACRO 123
+
 // test function define.
 int printf(char* fmt, ...);
 int exit(int ret);
@@ -13,6 +16,7 @@ int test_type();
 int test_primary();
 int test_pointer();
 int test_assignment();
+int test_preprocess();
 
 int g_a;
 int g_b;
@@ -498,6 +502,15 @@ int test_assignment(){
     a = 13; a %= 5; assert(a, 3);
     a = 56; a >>= 3; assert(a, 7);
     a = 7; a <<= 3; assert(a, 56);
+    return 0;
+}
+
+int test_preprocess()
+{
+    printf("test of preprocess..\n");
+    int a = 0;
+    a = TEST_MACRO;
+    assert(a, 123);
     return 0;
 }
 

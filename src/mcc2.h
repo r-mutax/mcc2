@@ -17,6 +17,7 @@ typedef struct Label Label;
 typedef struct StringLiteral StringLiteral;
 typedef struct SrcFile SrcFile;
 typedef struct IncludePath IncludePath;
+typedef struct Macro Macro;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
@@ -101,6 +102,7 @@ typedef enum TokenKind {
 
     // preprocess
     TK_INCLUDE,                 // #include
+    TK_DEFINE,                  // #define
     TK_HASH,
     TK_HASH_HASH,
     TK_EOF                      // 終端記号
@@ -113,6 +115,12 @@ struct Token {
     int         val;
     int         len;
     Token*      next;   // 次のトークン
+};
+
+struct Macro {
+    Token*     name;
+    Token*     value;
+    Macro*     next;
 };
 
 typedef enum IdentKind {
