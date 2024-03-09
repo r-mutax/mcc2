@@ -34,4 +34,6 @@ static KEYWORD_MAP keyword_map[] = {
 static KEYWORD_MAP preprocess_keyword_map[] = {
     {   "include",      TK_INCLUDE  },
     {   "define",       TK_DEFINE   },
+    {   "undef",        TK_UNDEF    },
+    
 };

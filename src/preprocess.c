@@ -13,6 +13,7 @@ Macro* macros = NULL;
 static char* find_include_file(char* filename);
 static void add_macro(Token* name, Token* value);
 static Macro* find_macro(Token* name);
+static void delete_macro(Macro* m);
 
 // for debug
 static void print_macros();
@@ -59,6 +60,18 @@ Token* preprocess(Token* token){
                     }
                     add_macro(defsymbol, defvalue);
                     Token* newline = next_newline(defvalue);
+                    cur->next = newline->next;
+                    continue;
+                }
+                break;
+            case TK_UNDEF:
+                {
+                    Token* undefsymbol = cur->next->next;
+                    Macro* m = find_macro(undefsymbol);
+                    if(m){
+                        delete_macro(m);
+                    }
+                    Token* newline = next_newline(undefsymbol);
                     cur->next = newline->next;
                     continue;
                 }
@@ -126,6 +139,25 @@ static Macro* find_macro(Token* name){
         }
     }
     return NULL;
+}
+
+static void delete_macro(Macro* m){
+    Macro* prev = NULL;
+    Macro* cur = macros;
+    while(cur){
+        if(cur == m){
+            if(prev){
+                prev->next = cur->next;
+            } else {
+                macros = cur->next;
+            }
+            free(cur);
+            return;
+        }
+        prev = cur;
+        cur = cur->next;
+    }
+
 }
 
 // for debug
