@@ -11,6 +11,7 @@
 #include "preprocess.h"
 #include "parse.h"
 #include "file.h"
+#include "semantics.h"
 #include "gen_ir.h"
 #include "gen_x86_64.h"
 #include <bits/getopt_core.h>
@@ -75,6 +76,10 @@ int main(int argc, char **argv){
     Token* tok = tokenize(filename);
     parse(tok);
 
+    // semantics
+    semantics();
+
+    // generate
     gen_ir();
     gen_x86(get_ir());
 
