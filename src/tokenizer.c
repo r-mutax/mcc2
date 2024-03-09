@@ -88,7 +88,7 @@ static Token* scan(char* src){
                 } else if(*(p + 1) == '*') {
                     char* q = strstr(p + 2, "*/");
                     if(q == 0) {
-                        // error_at(p, "Block comment is not close.");
+                        error_at_src(p, cur_file, "Block comment is not close.");
                     }
                     p = q + 2;
                 } else {
@@ -153,8 +153,7 @@ static Token* scan(char* src){
                     cur = new_token(TK_NOT_EQUAL, cur, p);
                     p += 2;
                 } else {
-                    // まだ使えないから
-                    // error_at(p, "error: unexpected token.\n");
+                    error_at_src(p, cur_file, "error: unexpected token.\n");
                 }
                 break;
             case '?':
@@ -275,7 +274,7 @@ static Token* scan(char* src){
                     cur->len = p - s;
                 } else {
                     // 想定外のトークンが来た
-                    // error_at(p, "error: unexpected token.\n");
+                    error_at_src(p, cur_file, "error: unexpected token.\n");
                 }
                 break;
         }

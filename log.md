@@ -12,3 +12,9 @@
 - preprocessの中でTK_INCLUDEが来たら、tokenize(filepath)して置き換えるようにした。今のところinludepathは、コンパイルターゲットに限定している
 - ちょっと反則的だけど、IR_COMMENTの第1引数にわたすようにREG_TOKENタイプを追加した。これはアセンブリファイルに出す文字列が文字列+ファイル名でやっているので、そのせい。
 - error_atの引数をTokenに変更した。
+
+# 2024/03/09
+- これは昨日だけど、型指定子を読めるようにした。constだけ対応している。Type.is_constを追加して、is_constへのassignをエラーにした。
+- 日記書く習慣がなかなかないから書き忘れてしまう。
+- error_tok()とerror_at_src()を用意して、tokenize中はerror_at_src()でエラーを出すようにした。従来のTokenでerror出す関数はerror_tok()にした。
+
