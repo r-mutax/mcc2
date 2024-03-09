@@ -103,6 +103,7 @@ typedef enum TokenKind {
     // preprocess
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
+    TK_UNDEF,                   // #undef
     TK_HASH,
     TK_HASH_HASH,
     TK_EOF                      // 終端記号
