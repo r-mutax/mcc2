@@ -368,3 +368,33 @@ Token* copy_token(Token* tok){
     new->next = NULL;
     return new;
 }
+
+Token* copy_token_list(Token* tok){
+    Token head;
+    Token* cur = &head;
+    while(tok){
+        cur->next = copy_token(tok);
+        cur = cur->next;
+        tok = tok->next;
+    }
+    return head.next;
+}
+
+// 改行までのトークンのつながりをコピーする
+Token* copy_token_eol(Token* tok){
+    Token head;
+    Token* cur = &head;
+    while(tok->kind != TK_NEWLINE){
+        cur->next = copy_token(tok);
+        cur = cur->next;
+        tok = tok->next;
+    }
+    return head.next;
+}
+
+Token* get_tokens_tail(Token* tok){
+    while(tok->next){
+        tok = tok->next;
+    }
+    return tok;
+}

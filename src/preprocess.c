@@ -68,8 +68,9 @@ Token* preprocess(Token* token){
                     Token* ident = cur->next;
                     Macro* m = find_macro(ident);
                     if(m){
-                        Token* value = copy_token(m->value);
-                        value->next = cur->next->next;
+                        Token* value = copy_token_list(m->value);
+                        Token* tail = get_tokens_tail(value);
+                        tail->next = cur->next->next;
                         cur->next = value;
                     }                    
                 }
@@ -112,7 +113,7 @@ static char* find_include_file(char* filename){
 static void add_macro(Token* name, Token* value){
     Macro* m = malloc(sizeof(Macro));
     m->name = copy_token(name);
-    m->value = copy_token(value);
+    m->value = copy_token_eol(value);
     m->next = macros;
     macros = m;
 }
