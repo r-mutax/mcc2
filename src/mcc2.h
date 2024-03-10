@@ -369,7 +369,7 @@ struct Scope {
     StringLiteral*  string_literal;
     Scope*          parent;
     Label*          label;
-    Type*           struct_or_union_type;
+    Type*           type_tag;
 };
 
 enum TypeKind{

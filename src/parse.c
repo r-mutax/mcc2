@@ -580,7 +580,7 @@ static Type* struct_or_union_spec(bool is_union){
     Token* tok = consume_ident();
     if(tok){
         // 名前付き構造体
-        Type* ty = find_struct_or_union_type(tok);
+        Type* ty = find_tag(tok);
 
         if(!ty){
             // まだ登録されていない構造体
@@ -606,7 +606,7 @@ static Type* struct_or_union_spec(bool is_union){
                 ty->size = offset;
             }
             ty->name = tok;
-            register_struct_or_union_type(ty);
+            register_tag(ty);
         }
         return ty;
     } else {
@@ -679,14 +679,14 @@ static Type* enum_spec(){
     Type* ty = NULL;
 
     if(tok){
-        ty = find_struct_or_union_type(tok);
+        ty = find_tag(tok);
         if(!ty){
             // 新規追加
             expect_token(TK_L_BRACKET);
             ty = new_type(TY_ENUM, 4);
             ty->name = tok;
             ty->member = enum_member();
-            register_struct_or_union_type(ty);
+            register_tag(ty);
         } else {
             if(consume_token(TK_L_BRACKET)){
                 // すでに登録してあるタグなのにあったらエラー
