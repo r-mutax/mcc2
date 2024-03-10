@@ -65,6 +65,8 @@ static Type* declspec(StorageClassKind* sck);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
 static Member* struct_or_union_member();
 static Type* struct_or_union_spec(bool is_union);
+static Type* enum_spec();
+static Member* enum_member();
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -115,6 +117,15 @@ Token unnamed_struct_token = {
     NULL,
     0,
     sizeof("__unnamed_struct"),
+    NULL,
+};
+
+Token unnamed_enum_token = {
+    TK_IDENT,
+    "__unnamed_enum",
+    NULL,
+    0,
+    sizeof("__unnamed_enum"),
     NULL,
 };
 
@@ -405,6 +416,11 @@ static Node* declaration(){
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
 
+    if(ty->kind == TY_ENUM && consume_token(TK_SEMICORON)){
+        // 列挙型の登録を行う
+        return new_node(ND_VOID_STMT, NULL, NULL);
+    }
+
     Ident* ident = declare(ty);
     register_ident(ident);
 
@@ -468,6 +484,15 @@ static Type* declspec(StorageClassKind* sck){
                 error_tok(tok, "duplicate type keyword.\n");
             }
             ty = struct_or_union_spec(tok->kind == TK_UNION);
+            type_flg += K_USER;
+            continue;
+        }
+
+        if(consume_token(TK_ENUM)){
+            if(ty || type_flg){
+                error_tok(tok, "duplicate type keyword.\n");
+            }
+            ty = enum_spec();
             type_flg += K_USER;
             continue;
         }
@@ -610,6 +635,71 @@ static Type* struct_or_union_spec(bool is_union){
         ty->name = &unnamed_struct_token;
         return ty;
     }
+}
+
+static Member* enum_member(){
+    // enummember = ident ('=' num)? (',' ident ('=' num)?)* '}'
+    Member head;
+    Member* cur = &head;
+    int val = 0;
+    Type* ty = copy_type(ty_int);
+    ty->is_const = true;
+
+    cur = cur->next = calloc(1, sizeof(Member));
+    Token* tok = expect_ident();
+    if(consume_token(TK_ASSIGN)){
+        val = expect_num();
+    }
+    cur->ident = make_ident(tok, ID_ENUM, ty);
+    cur->ident->val = val++;
+    register_ident(cur->ident);
+
+    if(!consume_token(TK_R_BRACKET)){
+        do {
+            expect_token(TK_COMMA);
+            Token* tok = consume_ident();
+            if(!tok) {
+                expect_token(TK_R_BRACKET);
+                break;
+            }
+            cur = cur->next = calloc(1, sizeof(Member));
+            if(consume_token(TK_ASSIGN)){
+                val = expect_num();
+            }
+            cur->ident = make_ident(tok, ID_ENUM, ty);
+            cur->ident->val = val++;
+            register_ident(cur->ident);
+        } while(!consume_token(TK_R_BRACKET));
+    }
+    return head.next;
+}
+
+static Type* enum_spec(){
+    Token* tok = consume_ident();
+    Type* ty = NULL;
+
+    if(tok){
+        ty = find_struct_or_union_type(tok);
+        if(!ty){
+            // 新規追加
+            expect_token(TK_L_BRACKET);
+            ty = new_type(TY_ENUM, 4);
+            ty->name = tok;
+            ty->member = enum_member();
+            register_struct_or_union_type(ty);
+        } else {
+            if(consume_token(TK_L_BRACKET)){
+                // すでに登録してあるタグなのにあったらエラー
+                error_tok(tok, "redefinition of enum.");
+            }
+        }
+    } else {
+        expect_token(TK_L_BRACKET);
+        ty = new_type(TY_ENUM, 4);
+        ty->name = &unnamed_enum_token;
+        ty->member = enum_member();
+    }
+    return ty;
 }
 
 static Node* expr(){
@@ -899,6 +989,9 @@ static Node* primary(){
                 node->ident = ident;
                 node->type = ident->type;
                 return node;
+            } else if(ident->kind == ID_ENUM){
+                Node* node = new_node_num(ident->val);
+                return node;
             } else if(ident->kind == ID_FUNC){
                 if(consume_token(TK_L_PAREN)){
                     Node* node = new_node(ND_FUNCCALL, 0, 0);
@@ -1146,6 +1239,7 @@ bool is_eof(){
 bool is_type(){
     return token->kind == TK_STRUCT
         || token->kind == TK_UNION
+        || token->kind == TK_ENUM
         || token->kind == TK_CONST
         || token->kind == TK_VOLATILE
         || token->kind == TK_RESTRICT

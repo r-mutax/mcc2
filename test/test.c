@@ -452,6 +452,24 @@ int test_type(){
     assert(test_union.i, 3);
     assert(sizeof(test_union), 4);
 
+    printf("test of enum..\n");
+    enum {
+        AAA,
+        ABC = 100,
+        DEF = 200,
+        GHI,
+    } ddd;
+
+    enum iii{
+        iii_ABC = 100,
+        iii_DEF = 200,
+    } ddd2;
+    assert(AAA, 0);
+    assert(DEF, 200);
+    assert(GHI, 201);
+    assert(iii_ABC, 100);
+    assert(iii_DEF, 200);
+
     printf("test of type qualifier..\n");
     const int const_a = 0;
     volatile int volatile_b = 0;
