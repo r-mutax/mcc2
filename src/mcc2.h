@@ -94,6 +94,7 @@ typedef enum TokenKind {
     TK_SHORT,                   // "short"
     TK_LONG,                    // "long" 
     TK_STRUCT,                  //  "struct"
+    TK_ENUM,                    // "enum"
     TK_UNION,                   // "union"
     TK_CONST,                   // const
     TK_RESTRICT,                // restrict
@@ -140,6 +141,7 @@ struct Ident {
     int offset;             // ローカル変数ののオフセット
     int is_string_literal;  // 文字列リテラルか？のフラグ
     Scope* scope;           // 関数スコープ
+    int val;                // 数値(enum用)
 
     Node* funcbody;         // 関数のbody
     Parameter* params;
@@ -377,6 +379,7 @@ enum TypeKind{
     TY_FUNC,
     TY_STRUCT,
     TY_UNION,
+    TY_ENUM,
 };
 
 struct Member {
