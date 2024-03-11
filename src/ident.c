@@ -68,9 +68,9 @@ void register_ident(Ident* ident){
     cur_scope->ident = ident;
 }
 
-void register_struct_or_union_type(Type* type){
-    type->next = cur_scope->struct_or_union_type;
-    cur_scope->struct_or_union_type = type;
+void register_tag(Type* type){
+    type->next = cur_scope->type_tag;
+    cur_scope->type_tag = type;
 }
 
 Ident* register_string_literal(Token* tok){
@@ -125,9 +125,9 @@ Ident* find_ident(Token* tok){
     return NULL;
 }
 
-Type* find_struct_or_union_type(Token* tok){
+Type* find_tag(Token* tok){
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
-        for(Type* ty = sc->struct_or_union_type; ty; ty = ty->next){
+        for(Type* ty = sc->type_tag; ty; ty = ty->next){
             if(is_equal_token(ty->name, tok)){
                 return ty;
             }
