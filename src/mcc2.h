@@ -18,6 +18,7 @@ typedef struct StringLiteral StringLiteral;
 typedef struct SrcFile SrcFile;
 typedef struct IncludePath IncludePath;
 typedef struct Macro Macro;
+typedef struct Warning Warning;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
@@ -424,5 +425,10 @@ struct StringLiteral{
     char*           name;
     Token*          val;
     StringLiteral*  next;
+};
+
+struct Warning {
+    char*       warn;
+    Warning*    next;
 };
 
