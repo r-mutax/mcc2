@@ -207,10 +207,24 @@ static Token* read_if(Token* token){
                 cur = get_endif(target);
                 cur = next_newline(cur);
                 break;
+            case TK_PP_ELIF:
+                if_group->tail = cur;
+                if_group->next = calloc(1, sizeof(IF_GROUP));
+                if_group->head = next_newline(target);
+                if_group->cond = eval_if_cond(target);
+                cur = next_newline(target);
+                break;
+            case TK_PP_ELSE:
+                if_group->tail = cur;
+                if_group->next = calloc(1, sizeof(IF_GROUP));
+                if_group->head = next_newline(target);
+                if_group->cond = true;
+                cur = next_newline(target);
+                break;
             case TK_PP_ENDIF:
                 if_group->tail = cur;
                 endif = true;
-                cur = next_newline(cur);
+                cur = next_newline(target);
                 break;
         }
 
@@ -218,12 +232,14 @@ static Token* read_if(Token* token){
         cur = cur->next;
     }
     
-    if(if_group->cond){
-        if_group->tail->next = cur;
-        return if_group->head;
-    } else {
-        return cur;
+    for(if_group = if_head.next; if_group->next; if_group = if_group->next){
+        if(if_group->cond){
+            if_group->tail->next = cur;
+            return if_group->head;
+        }
+        if_group->tail->next = if_group->next->head;
     }
+    return cur;
 }
 
 static bool eval_if_cond(Token* token){
@@ -242,6 +258,8 @@ static bool eval_if_cond(Token* token){
                 return m == NULL;
             }
             break;
+        case TK_PP_ELSE:
+            return true;
         default:
             error("invalid if condition");
             return false;

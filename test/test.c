@@ -540,6 +540,15 @@ int test_preprocess()
     #ifndef TEST_MACRO_2
     abcdefg = 10; 
     #endif
+
+    #ifndef TEST_MACRO_2
+    abcdefg = 10; 
+    #else
+    a = 20;
+    #endif
+    assert(a, 20);
+
+
     return 0;
 }
 
