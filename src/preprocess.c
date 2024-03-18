@@ -15,6 +15,10 @@ static void add_macro(Token* name, Token* value);
 static Macro* find_macro(Token* name);
 static void delete_macro(Macro* m);
 
+// if-group
+static Token* read_if(Token* token);
+static bool eval_if_cond(Token* token);
+
 // for debug
 static void print_macros();
 
@@ -64,6 +68,7 @@ Token* preprocess(Token* token){
                     continue;
                 }
                 break;
+            
             case TK_UNDEF:
                 {
                     Token* undefsymbol = cur->next->next;
@@ -75,6 +80,11 @@ Token* preprocess(Token* token){
                     cur->next = newline->next;
                     continue;
                 }
+                break;
+            case TK_PP_IF:
+            case TK_PP_IFDEF:
+            case TK_PP_IFNDEF:
+                cur->next = read_if(cur->next);
                 break;
             case TK_IDENT:
                 {
@@ -158,6 +168,84 @@ static void delete_macro(Macro* m){
         cur = cur->next;
     }
 
+}
+
+static Token* get_endif(Token* token){
+    Token* cur = token;
+    while(cur){
+        switch(cur->kind){
+            case TK_PP_ENDIF:
+                return cur;
+            case TK_PP_IF:
+            case TK_PP_IFDEF:
+            case TK_PP_IFNDEF:
+                cur = get_endif(next_newline(cur));
+                cur = next_newline(cur);
+                break;
+        }
+        cur = cur->next;
+    }
+    return NULL;
+}
+
+static Token* read_if(Token* token){
+
+    IF_GROUP if_head;
+    IF_GROUP* if_group = &if_head;
+    if_group->next = calloc(1, sizeof(IF_GROUP));
+    if_group->cond = eval_if_cond(token);
+    if_group->head = next_newline(token);
+
+    Token* cur = next_newline(token);
+    while(cur){
+        Token* target = cur->next;
+        bool endif = false;
+        switch(cur->kind){
+            case TK_PP_IF:
+            case TK_PP_IFDEF:
+            case TK_PP_IFNDEF:
+                cur = get_endif(target);
+                cur = next_newline(cur);
+                break;
+            case TK_PP_ENDIF:
+                if_group->tail = cur;
+                endif = true;
+                cur = next_newline(cur);
+                break;
+        }
+
+        if(endif) break;
+        cur = cur->next;
+    }
+    
+    if(if_group->cond){
+        if_group->tail->next = cur;
+        return if_group->head;
+    } else {
+        return cur;
+    }
+}
+
+static bool eval_if_cond(Token* token){
+    switch(token->kind){
+        case TK_PP_IF:
+            return true;
+        case TK_PP_IFDEF:
+            {
+                Macro* m = find_macro(token->next);
+                return m != NULL;
+            }
+            break;
+        case TK_PP_IFNDEF:
+            {
+                Macro* m = find_macro(token->next);
+                return m == NULL;
+            }
+            break;
+        default:
+            error("invalid if condition");
+            return false;
+    }
 }
 
 // for debug

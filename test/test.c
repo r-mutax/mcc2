@@ -531,6 +531,15 @@ int test_preprocess()
     a = TEST_MACRO;
     assert(a, 123);
     assert(TEST_MACRO_2, 3);
+
+    printf("test of preprocess if-group..\n");
+    #ifdef TEST_MACRO_ABCDEFG
+    abcdefg = 10;
+    #endif
+
+    #ifndef TEST_MACRO_2
+    abcdefg = 10; 
+    #endif
     return 0;
 }
 

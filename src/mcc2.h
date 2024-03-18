@@ -19,6 +19,7 @@ typedef struct SrcFile SrcFile;
 typedef struct IncludePath IncludePath;
 typedef struct Macro Macro;
 typedef struct Warning Warning;
+typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
@@ -31,6 +32,13 @@ struct IncludePath {
 struct SrcFile{
     char*   name;
     char*   body;
+};
+
+struct IF_GROUP {
+    bool        cond;
+    Token*      head;
+    Token*      tail;
+    IF_GROUP*   next;
 };
 
 typedef enum TokenKind {
@@ -106,6 +114,12 @@ typedef enum TokenKind {
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
     TK_UNDEF,                   // #undef
+    TK_PP_IF,
+    TK_PP_IFDEF,
+    TK_PP_IFNDEF,
+    TK_PP_ELIF,
+    TK_PP_ELSE,
+    TK_PP_ENDIF,
     TK_HASH,
     TK_HASH_HASH,
     TK_EOF                      // 終端記号
