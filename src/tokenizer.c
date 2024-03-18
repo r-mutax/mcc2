@@ -238,24 +238,31 @@ static Token* scan(char* src){
                     if(*(p+1) == '#'){
                         cur = new_token(TK_HASH_HASH, cur, p);
                         p += 2;
-                    } else if(is_ident1(*(p+1))){
-                        char* hash = p;
-                        char* s = p + 1;
-                        p += 2;
-                        while(is_ident2(*p)) {
+                    } else {
+                        // space除去
+                        while(isspace(*p)){
                             p++;
                         }
-                        TokenKind kind = check_preprocess_keyword(s, p - s);
-                        if(kind == TK_IDENT){
-                            cur = new_token(TK_HASH, cur, hash);
-                            cur = new_token(TK_IDENT, cur, s);
-                            cur->len = p - s;
+
+                        if(is_ident1(*(p+1))){
+                            char* hash = p;
+                            char* s = p + 1;
+                            p += 2;
+                            while(is_ident2(*p)) {
+                                p++;
+                            }
+                            TokenKind kind = check_preprocess_keyword(s, p - s);
+                            if(kind == TK_IDENT){
+                                cur = new_token(TK_HASH, cur, hash);
+                                cur = new_token(TK_IDENT, cur, s);
+                                cur->len = p - s;
+                            } else {
+                                cur = new_token(kind, cur, s);
+                                cur->len = hash - s;
+                            }
                         } else {
-                            cur = new_token(kind, cur, s);
-                            cur->len = hash - s;
+                            cur = new_token(TK_HASH, cur, p++);
                         }
-                    } else {
-                        cur = new_token(TK_HASH, cur, p++);
                     }
                 }
                 break;
