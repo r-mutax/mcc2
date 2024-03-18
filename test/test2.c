@@ -1,10 +1,14 @@
 #define TEST_MACRO_2 1
 int main(){
-    int a = 10;
-    #ifndef TEST_MACRO_2
-    abcdefg = 10; 
-    #else
-    a = 20;
-    #endif
-    return a;
+        int pp_ans = 0;
+// test #if - #elif - #endif directive.
+#if 0
+    assert(1, 0);
+#elif 0
+    assert(1, 0);
+#elif 1
+    pp_ans = 20;
+#endif
+    //assert(pp_ans, 20);
+    return pp_ans;
 }
