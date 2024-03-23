@@ -531,6 +531,104 @@ int test_preprocess()
     a = TEST_MACRO;
     assert(a, 123);
     assert(TEST_MACRO_2, 3);
+
+    printf("test of preprocess if-group..\n");
+    #ifdef TEST_MACRO_ABCDEFG
+    abcdefg = 10;
+    #endif
+
+    #ifndef TEST_MACRO_2
+    abcdefg = 10; 
+    #endif
+
+    #ifndef TEST_MACRO_2
+    abcdefg = 10; 
+    #else
+    a = 20;
+    #endif
+    assert(a, 20);
+
+    int pp_ans = 10;
+// test #if directive.
+#if 0
+    assert(1, 0);
+#else
+
+// test Nesting #if directive.
+#if 0
+    assert(1, 0);
+#else
+    pp_ans = 10;
+#endif
+#endif
+    assert(pp_ans, 10);
+
+// test #if - #elif - #endif directive.
+#if 0
+    assert(1, 0);
+#elif 0
+    assert(1, 0);
+#elif 1
+    pp_ans = 20;
+#endif
+    assert(pp_ans, 20);
+
+// test #if directive expression
+#if (2 * 3 - 6)
+    assert(1, 0);
+#endif
+
+#if (4 / 2 + 4) - 6
+    assert(1, 0);
+#endif
+
+#if (5 % 3 + 1) - 3
+    assert(1, 0);
+#endif
+
+#if (1 << 3 + 2) - 32
+    assert(1, 0);
+#endif
+
+#if (8 >> 3 - 2) - 4
+    assert(1, 0);
+#endif
+
+#if (7 < 4 << 1) - 1
+    assert(1, 0);
+#endif
+
+#if (2 <= 8 >> 2) - 1
+    assert(1, 0);
+#endif
+
+#if (17 > 4 << 2) - 1
+    assert(1, 0);
+#endif
+
+#if (1 >= 4 >> 2) - 1
+    assert(1, 0);
+#endif
+
+#if (1 == 2 > 0 != 2) - 1
+    assert(1, 0);
+#endif
+
+#if (2 & 5 ^ 3 | 9) - 11
+    assert(1, 0);
+#endif
+
+#if (3 == 3 && 4 != 4 ? 3 : 9) - 9
+    assert(1, 0);
+#endif
+
+#if 0xabc - 2748
+    assert(1, 0);
+#endif
+
+#if 0567 - 375
+    assert(1, 0);
+#endif
     return 0;
 }
 
