@@ -51,6 +51,7 @@ typedef enum TokenKind {
     TK_MINUS_MINUS,             // --
     TK_MUL,                     // *
     TK_DIV,                     // /
+    TK_NOT,                     // !
     TK_PERCENT,                 // %
     TK_PERCENT_EQUAL,           // %=
     TK_PLUS_EQUAL,              // +=
@@ -120,6 +121,7 @@ typedef enum TokenKind {
     TK_PP_ELIF,
     TK_PP_ELSE,
     TK_PP_ENDIF,
+    TK_DEFINED,                 // defined
     TK_HASH,
     TK_HASH_HASH,
     TK_EOF                      // 終端記号

@@ -629,6 +629,16 @@ int test_preprocess()
 #if 0567 - 375
     assert(1, 0);
 #endif
+
+#define TEST_DEF 1
+#if defined ( TEST_DEF ) - 1
+    assert(1, 0);
+#endif
+
+#if ! defined TEST_DEF
+    assert(1, 0);
+#endif
+
     return 0;
 }
 

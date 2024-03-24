@@ -153,7 +153,7 @@ static Token* scan(char* src){
                     cur = new_token(TK_NOT_EQUAL, cur, p);
                     p += 2;
                 } else {
-                    error_at_src(p, cur_file, "error: unexpected token.\n");
+                    cur = new_token(TK_NOT, cur, p++);
                 }
                 break;
             case '?':

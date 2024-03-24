@@ -30,6 +30,7 @@ static KEYWORD_MAP keyword_map[] = {
     {   "const",        TK_CONST    },
     {   "restrict",     TK_RESTRICT },
     {   "volatile",     TK_VOLATILE },
+    {   "defined",      TK_DEFINED  },
 };
 
 static KEYWORD_MAP preprocess_keyword_map[] = {
