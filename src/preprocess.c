@@ -8,6 +8,16 @@
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;
 
+Token tok_zero = {
+    .kind = TK_NUM,
+    .val = 0,
+};
+
+Token tok_one = {
+    .kind = TK_NUM,
+    .val = 1,
+};
+
 Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
@@ -19,6 +29,7 @@ static void delete_macro(Macro* m);
 static Token* read_if(Token* token);
 static bool eval_if_cond(Token* token);
 static bool eval_expr(Token* token);
+static Token* expand_defined(Token* tok);
 
 // constant_expr for preprocessor
 Token* expr_token = NULL;
@@ -54,7 +65,7 @@ static int get_token_int(Token* token);
     bitShift = add ('<<' add | '>>' add)?
     add = mul ('+' mul | '-' mul)*
     mul = unary ('*' unary | '/' unary)
-    unary = ('+' | '-' )? primary
+    unary = ('+' | '-' | '!' )? primary
     primary = '(' expr ')' | num
 */
 
@@ -308,7 +319,39 @@ static bool eval_if_cond(Token* token){
     }
 }
 
+static Token* expand_defined(Token* tok){
+    Token head = {};
+    Token *cur = &head;
+    cur->next = tok;
+
+    while(cur && cur->next){
+        Token* target = cur->next;
+        if(target->kind == TK_DEFINED){
+            Token* ident = NULL;
+            target = target->next;
+
+            if(target->kind == TK_L_PAREN){
+                ident = target = target->next;
+                target = target->next;
+                if(target->kind != TK_R_PAREN){
+                    error("invalid defined");
+                }
+            } else {
+                ident = target;
+            }
+            target = target->next;
+
+            cur->next = find_macro(ident) ? &tok_one : &tok_zero;
+            cur->next->next = target;
+        } else {
+            cur = cur->next;
+        }
+    }
+    return head.next;
+}
+
 static bool eval_expr(Token* token){
+    token = expand_defined(token);
     return pp_constant_expr(token);
 }
 
@@ -450,6 +493,8 @@ static int pp_unary(){
     if(pp_consume(TK_PLUS)){
         return pp_primary();
     } else if(pp_consume(TK_MINUS)){
+        return -pp_primary();
+    } else if(pp_consume(TK_NOT)){
         return -pp_primary();
     } else {
         return pp_primary();
