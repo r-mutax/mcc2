@@ -78,80 +78,81 @@ Token* preprocess(Token* token){
     head.next = token;
     Token* cur = &head;
     while(cur->next){
-        switch(cur->next->kind){
-            case TK_INCLUDE:
-                {
-                    char* filepath = get_token_string(cur->next->next);
-                    char* path = find_include_file(filepath);
-                    if(!path){
-                        error("file not found: %s", filepath);
-                    }
-                    Token* inlcude = tokenize(path);
-                    Token* newline = next_newline(cur->next);
-                    cur->next = inlcude;
 
-                    // get tail of tokenlist from include
-                    Token* tail = inlcude;
-                    while(tail->next){
-                        if(tail->next->kind != TK_EOF){
-                            tail = tail->next;
-                        } else {
-                            break;
+        if(cur->next->kind == TK_HASH){
+            Token* target = cur->next->next;
+            switch(target->kind){
+                case TK_INCLUDE:
+                    {
+                        char* filepath = get_token_string(target->next);
+                        char* path = find_include_file(filepath);
+                        if(!path){
+                            error("file not found: %s", filepath);
                         }
+                        Token* inlcude = tokenize(path);
+                        Token* newline = next_newline(target);
+                        cur->next = inlcude;
+
+                        // get tail of tokenlist from include
+                        Token* tail = inlcude;
+                        while(tail->next){
+                            if(tail->next->kind != TK_EOF){
+                                tail = tail->next;
+                            } else {
+                                break;
+                            }
+                        }
+                        tail->next = newline->next;
+                        continue;
                     }
-                    tail->next = newline->next;
-                    continue;
-                }
-                break;
-            case TK_DEFINE:
-                {
-                    Token* defsymbol = cur->next->next;
-                    Token* defvalue = NULL;
-                    if(defsymbol->next->kind == TK_NEWLINE){
-                        // 今は空マクロは非対応
-                        error("macro definition is empty");
-                    } else {
-                        defvalue = defsymbol->next;
+                    break;
+                case TK_DEFINE:
+                    {
+                        Token* defsymbol = target->next;
+                        Token* defvalue = NULL;
+                        if(defsymbol->next->kind == TK_NEWLINE){
+                            // 今は空マクロは非対応
+                            error("macro definition is empty");
+                        } else {
+                            defvalue = defsymbol->next;
+                        }
+                        add_macro(defsymbol, defvalue);
+                        Token* newline = next_newline(defvalue);
+                        cur->next = newline->next;
+                        continue;
                     }
-                    add_macro(defsymbol, defvalue);
-                    Token* newline = next_newline(defvalue);
-                    cur->next = newline->next;
-                    continue;
-                }
-                break;
-            
-            case TK_UNDEF:
-                {
-                    Token* undefsymbol = cur->next->next;
-                    Macro* m = find_macro(undefsymbol);
-                    if(m){
-                        delete_macro(m);
+                    break;
+                case TK_UNDEF:
+                    {
+                        Token* undefsymbol = target->next;
+                        Macro* m = find_macro(undefsymbol);
+                        if(m){
+                            delete_macro(m);
+                        }
+                        Token* newline = next_newline(undefsymbol);
+                        cur->next = newline->next;
+                        continue;
                     }
-                    Token* newline = next_newline(undefsymbol);
-                    cur->next = newline->next;
-                    continue;
-                }
-                break;
-            case TK_PP_IF:
-            case TK_PP_IFDEF:
-            case TK_PP_IFNDEF:
-                cur->next = read_if(cur->next);
-                break;
-            case TK_IDENT:
-                {
-                    Token* ident = cur->next;
-                    Macro* m = find_macro(ident);
-                    if(m){
-                        Token* value = copy_token_list(m->value);
-                        Token* tail = get_tokens_tail(value);
-                        tail->next = cur->next->next;
-                        cur->next = value;
-                    }                    
-                }
-                break;
-            default:
-                break;
+                    break;
+                case TK_PP_IF:
+                case TK_PP_IFDEF:
+                case TK_PP_IFNDEF:
+                    cur->next = read_if(target);
+                    break;
+                default:
+                    break;
+            }
+        } else if(cur->next->kind == TK_IDENT){
+            Token* ident = cur->next;
+            Macro* m = find_macro(ident);
+            if(m){
+                Token* value = copy_token_list(m->value);
+                Token* tail = get_tokens_tail(value);
+                tail->next = cur->next->next;
+                cur->next = value;
+            }
         }
+
         cur = cur->next;
     }
 
