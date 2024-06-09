@@ -257,6 +257,7 @@ static Token* scan(char* src){
                                 cur = new_token(TK_IDENT, cur, s);
                                 cur->len = p - s;
                             } else {
+                                cur = new_token(TK_HASH, cur, hash);
                                 cur = new_token(kind, cur, s);
                                 cur->len = hash - s;
                             }
