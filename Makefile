@@ -12,7 +12,7 @@ mcc2: $(OBJS)
 -include $(DEPS)
 
 test: mcc2
-	./mcc2 -c ./test/test.c -o ./tmp.s
+	./mcc2 -c ./test/test.c -o ./tmp.s -d PREDEFINED_MACRO
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
