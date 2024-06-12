@@ -4,6 +4,7 @@
 #include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;
@@ -166,6 +167,19 @@ void add_include_path(char* path){
     include_paths = p;
 }
 
+void add_predefine_macro(char* name){
+    Token* tok = calloc(1, sizeof(Token));
+    tok->pos = strnewcpyn(name, strlen(name));
+    tok->len = strlen(name);
+    tok->kind = TK_IDENT;
+
+    Macro* m = malloc(sizeof(Macro));
+    m->name = tok;
+    m->value = NULL;
+    m->next = macros;
+    macros = m;
+}
+
 static char* find_include_file(char* filename){
     IncludePath* p;
     for(p = include_paths; p; p = p->next){
@@ -243,53 +257,55 @@ static Token* get_endif(Token* token){
 static Token* read_if(Token* token){
 
     IF_GROUP if_head;
+    if_head.cond = false;
+
     IF_GROUP* if_group = &if_head;
-    if_group->next = calloc(1, sizeof(IF_GROUP));
+    if_group = if_group->next = calloc(1, sizeof(IF_GROUP));
     if_group->cond = eval_if_cond(token);
     if_group->head = next_newline(token);
 
     Token* cur = next_newline(token);
-    while(cur){
-        Token* target = cur->next;
-        bool endif = false;
-        switch(cur->kind){
-            case TK_PP_IF:
-            case TK_PP_IFDEF:
-            case TK_PP_IFNDEF:
-                cur = get_endif(target);
-                cur = next_newline(cur);
-                break;
-            case TK_PP_ELIF:
-                if_group->tail = cur;
-                if_group->next = calloc(1, sizeof(IF_GROUP));
-                if_group->head = next_newline(target);
-                if_group->cond = eval_if_cond(cur);
-                cur = next_newline(target);
-                break;
-            case TK_PP_ELSE:
-                if_group->tail = cur;
-                if_group->next = calloc(1, sizeof(IF_GROUP));
-                if_group->head = next_newline(target);
-                if_group->cond = true;
-                cur = next_newline(target);
-                break;
-            case TK_PP_ENDIF:
-                if_group->tail = cur;
-                endif = true;
-                cur = next_newline(target);
-                break;
+    while(cur->next && cur->next->next){
+        if(cur->next->kind == TK_HASH){
+            Token* target = cur->next->next;
+            bool endif = false;
+            switch(target->kind){
+                case TK_PP_IF:
+                case TK_PP_IFDEF:
+                case TK_PP_IFNDEF:
+                    cur = get_endif(target->next);
+                    cur = next_newline(cur);
+                    break;
+                case TK_PP_ELIF:
+                    if_group->tail = cur;
+                    if_group = if_group->next = calloc(1, sizeof(IF_GROUP));
+                    if_group->head = next_newline(target);
+                    if_group->cond = eval_if_cond(target);
+                    cur = next_newline(target);
+                    break;
+                case TK_PP_ELSE:
+                    if_group->tail = cur;
+                    if_group = if_group->next = calloc(1, sizeof(IF_GROUP));
+                    if_group->head = next_newline(target);
+                    if_group->cond = true;
+                    cur = next_newline(target);
+                    break;
+                case TK_PP_ENDIF:
+                    if_group->tail = cur;
+                    endif = true;
+                    cur = next_newline(target);
+                    break;
+            }
+            if(endif) break;
+        } else {
+            cur = cur->next;
         }
-
-        if(endif) break;
-        cur = cur->next;
     }
-    
-    for(if_group = if_head.next; if_group->next; if_group = if_group->next){
+    for(if_group = &if_head; if_group; if_group = if_group->next){
         if(if_group->cond){
             if_group->tail->next = cur;
             return if_group->head;
         }
-        if_group->tail->next = if_group->next->head;
     }
     return cur;
 }
@@ -483,6 +499,8 @@ static int pp_mul(){
             val = val * pp_unary();
         } else if(pp_consume(TK_DIV)){
             val = val / pp_unary();
+        } else if(pp_consume(TK_PERCENT)){
+            val = val % pp_unary();
         } else {
             break;
         }
@@ -496,7 +514,7 @@ static int pp_unary(){
     } else if(pp_consume(TK_MINUS)){
         return -pp_primary();
     } else if(pp_consume(TK_NOT)){
-        return -pp_primary();
+        return !pp_primary();
     } else {
         return pp_primary();
     }

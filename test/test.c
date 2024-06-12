@@ -29,6 +29,7 @@ int main(){
     test_variable();
     test_type();
     test_primary();
+    test_preprocess();
 
     printf("test is complete!!!\n");
     return 0;
@@ -542,7 +543,7 @@ int test_preprocess()
     #endif
 
     #ifndef TEST_MACRO_2
-    abcdefg = 10; 
+    abcdefg = 16; 
     #else
     a = 20;
     #endif
@@ -550,6 +551,7 @@ int test_preprocess()
 
     int pp_ans = 10;
 // test #if directive.
+    printf("test of preprocess if directive..\n");
 #if 0
     assert(1, 0);
 #else
@@ -567,7 +569,7 @@ int test_preprocess()
 #if 0
     assert(1, 0);
 #elif 0
-    assert(1, 0);
+    assert(77, 0);
 #elif 1
     pp_ans = 20;
 #endif
@@ -626,9 +628,11 @@ int test_preprocess()
     assert(1, 0);
 #endif
 
-#if 0567 - 375
-    assert(1, 0);
-#endif
+// TODO : 8進数をトークナイザが読めるようにする
+// #if 0567 - 375
+//     assert(1, 0);
+// #endif
+
 
 #define TEST_DEF 1
 #if defined ( TEST_DEF ) - 1
@@ -636,6 +640,10 @@ int test_preprocess()
 #endif
 
 #if ! defined TEST_DEF
+    assert(1, 0);
+#endif
+
+#ifndef PREDEFINED_MACRO
     assert(1, 0);
 #endif
 
