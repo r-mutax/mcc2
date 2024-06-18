@@ -1,3 +1,3 @@
-#if (5 % 3 + 1) - 3
+#if ! defined TEST_DEF
     assert(1, 0);
 #endif

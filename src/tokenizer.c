@@ -273,7 +273,8 @@ static Token* scan(char* src){
                     cur->val = strtol(p, &p, 10);
                     cur->len = p - cur->pos;
                 } else if(isspace(c)){
-                    p++;
+                    cur = new_token(TK_SPACE, cur, p++);
+                    // p++;
                 } else if(is_ident1(c)){
                     char* s = p;
                     p++;
@@ -368,6 +369,15 @@ Token* next_newline(Token* tok){
         tok = tok->next;
     }
     return tok;
+}
+
+Token* next_token(Token* tok){
+    for(Token* cur = tok->next; cur; cur = cur->next){
+        if(cur->kind != TK_NEWLINE && cur->kind != TK_SPACE){
+            return cur;
+        }
+    }
+    return  NULL;
 }
 
 Token* copy_token(Token* tok){
