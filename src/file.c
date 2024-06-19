@@ -3,8 +3,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
 #include "error.h"
 #include "mcc2.h"
+
+FILE* fp = NULL;
 
 SrcFile* read_file(char* path){
 
@@ -40,4 +43,27 @@ char* get_dirname(char* path){
     char* buf = calloc(1, sizeof(strlen(path) + (yen_pos - path) - 1));
     strncpy(buf, path, yen_pos - path);
     return buf;
+}
+
+void file_init()
+{
+    fp = stdout;
+}
+
+void open_output_file(char* filename){
+    fp = fopen(filename, "w");
+    if(fp == NULL){
+        error("cannot open file: %s", filename);
+    }
+}
+
+void close_output_file(){
+    fclose(fp);
+}
+
+void print(char* fmt, ...){
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(fp, fmt, ap);
+    va_end(ap);
 }

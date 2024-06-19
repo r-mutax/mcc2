@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef struct Token Token;
 typedef struct Node Node;
@@ -23,6 +24,7 @@ typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
+extern FILE* fp;
 
 struct IncludePath {
     char* path;
@@ -124,6 +126,7 @@ typedef enum TokenKind {
     TK_DEFINED,                 // defined
     TK_HASH,
     TK_HASH_HASH,
+    TK_SPACE,                   // 空白
     TK_EOF                      // 終端記号
 } TokenKind;
 
