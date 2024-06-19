@@ -8,6 +8,7 @@
 
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;
+extern bool is_preprocess;
 
 Token tok_zero = {
     .kind = TK_NUM,
@@ -158,7 +159,8 @@ Token* preprocess(Token* token){
         cur = cur->next;
     }
 
-    head.next = delete_space(head.next);
+    if(!is_preprocess)
+        head.next = delete_space(head.next);
 
     return head.next;
 }

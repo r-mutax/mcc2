@@ -4,8 +4,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-extern FILE* fp;
-
 char* strnewcpyn(char* src, int n){
     char* buf = calloc(n, sizeof(char));
     strncpy(buf, src, n);

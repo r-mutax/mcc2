@@ -12,3 +12,4 @@ Token* copy_token(Token* tok);
 Token* copy_token_list(Token* tok);
 Token* copy_token_eol(Token* tok);
 Token* get_tokens_tail(Token* tok);
+void output_token(Token* tok);

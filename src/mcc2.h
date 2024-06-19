@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef struct Token Token;
 typedef struct Node Node;
@@ -23,6 +24,7 @@ typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
 extern Type* ty_int;
+extern FILE* fp;
 
 struct IncludePath {
     char* path;

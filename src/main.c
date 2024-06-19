@@ -17,6 +17,7 @@
 #include <bits/getopt_core.h>
 
 static char* filename = NULL;
+bool is_preprocess = false;
 
 char* get_filename(char* path){
     char* yen_pos = strrchr(path, '/');
@@ -27,7 +28,7 @@ char* get_filename(char* path){
 
 void analy_opt(int argc, char** argv){
     int opt;
-    while((opt = getopt(argc, argv, "c:o:i:d:")) != -1){
+    while((opt = getopt(argc, argv, "c:o:i:d:E")) != -1){
         switch(opt){
             case 'c':
                 filename = optarg;
@@ -57,6 +58,9 @@ void analy_opt(int argc, char** argv){
                     exit(1);
                 }
                 break;
+            case 'E':
+                is_preprocess = true;
+                break;
             default:
                 error("invalid option.");
         }
@@ -66,6 +70,7 @@ void analy_opt(int argc, char** argv){
 int main(int argc, char **argv){
     // initialize
     ty_init();
+    file_init();
 
     if(argc > 2){
         analy_opt(argc, argv);
@@ -82,6 +87,12 @@ int main(int argc, char **argv){
 
     // compile
     Token* tok = tokenize(filename);
+    if(is_preprocess){
+        // プリプロセス出力のオプションが指定されている場合は、
+        // トークンをプリプロセスして出力して終了する
+        output_token(tok);
+        return 0;
+    }
     parse(tok);
 
     // semantics

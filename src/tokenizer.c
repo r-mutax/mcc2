@@ -10,9 +10,10 @@
 
 Token* token;
 SrcFile* cur_file;
+extern bool is_preprocess;
 
 static Token* scan(char* src);
-static Token* new_token(TokenKind kind, Token* cur, char* p);
+static Token* new_token(TokenKind kind, Token* cur, char* p, int len);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
@@ -25,7 +26,8 @@ Token* tokenize(char* path){
 
     Token* tok = scan(file->body);
     tok = preprocess(tok);
-    tok = delete_newline_token(tok);
+    if(!is_preprocess)
+        tok = delete_newline_token(tok);
     return tok;
 }
 
@@ -46,41 +48,41 @@ static Token* scan(char* src){
         switch(c){
             case 0:
                 continue_flg = false;
-                cur = new_token(TK_EOF, cur, p++);
+                cur = new_token(TK_EOF, cur, p++, 1);
                 break;
             case '+':
                 if(*(p + 1) == '+'){
-                    cur = new_token(TK_PLUS_PLUS, cur, p);
+                    cur = new_token(TK_PLUS_PLUS, cur, p, 2);
                     p += 2;
                 } else if(*(p + 1) == '=') {
-                    cur = new_token(TK_PLUS_EQUAL, cur, p);
+                    cur = new_token(TK_PLUS_EQUAL, cur, p, 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_PLUS, cur, p++);
+                    cur = new_token(TK_PLUS, cur, p++, 1);
                 }
                 break;
             case '-':
                 if(*(p + 1) == '-'){
-                    cur = new_token(TK_MINUS_MINUS, cur, p);
+                    cur = new_token(TK_MINUS_MINUS, cur, p, 2);
                     p += 2;
                 } else if(*(p + 1) == '=') {
-                    cur = new_token(TK_MINUS_EQUAL, cur, p);
+                    cur = new_token(TK_MINUS_EQUAL, cur, p, 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_MINUS, cur, p++);
+                    cur = new_token(TK_MINUS, cur, p++, 1);
                 }
                 break;
             case '*':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_MUL_EQUAL, cur, p);
+                    cur = new_token(TK_MUL_EQUAL, cur, p, 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_MUL, cur, p++);
+                    cur = new_token(TK_MUL, cur, p++, 1);
                 }
                 break;
             case '/':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_DIV_EQUAL, cur, p);
+                    cur = new_token(TK_DIV_EQUAL, cur, p, 2);
                     p += 2;
                 } else if(*(p + 1) == '/') {
                     p += 2;
@@ -92,113 +94,113 @@ static Token* scan(char* src){
                     }
                     p = q + 2;
                 } else {
-                    cur = new_token(TK_DIV, cur, p++);
+                    cur = new_token(TK_DIV, cur, p++, 1);
                 }
                 break;
             case '%':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_PERCENT_EQUAL, cur, p);
+                    cur = new_token(TK_PERCENT_EQUAL, cur, p, 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_PERCENT, cur, p++);
+                    cur = new_token(TK_PERCENT, cur, p++, 1);
                 }
                 break;
             case '(':
-                cur = new_token(TK_L_PAREN, cur, p++);
+                cur = new_token(TK_L_PAREN, cur, p++, 1);
                 break;
             case ')':
-                cur = new_token(TK_R_PAREN, cur, p++);
+                cur = new_token(TK_R_PAREN, cur, p++, 1);
                 break;
             case '{':
-                cur = new_token(TK_L_BRACKET, cur, p++);
+                cur = new_token(TK_L_BRACKET, cur, p++, 1);
                 break;
             case '}':
-                cur = new_token(TK_R_BRACKET, cur, p++);
+                cur = new_token(TK_R_BRACKET, cur, p++, 1);
                 break;
             case '[':
-                cur = new_token(TK_L_SQUARE_BRACKET, cur, p++);
+                cur = new_token(TK_L_SQUARE_BRACKET, cur, p++, 1);
                 break;
             case ']':
-                cur = new_token(TK_R_SQUARE_BRACKET, cur, p++);
+                cur = new_token(TK_R_SQUARE_BRACKET, cur, p++ , 1);
                 break;
             case '&':
                 if(*(p + 1) == '&'){
-                    cur = new_token(TK_AND_AND, cur, p);
+                    cur = new_token(TK_AND_AND, cur, p , 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_AND, cur, p++);
+                    cur = new_token(TK_AND, cur, p++ , 1);
                 }
                 break;
             case '^':
-                cur = new_token(TK_HAT, cur, p++);
+                cur = new_token(TK_HAT, cur, p++ , 1);
                 break;
             case '|':
                 if(*(p + 1) == '|'){
-                    cur = new_token(TK_PIPE_PIPE, cur, p);
+                    cur = new_token(TK_PIPE_PIPE, cur, p , 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_PIPE, cur, p++);
+                    cur = new_token(TK_PIPE, cur, p++ , 1);
                 }
                 break;
             case '=':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_EQUAL, cur, p);
+                    cur = new_token(TK_EQUAL, cur, p , 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_ASSIGN, cur, p++);
+                    cur = new_token(TK_ASSIGN, cur, p++ , 1);
                 }
                 break;
             case '!':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_NOT_EQUAL, cur, p);
+                    cur = new_token(TK_NOT_EQUAL, cur, p , 2);
                     p += 2;
                 } else {
-                    cur = new_token(TK_NOT, cur, p++);
+                    cur = new_token(TK_NOT, cur, p++ , 1);
                 }
                 break;
             case '?':
-                cur = new_token(TK_QUESTION, cur, p++);
+                cur = new_token(TK_QUESTION, cur, p++ , 1);
                 break;
             case ':':
-                cur = new_token(TK_COLON, cur, p++);
+                cur = new_token(TK_COLON, cur, p++ , 1);
                 break;
             case '<':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_L_ANGLE_BRACKET_EQUAL, cur, p);
+                    cur = new_token(TK_L_ANGLE_BRACKET_EQUAL, cur, p , 2);
                     p += 2;
                 } else if(*(p + 1) == '<') {
                     if(*(p + 2) == '=') {
-                        cur = new_token(TK_L_BITSHIFT_EQUAL, cur, p);
+                        cur = new_token(TK_L_BITSHIFT_EQUAL, cur, p, 3);
                         p += 3;
                     } else {
-                        cur = new_token(TK_L_BITSHIFT, cur, p);
+                        cur = new_token(TK_L_BITSHIFT, cur, p , 2);
                         p += 2;
                     }
                 } else {
-                    cur = new_token(TK_L_ANGLE_BRACKET, cur, p++);
+                    cur = new_token(TK_L_ANGLE_BRACKET, cur, p++ , 1);
                 }
                 break;
             case '>':
                 if(*(p + 1) == '='){
-                    cur = new_token(TK_R_ANGLE_BRACKET_EQUAL, cur, p);
+                    cur = new_token(TK_R_ANGLE_BRACKET_EQUAL, cur, p , 2);
                     p += 2;
                 } else if(*(p + 1) == '>') {
                     if(*(p + 2) == '=') {
-                        cur = new_token(TK_R_BITSHIFT_EQUAL, cur, p);
+                        cur = new_token(TK_R_BITSHIFT_EQUAL, cur, p, 3);
                         p += 3;
                     } else {
-                        cur = new_token(TK_R_BITSHIFT, cur, p);
+                        cur = new_token(TK_R_BITSHIFT, cur, p , 2);
                         p += 2;
                     }
                 } else {
-                    cur = new_token(TK_R_ANGLE_BRACKET, cur, p++);
+                    cur = new_token(TK_R_ANGLE_BRACKET, cur, p++ , 1);
                 }
                 break;
             case ';':
-                cur = new_token(TK_SEMICORON, cur, p++);
+                cur = new_token(TK_SEMICORON, cur, p++ , 1);
                 break;
             case ',':
-                cur = new_token(TK_COMMA, cur, p++);
+                cur = new_token(TK_COMMA, cur, p++ , 1);
                 break;
             case '"':
                 {
@@ -206,37 +208,39 @@ static Token* scan(char* src){
                     while(*p != '"'){
                         p++;
                     }
-                    cur = new_token(TK_STRING_LITERAL, cur, start);
+                    cur = new_token(TK_STRING_LITERAL, cur, start, 0);
                     cur->len = p - start;
                     p++;
                 }
                 break;
             case '\'':
                 {
+                    char* pos = p;
                     char a = *(++p);
-                    cur = new_token(TK_NUM, cur, p);
+                    cur = new_token(TK_NUM, cur, pos, 0);
                     cur->val = a;
                     while(*p != '\''){
                         p++;
                     }
                     p++;
+                    cur->len = p - cur->pos;
                 }
                 break;
             case '.':
                 if(*(p+1) == '.' && *(p+2) == '.' ){
-                    cur = new_token(TK_DOT_DOT_DOT, cur, p);
+                    cur = new_token(TK_DOT_DOT_DOT, cur, p, 3);
                     p += 3;
                 } else {
-                    cur = new_token(TK_DOT, cur, p++);
+                    cur = new_token(TK_DOT, cur, p++ , 1);
                 }
                 break;
             case '\n':
-                cur = new_token(TK_NEWLINE, cur, p++);
+                cur = new_token(TK_NEWLINE, cur, p++ , 1);
                 break;
             case '#':
                 {
                     if(*(p+1) == '#'){
-                        cur = new_token(TK_HASH_HASH, cur, p);
+                        cur = new_token(TK_HASH_HASH, cur, p, 2);
                         p += 2;
                     } else {
                         // space除去
@@ -253,27 +257,27 @@ static Token* scan(char* src){
                             }
                             TokenKind kind = check_preprocess_keyword(s, p - s);
                             if(kind == TK_IDENT){
-                                cur = new_token(TK_HASH, cur, hash);
-                                cur = new_token(TK_IDENT, cur, s);
+                                cur = new_token(TK_HASH, cur, hash, 1);
+                                cur = new_token(TK_IDENT, cur, s, 0);
                                 cur->len = p - s;
                             } else {
-                                cur = new_token(TK_HASH, cur, hash);
-                                cur = new_token(kind, cur, s);
+                                cur = new_token(TK_HASH, cur, hash, 1);
+                                cur = new_token(kind, cur, s, 0);
                                 cur->len = hash - s;
                             }
                         } else {
-                            cur = new_token(TK_HASH, cur, p++);
+                            cur = new_token(TK_HASH, cur, p++ , 1);
                         }
                     }
                 }
                 break;
             default:
                 if(isdigit(c)){
-                    cur = new_token(TK_NUM, cur, p);
+                    cur = new_token(TK_NUM, cur, p, 0);
                     cur->val = strtol(p, &p, 10);
                     cur->len = p - cur->pos;
                 } else if(isspace(c)){
-                    cur = new_token(TK_SPACE, cur, p++);
+                    cur = new_token(TK_SPACE, cur, p++ , 1);
                     // p++;
                 } else if(is_ident1(c)){
                     char* s = p;
@@ -281,7 +285,7 @@ static Token* scan(char* src){
                     while(is_ident2(*p)) {
                         p++;
                     }
-                    cur = new_token(check_keyword(s, p - s), cur, s);
+                    cur = new_token(check_keyword(s, p - s), cur, s, 0);
                     cur->len = p - s;
                 } else {
                     // 想定外のトークンが来た
@@ -295,11 +299,12 @@ static Token* scan(char* src){
 }
 
 
-static Token* new_token(TokenKind kind, Token* cur, char* p){
+static Token* new_token(TokenKind kind, Token* cur, char* p, int len){
     Token* tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->pos = p;
     tok->file = cur_file;
+    tok->len = len;
     cur->next = tok;
     return tok;
 }
@@ -415,4 +420,15 @@ Token* get_tokens_tail(Token* tok){
         tok = tok->next;
     }
     return tok;
+}
+
+void output_token(Token* tok){
+    while(tok){
+        if(tok->kind == TK_STRING_LITERAL){
+            print("\"%.*s\"", tok->len, tok->pos);
+        } else {
+            print("%.*s", tok->len, tok->pos);
+        }
+        tok = tok->next;
+    }
 }

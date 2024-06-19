@@ -21,6 +21,9 @@ test2: mcc2
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
+test3: mcc2
+	./mcc2 -c ./test/test.c -o ./tmp.s -d PREDEFINED_MACRO -E
+
 clean:
 	rm -f mcc2 src/*.o *~ tmp* src/*.d
 
