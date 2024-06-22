@@ -23,10 +23,12 @@ Token tok_one = {
 Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
+
 static void add_macro(Token* name, Token* value);
-static Macro* find_macro(Token* name, Macro* mac);
 static void delete_macro(Macro* m);
+static Macro* find_macro(Token* name, Macro* mac);
 static Token* delete_space(Token* token);
+static Token* replace_token(Token* tok, Macro* mac, Macro* list);
 
 // if-group
 static Token* read_if(Token* token);
@@ -149,10 +151,11 @@ Token* preprocess(Token* token){
             Token* ident = next_token(cur);
             Macro* m = find_macro(ident, macros);
             if(m){
-                Token* value = copy_token_list(m->value);
-                Token* tail = get_tokens_tail(value);
-                tail->next = t1->next;
-                cur->next = value;
+                cur->next = replace_token(t1, m, NULL);
+                // Token* value = copy_token_list(m->value);
+                // Token* tail = get_tokens_tail(value);
+                // tail->next = t1->next;
+                // cur->next = value;
             }
         }
 
@@ -201,6 +204,18 @@ static Token* delete_space(Token* token){
 
     return head.next;
 
+}
+
+static Token* replace_token(Token* tok, Macro* mac, Macro* list){
+    // 置き換え後のトークン取得
+    Token* val = NULL;
+    val = copy_token_list(mac->value);
+
+    if(!val) return tok->next;
+    Token* tail = get_tokens_tail(val);
+    tail->next = tok->next;
+
+    return val;
 }
 
 static char* find_include_file(char* filename){
