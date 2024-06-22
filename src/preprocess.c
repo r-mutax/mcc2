@@ -24,7 +24,7 @@ Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
 static void add_macro(Token* name, Token* value);
-static Macro* find_macro(Token* name);
+static Macro* find_macro(Token* name, Macro* mac);
 static void delete_macro(Macro* m);
 static Token* delete_space(Token* token);
 
@@ -128,7 +128,7 @@ Token* preprocess(Token* token){
                 case TK_UNDEF:
                     {
                         Token* undefsymbol = next_token(target);
-                        Macro* m = find_macro(undefsymbol);
+                        Macro* m = find_macro(undefsymbol, macros);
                         if(m){
                             delete_macro(m);
                         }
@@ -147,7 +147,7 @@ Token* preprocess(Token* token){
             }
         } else if(next_token(cur)->kind == TK_IDENT){
             Token* ident = next_token(cur);
-            Macro* m = find_macro(ident);
+            Macro* m = find_macro(ident, macros);
             if(m){
                 Token* value = copy_token_list(m->value);
                 Token* tail = get_tokens_tail(value);
@@ -230,9 +230,13 @@ static void add_macro(Token* name, Token* value){
     macros = m;
 }
 
-static Macro* find_macro(Token* name){
+static Macro* find_macro(Token* name, Macro* mac){
+    if(name->kind != TK_IDENT){
+        return NULL;
+    }
+
     Macro* m;
-    for(m = macros; m; m = m->next){
+    for(m = mac; m; m = m->next){
         if(is_equal_token(m->name, name)){
             return m;
         }
@@ -342,13 +346,13 @@ static bool eval_if_cond(Token* token){
             return eval_expr(copy_token_eol(next_token(token)));
         case TK_PP_IFDEF:
             {
-                Macro* m = find_macro(next_token(token));
+                Macro* m = find_macro(next_token(token), macros);
                 return m != NULL;
             }
             break;
         case TK_PP_IFNDEF:
             {
-                Macro* m = find_macro(next_token(token));
+                Macro* m = find_macro(next_token(token), macros);
                 return m == NULL;
             }
             break;
@@ -382,7 +386,7 @@ static Token* expand_defined(Token* tok){
             }
             target = next_token(target);
 
-            cur->next = find_macro(ident) ? &tok_one : &tok_zero;
+            cur->next = find_macro(ident, macros) ? &tok_one : &tok_zero;
             cur->next->next = target;
         } else {
             cur = next_token(cur);
