@@ -24,7 +24,7 @@ Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
 
-static void add_macro(Token* name, Token* value);
+static void add_macro(Token* target);
 static void delete_macro(Macro* m);
 static Macro* find_macro(Token* name, Macro* mac);
 static Token* delete_space(Token* token);
@@ -115,17 +115,8 @@ Token* preprocess(Token* token){
                     break;
                 case TK_DEFINE:
                     {
-                        Token* defsymbol = next_token(target);
-                        Token* defvalue = NULL;
-                        if(next_token(defsymbol)->kind == TK_NEWLINE){
-                            // 今は空マクロは非対応
-                            error("macro definition is empty");
-                        } else {
-                            defvalue = next_token(defsymbol);
-                        }
-                        add_macro(defsymbol, defvalue);
-                        Token* newline = next_newline(defvalue);
-                        cur->next = next_token(newline);
+                        add_macro(target);
+                        cur->next = next_newline(target);
                         continue;
                     }
                     break;
@@ -284,7 +275,18 @@ static char* find_include_file(char* filename){
     return NULL;
 }
 
-static void add_macro(Token* name, Token* value){
+static void add_macro(Token* target){
+
+    Token* name = next_token(target);
+
+    Token* value = NULL;
+    if(next_token(name)->kind == TK_NEWLINE){
+        // 今は空マクロは非対応
+        error("macro definition is empty");
+    } else {
+        value = next_token(name);
+    }
+
     Macro* m = malloc(sizeof(Macro));
     m->name = copy_token(name);
     m->value = copy_token_eol(value);
