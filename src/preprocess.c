@@ -23,10 +23,14 @@ Token tok_one = {
 Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
+
 static void add_macro(Token* name, Token* value);
-static Macro* find_macro(Token* name);
 static void delete_macro(Macro* m);
+static Macro* find_macro(Token* name, Macro* mac);
 static Token* delete_space(Token* token);
+static Token* replace_token(Token* tok, Macro* mac, Macro* list);
+static Macro* copy_macro(Macro* mac);
+static bool is_expand(Token* tok, Macro* list);
 
 // if-group
 static Token* read_if(Token* token);
@@ -80,8 +84,8 @@ Token* preprocess(Token* token){
     Token head = {};
     head.next = token;
     Token* cur = &head;
-    while(next_token(cur)){
-        Token* t1 = next_token(cur);
+    while(cur->next){
+        Token* t1 = cur->next;
         if(t1->kind == TK_HASH){
             Token* target = next_token(t1);
             switch(target->kind){
@@ -128,7 +132,7 @@ Token* preprocess(Token* token){
                 case TK_UNDEF:
                     {
                         Token* undefsymbol = next_token(target);
-                        Macro* m = find_macro(undefsymbol);
+                        Macro* m = find_macro(undefsymbol, macros);
                         if(m){
                             delete_macro(m);
                         }
@@ -145,14 +149,11 @@ Token* preprocess(Token* token){
                 default:
                     break;
             }
-        } else if(next_token(cur)->kind == TK_IDENT){
-            Token* ident = next_token(cur);
-            Macro* m = find_macro(ident);
+        } else if(t1->kind == TK_IDENT){
+            Token* ident = t1;
+            Macro* m = find_macro(ident, macros);
             if(m){
-                Token* value = copy_token_list(m->value);
-                Token* tail = get_tokens_tail(value);
-                tail->next = t1->next;
-                cur->next = value;
+                cur->next = replace_token(ident, m, NULL);
             }
         }
 
@@ -203,6 +204,67 @@ static Token* delete_space(Token* token){
 
 }
 
+static Macro* copy_macro(Macro* mac){
+    Macro* ret = calloc(1, sizeof(Macro));
+    memcpy(ret, mac, sizeof(Macro));
+    ret->next = NULL;
+    
+    return ret;
+}
+
+static bool is_expand(Token* tok, Macro* list){
+    Macro* cur = list;
+    while(cur){
+        if(is_equal_token(tok, cur->name)){
+            return true;
+        }
+        cur = cur->next;
+    }
+
+    return false;
+}
+
+static Token* replace_token(Token* tok, Macro* mac, Macro* list){
+
+    if(!list){
+        list = copy_macro(mac);
+    } else {
+        list->next = copy_macro(mac);
+    }
+
+    // 置き換え後のトークン取得
+    Token* val = NULL;
+    val = copy_token_list(mac->value);
+
+    if(!val) return tok->next;
+
+    // マクロを再帰的に展開
+    Token head = {};
+    head.next = val;
+    Token* cur = &head;
+    Token* target = NULL;
+    while(target = next_token(cur)){
+        if(target->kind == TK_IDENT){
+            if(is_expand(target, list)){
+                cur = next_token(cur);
+                continue;
+            }
+
+            Macro* m = find_macro(target, macros);
+            if(m){
+                cur->next = replace_token(target, m, list);
+                continue;
+            }
+        }
+        cur = next_token(cur);
+    }
+
+    Token* tail = get_tokens_tail(&head);
+    tail->next = tok->next;
+
+    return head.next;
+}
+
 static char* find_include_file(char* filename){
     IncludePath* p;
     for(p = include_paths; p; p = p->next){
@@ -230,9 +292,13 @@ static void add_macro(Token* name, Token* value){
     macros = m;
 }
 
-static Macro* find_macro(Token* name){
+static Macro* find_macro(Token* name, Macro* mac){
+    if(name->kind != TK_IDENT){
+        return NULL;
+    }
+
     Macro* m;
-    for(m = macros; m; m = m->next){
+    for(m = mac; m; m = m->next){
         if(is_equal_token(m->name, name)){
             return m;
         }
@@ -342,13 +408,13 @@ static bool eval_if_cond(Token* token){
             return eval_expr(copy_token_eol(next_token(token)));
         case TK_PP_IFDEF:
             {
-                Macro* m = find_macro(next_token(token));
+                Macro* m = find_macro(next_token(token), macros);
                 return m != NULL;
             }
             break;
         case TK_PP_IFNDEF:
             {
-                Macro* m = find_macro(next_token(token));
+                Macro* m = find_macro(next_token(token), macros);
                 return m == NULL;
             }
             break;
@@ -382,7 +448,7 @@ static Token* expand_defined(Token* tok){
             }
             target = next_token(target);
 
-            cur->next = find_macro(ident) ? &tok_one : &tok_zero;
+            cur->next = find_macro(ident, macros) ? &tok_one : &tok_zero;
             cur->next->next = target;
         } else {
             cur = next_token(cur);

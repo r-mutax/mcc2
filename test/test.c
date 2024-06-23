@@ -647,6 +647,12 @@ int test_preprocess()
     assert(1, 0);
 #endif
 
+int TEST_CIRC_A = 30;
+#define TEST_CIRC_A TEST_CIRC_B
+#define TEST_CIRC_B TEST_CIRC_C
+#define TEST_CIRC_C TEST_CIRC_A
+TEST_CIRC_A = 50;
+
     return 0;
 }
 
