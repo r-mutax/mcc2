@@ -29,6 +29,8 @@ static void delete_macro(Macro* m);
 static Macro* find_macro(Token* name, Macro* mac);
 static Token* delete_space(Token* token);
 static Token* replace_token(Token* tok, Macro* mac, Macro* list);
+static Macro* copy_macro(Macro* mac);
+static bool is_expand(Token* tok, Macro* list);
 
 // if-group
 static Token* read_if(Token* token);
@@ -82,8 +84,8 @@ Token* preprocess(Token* token){
     Token head = {};
     head.next = token;
     Token* cur = &head;
-    while(next_token(cur)){
-        Token* t1 = next_token(cur);
+    while(cur->next){
+        Token* t1 = cur->next;
         if(t1->kind == TK_HASH){
             Token* target = next_token(t1);
             switch(target->kind){
@@ -147,15 +149,11 @@ Token* preprocess(Token* token){
                 default:
                     break;
             }
-        } else if(next_token(cur)->kind == TK_IDENT){
-            Token* ident = next_token(cur);
+        } else if(t1->kind == TK_IDENT){
+            Token* ident = t1;
             Macro* m = find_macro(ident, macros);
             if(m){
-                cur->next = replace_token(t1, m, NULL);
-                // Token* value = copy_token_list(m->value);
-                // Token* tail = get_tokens_tail(value);
-                // tail->next = t1->next;
-                // cur->next = value;
+                cur->next = replace_token(ident, m, NULL);
             }
         }
 
@@ -206,16 +204,65 @@ static Token* delete_space(Token* token){
 
 }
 
+static Macro* copy_macro(Macro* mac){
+    Macro* ret = calloc(1, sizeof(Macro));
+    memcpy(ret, mac, sizeof(Macro));
+    ret->next = NULL;
+    
+    return ret;
+}
+
+static bool is_expand(Token* tok, Macro* list){
+    Macro* cur = list;
+    while(cur){
+        if(is_equal_token(tok, cur->name)){
+            return true;
+        }
+        cur = cur->next;
+    }
+
+    return false;
+}
+
 static Token* replace_token(Token* tok, Macro* mac, Macro* list){
+
+    if(!list){
+        list = copy_macro(mac);
+    } else {
+        list->next = copy_macro(mac);
+    }
+
     // 置き換え後のトークン取得
     Token* val = NULL;
     val = copy_token_list(mac->value);
 
     if(!val) return tok->next;
-    Token* tail = get_tokens_tail(val);
+
+    // マクロを再帰的に展開
+    Token head = {};
+    head.next = val;
+    Token* cur = &head;
+    Token* target = NULL;
+    while(target = next_token(cur)){
+        if(target->kind == TK_IDENT){
+            if(is_expand(target, list)){
+                cur = next_token(cur);
+                continue;
+            }
+
+            Macro* m = find_macro(target, macros);
+            if(m){
+                cur->next = replace_token(target, m, list);
+                continue;
+            }
+        }
+        cur = next_token(cur);
+    }
+
+    Token* tail = get_tokens_tail(&head);
     tail->next = tok->next;
 
-    return val;
+    return head.next;
 }
 
 static char* find_include_file(char* filename){
