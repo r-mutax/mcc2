@@ -378,7 +378,7 @@ Token* next_newline(Token* tok){
 
 Token* next_token(Token* tok){
     for(Token* cur = tok->next; cur; cur = cur->next){
-        if(cur->kind != TK_NEWLINE && cur->kind != TK_SPACE){
+        if(cur->kind != TK_SPACE){
             return cur;
         }
     }
