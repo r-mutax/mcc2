@@ -378,11 +378,21 @@ Token* next_newline(Token* tok){
 
 Token* next_token(Token* tok){
     for(Token* cur = tok->next; cur; cur = cur->next){
-        if(cur->kind != TK_NEWLINE && cur->kind != TK_SPACE){
+        if(cur->kind != TK_SPACE){
             return cur;
         }
     }
     return  NULL;
+}
+
+Token* skip_to_next(Token* tok, TokenKind kind){
+    while(tok->kind != kind){
+        tok = tok->next;
+        if(!tok){
+            return NULL;
+        }
+    }
+    return tok;
 }
 
 Token* copy_token(Token* tok){

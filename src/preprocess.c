@@ -24,7 +24,9 @@ Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
 
-static void add_macro(Token* name, Token* value);
+static void add_macro(Token* target);
+static void add_macro_objlike(Token* target);
+static void add_macro_funclike(Token* target);
 static void delete_macro(Macro* m);
 static Macro* find_macro(Token* name, Macro* mac);
 static Token* delete_space(Token* token);
@@ -114,20 +116,9 @@ Token* preprocess(Token* token){
                     }
                     break;
                 case TK_DEFINE:
-                    {
-                        Token* defsymbol = next_token(target);
-                        Token* defvalue = NULL;
-                        if(next_token(defsymbol)->kind == TK_NEWLINE){
-                            // 今は空マクロは非対応
-                            error("macro definition is empty");
-                        } else {
-                            defvalue = next_token(defsymbol);
-                        }
-                        add_macro(defsymbol, defvalue);
-                        Token* newline = next_newline(defvalue);
-                        cur->next = next_token(newline);
+                        add_macro(target);
+                        cur->next = next_newline(target);
                         continue;
-                    }
                     break;
                 case TK_UNDEF:
                     {
@@ -167,7 +158,7 @@ Token* preprocess(Token* token){
 }
 
 void add_include_path(char* path){
-    IncludePath* p = malloc(sizeof(IncludePath));
+    IncludePath* p = calloc(1, sizeof(IncludePath));
     p->path = path;
     p->next = include_paths;
     include_paths = p;
@@ -179,7 +170,7 @@ void add_predefine_macro(char* name){
     tok->len = strlen(name);
     tok->kind = TK_IDENT;
 
-    Macro* m = malloc(sizeof(Macro));
+    Macro* m = calloc(1, sizeof(Macro));
     m->name = tok;
     m->value = NULL;
     m->next = macros;
@@ -208,7 +199,7 @@ static Macro* copy_macro(Macro* mac){
     Macro* ret = calloc(1, sizeof(Macro));
     memcpy(ret, mac, sizeof(Macro));
     ret->next = NULL;
-    
+
     return ret;
 }
 
@@ -224,17 +215,87 @@ static bool is_expand(Token* tok, Macro* list){
     return false;
 }
 
+static Macro* make_param_list(Token* tok, Macro* mac){
+    // トークンを引数まで進める
+    while(tok->kind != TK_L_PAREN){
+        tok = next_token(tok);
+    }
+    tok = next_token(tok);
+
+    Macro head;
+    Macro* cur = &head;
+    Token* param = mac->params;
+
+    while(tok->kind != TK_R_PAREN){
+        Macro* m = calloc(1, sizeof(Macro));
+        m->name = copy_token(param);
+
+        // カンマまでのトークンをコピーする
+        Token th;
+        Token* tc = &th;
+        while(tok->kind != TK_COMMA && tok->kind != TK_R_PAREN){
+            tc = tc->next = copy_token(tok);
+            tok = next_token(tok);
+        }
+        m->value = th.next;
+
+        // パラメータを追加
+        cur = cur->next = m;
+
+        // カンマならトークンを進めて次のパラメータへ、右括弧なら終了、それ以外はエラー
+        if(tok->kind == TK_COMMA){
+            tok = next_token(tok);
+            param = next_token(param);
+        } else if(tok->kind == TK_R_PAREN){
+            break;
+        } else {
+            error_tok(tok, "expected comma operator or right parenthesis.");
+        }
+    }
+    return head.next;
+}
+
+// 関数マクロのパラメータ展開
+static Token* expand_funclike_macro_parameter(Token* tok, Macro* mac){
+
+    Macro* param = make_param_list(tok, mac);
+
+    Token head;
+    head.next = copy_token_list(mac->value);
+    Token* cur = &head;
+    while(cur->next){
+        Token* target = cur->next;
+        if(target->kind == TK_IDENT){
+            Macro* m = find_macro(target, param);
+            if(m){
+                Token* val = copy_token_list(m->value);
+                Token* tail = get_tokens_tail(val);
+                tail->next = cur->next->next;
+                cur->next = val;
+            }
+        }
+        cur = cur->next;
+    }
+    return head.next;
+}
+
 static Token* replace_token(Token* tok, Macro* mac, Macro* list){
 
     if(!list){
         list = copy_macro(mac);
     } else {
-        list->next = copy_macro(mac);
+        Macro* buf = copy_macro(mac);
+        buf->next = list;
+        list = buf;
     }
 
     // 置き換え後のトークン取得
     Token* val = NULL;
-    val = copy_token_list(mac->value);
+    if(mac->is_func){
+        val = expand_funclike_macro_parameter(tok, mac);
+    } else {
+        val = copy_token_list(mac->value);
+    }
 
     if(!val) return tok->next;
 
@@ -253,6 +314,7 @@ static Token* replace_token(Token* tok, Macro* mac, Macro* list){
             Macro* m = find_macro(target, macros);
             if(m){
                 cur->next = replace_token(target, m, list);
+                cur = cur->next;
                 continue;
             }
         }
@@ -260,7 +322,11 @@ static Token* replace_token(Token* tok, Macro* mac, Macro* list){
     }
 
     Token* tail = get_tokens_tail(&head);
-    tail->next = tok->next;
+    if(mac->is_func){
+        tail->next = skip_to_next(tok, TK_R_PAREN)->next;
+    } else {
+        tail->next = tok->next;
+    }
 
     return head.next;
 }
@@ -284,12 +350,64 @@ static char* find_include_file(char* filename){
     return NULL;
 }
 
-static void add_macro(Token* name, Token* value){
-    Macro* m = malloc(sizeof(Macro));
+static void add_macro_objlike(Token* target){
+    Token* name = next_token(target);
+    Token* value = next_token(name);
+
+    Macro* m = calloc(1,sizeof(Macro));
     m->name = copy_token(name);
     m->value = copy_token_eol(value);
     m->next = macros;
     macros = m;
+}
+
+static void add_macro_funclike(Token* target){
+    Token* name = next_token(target);
+    target = next_token(name);
+    target = next_token(target);
+
+    Token head;
+    Token* cur = &head;
+    while(target->kind != TK_R_PAREN){
+        if(target->kind != TK_IDENT){
+            error_tok(target, "invalid macro argument. : code %d\n", target->kind);
+        }
+
+        cur = cur->next = copy_token(target);
+        target = next_token(target);
+        if(target->kind == TK_R_PAREN){
+            break;
+        }
+
+        if(target->kind != TK_COMMA){
+            error_tok(target, "expected comma operator");
+        } else {
+            target = next_token(target);
+        }
+    }
+
+    target = next_token(target);
+
+    Macro* m = calloc(1, sizeof(Macro));
+    m->name = copy_token(name);
+    m->params = head.next;
+    m->value = copy_token_eol(target);
+    m->is_func = true;
+    m->next = macros;
+    macros = m;
+}
+
+static void add_macro(Token* target){
+    Token* name = next_token(target);
+
+    if(next_token(name)->kind == TK_NEWLINE){
+        // 今は空マクロは非対応
+        error("macro definition is empty");
+    } else if(next_token(name)->kind == TK_L_PAREN){
+        add_macro_funclike(target);
+    } else {
+        add_macro_objlike(target);
+    }
 }
 
 static Macro* find_macro(Token* name, Macro* mac){

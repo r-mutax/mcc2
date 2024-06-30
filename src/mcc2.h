@@ -142,6 +142,8 @@ struct Token {
 struct Macro {
     Token*     name;
     Token*     value;
+    Token*     params;
+    bool       is_func;
     Macro*     next;
 };
 
