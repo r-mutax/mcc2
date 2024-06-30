@@ -385,6 +385,16 @@ Token* next_token(Token* tok){
     return  NULL;
 }
 
+Token* skip_to_next(Token* tok, TokenKind kind){
+    while(tok->kind != kind){
+        tok = tok->next;
+        if(!tok){
+            return NULL;
+        }
+    }
+    return tok;
+}
+
 Token* copy_token(Token* tok){
     Token* new = calloc(1, sizeof(Token));
     memcpy(new, tok, sizeof(Token));

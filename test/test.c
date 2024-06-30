@@ -651,7 +651,14 @@ int TEST_CIRC_A = 30;
 #define TEST_CIRC_A TEST_CIRC_B
 #define TEST_CIRC_B TEST_CIRC_C
 #define TEST_CIRC_C TEST_CIRC_A
-TEST_CIRC_A = 50;
+    TEST_CIRC_A = 50;
+
+#define FUNC_MACRO(X)   X + 1
+#define FUNC_MACRO_ARG2(X, Y)   X * Y
+    TEST_CIRC_A = FUNC_MACRO(TEST_CIRC_A);
+    assert(TEST_CIRC_A, 51);
+    TEST_CIRC_A = FUNC_MACRO_ARG2(3, 4);
+    assert(TEST_CIRC_A, 12);
 
     return 0;
 }
