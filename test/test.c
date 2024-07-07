@@ -660,6 +660,10 @@ int TEST_CIRC_A = 30;
     TEST_CIRC_A = FUNC_MACRO_ARG2(3, 4);
     assert(TEST_CIRC_A, 12);
 
+#define FUNC_MULTILINE(X)   (X + 1 \
+                            + 2)
+    assert(FUNC_MULTILINE(3), 6);
+
     return 0;
 }
 

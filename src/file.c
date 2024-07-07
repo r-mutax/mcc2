@@ -30,9 +30,31 @@ SrcFile* read_file(char* path){
     buf[size] = '\0';
     fclose(fp);
 
+    char *buf2 = calloc(1, size + 2);
+
+    char *p = buf;
+    char *p2 = buf2;
+    while(*p){
+        if(*p == '\\' && isspace(*(p + 1))){
+            // 改行以外のスペースをスキップ
+            p++;
+            while(*p && *p != '\n' && isspace(*buf))
+                buf++;
+            // \のつぎが改行ならば
+            if(*p == '\n'){
+                p++;
+                // また改行以外のスペースをスキップ
+                while(*p && *p != '\n' && isspace(*p))
+                    p++;
+                continue;
+            }
+        }
+        *p2++ = *p++;
+    }
+
     SrcFile* file = calloc(1, sizeof(SrcFile));
     file->name = path;
-    file->body = buf;
+    file->body = buf2;
 
     return file;
 }
