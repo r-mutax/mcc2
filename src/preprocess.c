@@ -226,20 +226,25 @@ static Macro* make_param_list(Token* tok, Macro* mac){
     Macro* cur = &head;
     Token* param = mac->params;
 
-    while(tok->kind != TK_R_PAREN){
+    int paren_cnt = 1;
+
+    while(true){
         Macro* m = calloc(1, sizeof(Macro));
         m->name = copy_token(param);
-
-        // カンマまでのトークンをコピーする
-        Token th;
+        Token th = {};
         Token* tc = &th;
-        while(tok->kind != TK_COMMA && tok->kind != TK_R_PAREN){
+        int paren_cnt = 0;
+        while(!(paren_cnt == 0 && (tok->kind == TK_COMMA || tok->kind == TK_R_PAREN))){
+            if(tok->kind == TK_L_PAREN){
+                paren_cnt++;
+            } else if(tok->kind == TK_R_PAREN){
+                paren_cnt--;
+            }
             tc = tc->next = copy_token(tok);
             tok = next_token(tok);
         }
         m->value = th.next;
 
-        // パラメータを追加
         cur = cur->next = m;
 
         // カンマならトークンを進めて次のパラメータへ、右括弧なら終了、それ以外はエラー
@@ -272,6 +277,7 @@ static Token* expand_funclike_macro_parameter(Token* tok, Macro* mac){
                 Token* tail = get_tokens_tail(val);
                 tail->next = cur->next->next;
                 cur->next = val;
+                continue;
             }
         }
         cur = cur->next;
@@ -323,7 +329,18 @@ static Token* replace_token(Token* tok, Macro* mac, Macro* list){
 
     Token* tail = get_tokens_tail(&head);
     if(mac->is_func){
-        tail->next = skip_to_next(tok, TK_R_PAREN)->next;
+        Token* t = skip_to_next(tok, TK_L_PAREN)->next;
+        int paren_cnt = 0;
+        while(!(paren_cnt == 0 && t->kind == TK_R_PAREN)){
+            if(t->kind == TK_L_PAREN){
+                paren_cnt++;
+            } else if(t->kind == TK_R_PAREN){
+                paren_cnt--;
+            }
+            t = t->next;
+        }
+        // TODO : エラー処理
+        tail->next = t->next;
     } else {
         tail->next = tok->next;
     }
