@@ -341,12 +341,19 @@ void gen_x86(IR* ir){
                 } else if(ir->s1->size == 8){
                     print("  mov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
                 }
-                
                 freeReg(ir->s2);
 
                 if(ir->t){
                     activateRegLhs(ir->t);
-                    print("  mov %s, [%s]\n", ir->t->rreg, ir->s1->rreg);
+                    if(ir->s1->size == 1){
+                        print("  movsx %s, BYTE PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
+                    } else if(ir->s1->size == 2){
+                        print("  movsx %s, WORD PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
+                    } else if(ir->s1->size == 4){
+                        print("  movsxd %s, DWORD PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
+                    } else if(ir->s1->size == 8){
+                        print("  mov %s, QWORD PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
+                    }
                 }
                 freeReg(ir->s1);
                 break;
@@ -418,16 +425,13 @@ void gen_x86(IR* ir){
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
                 if(ir->s2->size == 1){
-                    print("  mov %s, 0\n", ir->s1->rreg);
-                    print("  mov %s, [%s]\n", rreg8[ir->s1->idx], ir->s2->rreg);
+                    print("  movsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                 } else if(ir->s2->size == 2){
-                    print("  mov %s, 0\n", ir->s1->rreg);
-                    print("  mov %s, [%s]\n", rreg16[ir->s1->idx], ir->s2->rreg);
+                    print("  movsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                  } else if(ir->s2->size == 4){
-                    print("  mov %s, 0\n", ir->s1->rreg);
-                    print("  mov %s, [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
+                    print("  movsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                 } else if(ir->s2->size == 8){
-                    print("  mov %s, [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    print("  mov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                 }
                 freeReg(ir->s2);
                 break;

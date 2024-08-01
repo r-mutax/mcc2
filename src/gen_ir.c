@@ -318,7 +318,9 @@ static Reg* gen_expr(Node* node){
         case ND_DREF:
         {
             Reg* ret = new_Reg();
-            new_IR(IR_LOAD, NULL, ret, gen_expr(node->lhs));
+            Reg* pointer = gen_expr(node->lhs);
+            pointer->size = node->lhs->type->ptr_to->size;
+            new_IR(IR_LOAD, NULL, ret, pointer);
             return ret;
         }
         case ND_COMMA:
