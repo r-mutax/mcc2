@@ -1,7 +1,7 @@
 // macro
 #define TEST_MACRO 123
 
-#define ASSERT(X, Y)    ((X) == (Y) ? 0 : printf("ojouzu\n"))
+#define ASSERT(X, Y)    ((X) == (Y) ? 0 : exit(1))
 
 // test function define.
 int printf(char* fmt, ...);
@@ -90,7 +90,7 @@ int test_expression(){
     ASSERT(- -10, 10);
     ASSERT(- -+10, 10);
     ASSERT(-10 + 20, 10);
-    long u = 0;
+    int u = 0;
     ++u;    // u -> 1
     ASSERT(u, 1);
     ASSERT(u++, 1); // u -> 2
@@ -102,19 +102,20 @@ int test_expression(){
     ASSERT(pi++, 0);
     ASSERT(pi, 1);
 
-    long pd = 0;
+    int pd = 0;
     ASSERT(pd--, 0);
     ASSERT(pd, -1);
 
-    long idlist[10];
+    int idlist[10];
     for(int i = 0; i < 10; ++i){
         idlist[i] = i;
     }
 
-    long* incp = idlist;
+    int* incp = idlist;
     incp++;
     ASSERT(*incp, 1);
     ASSERT(*(++incp), 2);
+
     incp--;
     ASSERT(*incp, 1);
     ASSERT(*(--incp), 0);
