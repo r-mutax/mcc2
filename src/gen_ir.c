@@ -256,29 +256,26 @@ static void gen_stmt(Node* node){
 }
 
 static Reg* gen_lvar(Node*  node){
+    Reg* reg = NULL;
     switch(node->kind){
         case ND_VAR:
-        {
-            Reg* reg = new_Reg();
+            reg = new_Reg();
             new_IR(IR_REL, reg, new_RegVar(node->ident), NULL);
             reg->size = node->type->size;
-            return reg;
-        }
-            return new_RegVar(node->ident);
+            break;
         case ND_DREF:
-            return gen_expr(node->lhs);
+            reg = gen_expr(node->lhs);
+            break;
         case ND_MEMBER:
-        {
-            Reg* base_reg = gen_lvar(node->lhs);
-            base_reg->size = node->type->size;
-            new_IR(IR_ADD, NULL, base_reg, new_RegImm(node->val));
-            return base_reg;
-        }
+            reg = gen_lvar(node->lhs);
+            reg->size = node->type->size;
+            new_IR(IR_ADD, NULL, reg, new_RegImm(node->val));
+            break;
         default:
             error_tok(node->ident->tok, "Not a lhs.\n");
             break;
     }
-    return NULL;
+    return reg;
 }
 
 static Reg* gen_expr(Node* node){
@@ -335,7 +332,13 @@ static Reg* gen_expr(Node* node){
                 error("incompatible types in assignment to array.");
             }
             Reg* reg = new_Reg();
-            new_IR(IR_ASSIGN, reg, gen_lvar(node->lhs), gen_expr(node->rhs));
+            Reg* reg_lvar = gen_lvar(node->lhs);
+            if(node->lhs->kind == ND_DREF){
+                Node* dref = node->lhs;
+                Node* var = dref->lhs;
+                reg_lvar->size = var->type->ptr_to->size;
+            }
+            new_IR(IR_ASSIGN, reg, reg_lvar, gen_expr(node->rhs));
             return reg;
         }
         case ND_LOGIC_OR:
