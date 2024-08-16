@@ -1,8 +1,18 @@
 #define ASSERT(X, Y)    ((X) == (Y) ? 0 : 1)
 
-int main(){
-    char c = -1;
-    short s = -1;
+int t(){
+    int data; data = 10;
+    int* a; a = &data;
+    // ASSERT(*a, 10);
+    // ASSERT(a, &data);
+    *a = 15;
+    //ASSERT(data, 15);
+    //ASSERT(sizeof a, 8);
 
-    return ASSERT((char)s, -1);
+    return 0;
+}
+
+int main(){
+    t();
+    return 0;
 }

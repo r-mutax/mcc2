@@ -2,6 +2,10 @@
     "github.copilot.chat.localeOverride": "ja",
     "files.associations": {
         "stdlib.h": "c",
-        "*.tcc": "c"
+        "*.tcc": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "utility": "c"
     }
 }
