@@ -222,6 +222,7 @@ typedef enum NodeKind {
     ND_LABEL,
     ND_GOTO,
     ND_MEMBER,
+    ND_CAST,
 } NodeKind;
 
 struct Node {
@@ -272,6 +273,7 @@ struct Reg {
     RegKind kind;
     int idx;
     int val;
+    bool is_unsigned;
     Ident*  ident;
     Reg*    addr;   // REG_ADDRのアドレスを格納しているところ
     int     size;
@@ -279,6 +281,18 @@ struct Reg {
     char*   rreg;
     Token*  tok;
 };
+
+typedef enum {
+    ierr = -1,
+    i8 = 0,
+    i16,
+    i32,
+    i64,
+    u8,
+    u16,
+    u32,
+    u64
+} SIZE_TYPE_ID;
 
 typedef enum IRCmd{
     // ARITHMETIC
@@ -299,6 +313,9 @@ typedef enum IRCmd{
     IR_ASSIGN,
     IR_FN_CALL,
     IR_REL,
+    IR_CAST,
+        // cast t, s1, (null)
+        //  s1をtの型にキャストして、仮想レジスタtに格納する
 
     // REGISTER OPERATION
     IR_MOV,
@@ -342,7 +359,7 @@ typedef enum IRCmd{
     IR_GVAR_LABEL,
         // gvarlabel (null) (ident) (imm)
         // -> identというグローバル変数を定義する
-        //    immグローバル変数のサイズ 
+        //    immグローバル変数のサイズ
     IR_STORE_ARG_REG,
     IR_LOAD_ARG_REG,
     IR_SET_FLOAT_NUM,
@@ -355,8 +372,8 @@ typedef enum IRCmd{
 } IRCmd;
 
 /*
-    IC : レジスタマシンの中間コード
-        ICCmd cmd   : 命令の種別
+    IR : レジスタマシンの中間コード
+        IRCmd cmd   : 命令の種別
         Reg *t      : ターゲットレジスタ
         Reg* s1     : ソースレジスタ1
         Reg* s2     : ソースレジスタ2
@@ -422,7 +439,7 @@ enum {
     K_VOID      = 1 << 0,
     K_BOOL      = 1 << 2,
     K_CHAR      = 1 << 4,
-    K_SHORT     = 1 << 6, 
+    K_SHORT     = 1 << 6,
     K_INT       = 1 << 8,
     K_LONG      = 1 << 10,      // up to 2 times can.
     K_USER      = 1 << 16,
@@ -452,4 +469,3 @@ struct Warning {
     char*       warn;
     Warning*    next;
 };
-

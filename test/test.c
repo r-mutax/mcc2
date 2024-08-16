@@ -18,6 +18,7 @@ int test_primary();
 int test_pointer();
 int test_assignment();
 int test_preprocess();
+int test_cast();
 
 int g_a;
 int g_b;
@@ -30,7 +31,10 @@ int main(){
     test_variable();
     test_type();
     test_primary();
+    //test_pointer();
+    test_assignment();
     test_preprocess();
+    test_cast();
 
     printf("test is complete!!!\n");
     return 0;
@@ -667,6 +671,43 @@ int TEST_CIRC_A = 30;
     ASSERT(FUNC_MULTILINE(3), 6);
 
     return 0;
+}
+
+int test_cast(){
+    printf("test of cast..\n");
+
+    char c = 0;
+    short s = 0;
+    int i = 0;
+    long l = 0;
+    // unsigned char uc = 0;
+    // unsigned short us = 0;
+    // unsigned int ui = 0;
+    // unsigned long ul = 0;
+
+    // char cast to ...
+    c = -1;
+    ASSERT((short)c, -1);
+    ASSERT((int)c, -1);
+    ASSERT((long)c, -1);
+
+    // short cast to ...
+    s = -1;
+    ASSERT((char)s, -1);
+    ASSERT((int)s, -1);
+    ASSERT((long)s, -1);
+
+    // int cast to ...
+    i = -1;
+    ASSERT((char)i, -1);
+    ASSERT((short)i, -1);
+    ASSERT((long)i, -1);
+
+    // long cast to ...
+    l = -1;
+    ASSERT((char)l, -1);
+    ASSERT((short)l, -1);
+    ASSERT((int)l, -1);
 }
 
 int add(int a, int b){

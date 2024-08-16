@@ -9,6 +9,7 @@ static long g_label = 0;
 static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
+
 static void gen_datas(Ident* ident);
 static void gen_funcs(Ident* ident);
 static void gen_function(Ident* func);
@@ -349,7 +350,7 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_JMP, NULL, new_RegImm(l_end), NULL);
             
             new_IRLabel(l_true);
-            new_IR(IR_MOV, NULL, ret, new_RegImm(1));            
+            new_IR(IR_MOV, NULL, ret, new_RegImm(1));
             new_IRLabel(l_end);
             return ret;
         }
@@ -381,14 +382,28 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_JMP, NULL, new_RegImm(l_end), NULL);
 
             new_IRLabel(l_false);
-            new_IR(IR_MOV, NULL, ret, gen_expr(node->rhs));            
+            new_IR(IR_MOV, NULL, ret, gen_expr(node->rhs));
             new_IRLabel(l_end);
+            return ret;
+        }
+        case ND_CAST:
+        {
+            Reg* ret = new_Reg();
+            Reg* target = gen_expr(node->lhs);
+
+            // サイズの設定
+            ret->size = node->type->size;
+            target->size = node->lhs->type->size;
+
+            // キャスト種別の判定
+            IRCmd cmd = IR_CAST;    // 整数→整数のキャスト
+
+            new_IR(cmd, ret, target, NULL);
             return ret;
         }
         default:
             break;
     }
-    
     Reg* r1 = gen_expr(node->lhs);
     Reg* r2 = gen_expr(node->rhs);
 
