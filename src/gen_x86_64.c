@@ -20,6 +20,53 @@ static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
 
+/*
+    CAST CMD のルール
+    1. 拡張長方向のキャスト
+        <32 bit : 32bit
+        64bit : 64bit
+    2. 縮小方向のキャストはターゲットのサイズにする
+
+    キャストコマンドの命名ルール
+    (src_type)_(dst_type)
+*/
+typedef enum
+{
+    // to char
+    NO_NEED = 0,
+    i64_i8,
+    i64_i16,
+    i64_i32,
+    i64_u8,
+    i64_u16,
+    i64_u32,
+
+    u64_i8,
+    u64_i16,
+    u64_i32,
+    u64_u8,
+    u64_u16,
+    u64_u32,
+} CAST_CMD;
+
+// cast instruction table
+// cast_table[src][dst]のように使う
+// レジスタは基本64bit幅に出している。
+static CAST_CMD cast_table[][8] = {
+// dst              i8       i16       i32       i64        u8       u16       u32       u64
+/* s:i8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
+/* s:i16    */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
+/* s:i32    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
+/* s:i64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
+
+/* s:u8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED  },
+/* s:u16    */ {    u64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED  },
+/* s:u32    */ {    u64_i8,  u64_i16,  NO_NEED,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED  },
+/* s:u64    */ {    u64_i8,  u64_i16,  u64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED  },
+};
+
+static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD);
+
 static void pop(char* reg);
 static void push(char* reg);
 
@@ -112,7 +159,7 @@ static void activateReg(Reg* reg, int is_lhs){
                 }  else if(ident->kind == ID_GVAR && ident->is_string_literal){
                     print("  mov %s, OFFSET FLAT:%s\n", reg->rreg, ident->name);
                 }
-            }            
+            }
             break;
     }
 }
@@ -155,6 +202,55 @@ static void emit_binop(char* op, Reg* t, Reg* s1, Reg* s2){
         // s1は残しておく
     }
     freeReg(s2);
+}
+
+static SIZE_TYPE_ID get_size_type_id(Reg* reg)
+{
+    SIZE_TYPE_ID id = 0;
+    switch(reg->size){
+        case 1:
+            id = reg->is_unsigned ? u8 : i8;
+            break;
+        case 2:
+            id = reg->is_unsigned ? u16 : i16;
+            break;
+        case 4:
+            id = reg->is_unsigned ? u32 : i32;
+            break;
+        case 8:
+            id = reg->is_unsigned ? u64 : i64;
+            break;
+        default:
+            id = ierr;
+            break;
+    }
+
+    return id;
+}
+
+static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
+    print("# cast st\n");
+
+    activateRegRhs(s1);
+    activateRegLhs(t);
+
+    switch(cmd){
+        case NO_NEED:
+            print("  mov %s, %s\n", t->rreg, s1->rreg);
+            break;
+        case i64_i8:
+            print("  movsx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            break;
+        case i64_i16:
+            print("  movsx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            break;
+        case i64_i32:
+            print("  movsxd %s, %s\n", t->rreg, rreg32[s1->idx]);
+            break;
+        default:
+            error("invalid cast %d \n", cmd);
+    }
+    freeReg(s1);
 }
 
 void gen_x86(IR* ir){
@@ -376,6 +472,19 @@ void gen_x86(IR* ir){
                     print("  lea %s, [rbp - %d]\n", ir->t->rreg, ir->s1->ident->offset);
                 } else if(ir->s1->ident->kind == ID_GVAR){
                     print("  mov %s, OFFSET FLAT:%s\n", ir->t->rreg, ir->s1->ident->name);
+                }
+                break;
+            case IR_CAST:
+                {
+                    SIZE_TYPE_ID dst_id = get_size_type_id(ir->t);
+                    SIZE_TYPE_ID src_id = get_size_type_id(ir->s1);
+
+                    if(dst_id == ierr || src_id == ierr){
+                        error("invalid cast\n");
+                    }
+
+                    CAST_CMD cmd = cast_table[src_id][dst_id];
+                    gen_cast_x86(ir->t, ir->s1, cmd);
                 }
                 break;
             case IR_MOV:

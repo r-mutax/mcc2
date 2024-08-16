@@ -46,7 +46,8 @@
     relational = bitShift ('<' bitShift | '<=' bitShift | '>' bitShift | '>=' bitShift)*
     bitShift = add ('<<' add | '>>' add)?
     add = mul ('+' mul | '-' mul)*
-    mul = unary ('*' unary | '/' unary)
+    mul = unary ('*' cast | '/' cast | '%' cast)*
+    cast = '(' type-name ')' cast | unary
     unary = ('+' | '-' | '&' unary | '*' unary | 'sizeof' unary )? postfix
     postfix = primary ('[' expr ']')*
     primary = '(' expr ')' | num | ident | ident '()'
@@ -80,6 +81,7 @@ static Node* relational();
 static Node* bitShift();
 static Node* add();
 static Node* mul();
+static Node* cast();
 static Node* unary();
 static Node* postfix();
 static Node* primary();
@@ -877,21 +879,55 @@ static Node* add(){
 }
 
 static Node* mul(){
-    Node* node = unary();
+    Node* node = cast();
 
     while(true){
         if(consume_token(TK_MUL)){
-            node = new_node(ND_MUL, node, unary());
+            node = new_node(ND_MUL, node, cast());
         } else if(consume_token(TK_DIV)){
-            node = new_node(ND_DIV, node, unary());
+            node = new_node(ND_DIV, node, cast());
         } else if(consume_token(TK_PERCENT)){
-            node = new_node(ND_MOD, node, unary());
+            node = new_node(ND_MOD, node, cast());
         } else {
             break;
         }
     }
 
     return node;
+}
+
+static bool is_cast(){
+    bool result = false;
+    Token* tok = get_token();
+
+    if(consume_token(TK_L_PAREN)){
+        if(is_type()){
+            result = true;
+        }
+    }
+    set_token(tok);
+    return result;
+}
+
+static Node* cast(){
+    if(is_cast()){
+        expect_token(TK_L_PAREN);
+        Type* ty = declspec(NULL);
+        expect_token(TK_R_PAREN);
+
+        Node* node;
+        if(!ty->ptr_to){
+            node = new_node(ND_CAST, unary(), NULL);
+        } else {
+            node = cast();
+            node->type = ty;
+            return node;
+        }
+
+        node->type = ty;
+        return node;
+    }
+    return unary();
 }
 
 static Node* unary(){
