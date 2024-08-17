@@ -92,7 +92,7 @@ static Node* new_node_sub(Node* lhs, Node* rhs);
 static Node* new_node_div(Node* lhs, Node* rhs);
 static Node* new_node_mul(Node* lhs, Node* rhs);
 static Node* new_node_mod(Node* lhs, Node* rhs);
-static Node* new_node_num(int num);
+static Node* new_node_num(unsigned long num);
 static Node* new_node_var(Ident* ident);
 static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
@@ -105,7 +105,7 @@ bool consume_token(TokenKind kind);
 Token* consume_ident();
 Token* expect_ident();
 Token* consume_string_literal();
-int expect_num();
+unsigned long expect_num();
 bool is_eof();
 bool is_type();
 bool is_label();
@@ -525,6 +525,10 @@ static Type* declspec(StorageClassKind* sck){
             count_decl_spec(&type_flg, K_INT, tok);
         if(consume_token(TK_LONG))
             count_decl_spec(&type_flg, K_LONG, tok);
+        if(consume_token(TK_SIGNED))
+            count_decl_spec(&type_flg, K_SIGNED, tok);
+        if(consume_token(TK_UNSIGNED))
+            count_decl_spec(&type_flg, K_UNSIGNED, tok);
     }
 
     if(!ty){
@@ -533,22 +537,37 @@ static Type* declspec(StorageClassKind* sck){
             case K_SIGNED + K_CHAR:
                 ty = ty_char;
                 break;
+            case K_UNSIGNED + K_CHAR:
+                ty = ty_uchar;
+                break;
             case K_SHORT:
             case K_SHORT + K_INT:
             case K_SIGNED + K_SHORT:
             case K_SIGNED + K_SHORT + K_INT:
                 ty = ty_short;
                 break;
+            case K_UNSIGNED + K_SHORT:
+            case K_UNSIGNED + K_SHORT + K_INT:
+                ty = ty_ushort;
+                break;
             case K_INT:
             case K_SIGNED:
             case K_SIGNED + K_INT:
                 ty = ty_int;
+                break;
+            case K_UNSIGNED:
+            case K_UNSIGNED + K_INT:
+                ty = ty_uint;
                 break;
             case K_LONG:
             case K_LONG + K_INT:
             case K_SIGNED + K_LONG:
             case K_SIGNED + K_LONG + K_INT:
                 ty = ty_long;
+                break;
+            case K_UNSIGNED + K_LONG:
+            case K_UNSIGNED + K_LONG + K_INT:
+                ty = ty_ulong;
                 break;
             default:
                 error_tok(get_token(), "Invalid type.\n");
@@ -1069,7 +1088,7 @@ static Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
     return result;
 }
 
-static Node* new_node_num(int num){
+static Node* new_node_num(unsigned long num){
     Node* result = calloc(1, sizeof(Node));
     result->val = num;
     return result;
@@ -1226,12 +1245,12 @@ void expect_token(TokenKind kind){
     token = token->next;
 }
 
-int expect_num(){
+unsigned long expect_num(){
     if(token->kind != TK_NUM){
         error_tok(token, "error: not a number.\n", token->pos);
     }
 
-    int result = token->val;
+    unsigned long result = token->val;
     token = token->next;
     return result;
 }
@@ -1279,6 +1298,8 @@ bool is_type(){
         || token->kind == TK_CONST
         || token->kind == TK_VOLATILE
         || token->kind == TK_RESTRICT
+        || token->kind == TK_SIGNED
+        || token->kind == TK_UNSIGNED
         || token->kind == TK_INT
         || token->kind == TK_LONG
         || token->kind == TK_SHORT

@@ -31,6 +31,8 @@ static KEYWORD_MAP keyword_map[] = {
     {   "restrict",     TK_RESTRICT },
     {   "volatile",     TK_VOLATILE },
     {   "defined",      TK_DEFINED  },
+    {   "signed",       TK_SIGNED   },
+    {   "unsigned",     TK_UNSIGNED },
 };
 
 static KEYWORD_MAP preprocess_keyword_map[] = {

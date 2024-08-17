@@ -24,7 +24,7 @@ static IR* new_IR(IRCmd cmd, Reg* t, Reg* s1, Reg* s2);
 static IR* new_IRLabel(long label);
 static IR* new_IRJmp(long label);
 static Reg* new_Reg();
-static Reg* new_RegImm(int val);
+static Reg* new_RegImm(unsigned long val);
 static Reg* new_RegVar(Ident* ident);
 static Reg* new_RegStr(char* str);
 static Reg* new_RegAddr(Reg* reg, int size);
@@ -262,6 +262,7 @@ static Reg* gen_lvar(Node*  node){
             reg = new_Reg();
             new_IR(IR_REL, reg, new_RegVar(node->ident), NULL);
             reg->size = node->type->size;
+            reg->is_unsigned = node->type->is_unsigned;
             break;
         case ND_DREF:
             reg = gen_expr(node->lhs);
@@ -269,6 +270,7 @@ static Reg* gen_lvar(Node*  node){
         case ND_MEMBER:
             reg = gen_lvar(node->lhs);
             reg->size = node->type->size;
+            reg->is_unsigned = node->type->is_unsigned;
             new_IR(IR_ADD, NULL, reg, new_RegImm(node->val));
             break;
         default:
@@ -398,6 +400,10 @@ static Reg* gen_expr(Node* node){
             ret->size = node->type->size;
             target->size = node->lhs->type->size;
 
+            // 符号付きフラグの設定
+            ret->is_unsigned = node->type->is_unsigned;
+            target->is_unsigned = node->lhs->type->is_unsigned;
+
             // キャスト種別の判定
             IRCmd cmd = IR_CAST;    // 整数→整数のキャスト
 
@@ -501,7 +507,7 @@ static Reg* new_Reg(){
     return reg;
 }
 
-static Reg* new_RegImm(int val){
+static Reg* new_RegImm(unsigned long val){
     Reg* reg = new_Reg();
     reg->kind = REG_IMM;
     reg->val = val;

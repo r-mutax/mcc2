@@ -8,6 +8,10 @@ Type* ty_char;
 Type* ty_int;
 Type* ty_short;
 Type* ty_long;
+Type* ty_uchar;
+Type* ty_ushort;
+Type* ty_uint;
+Type* ty_ulong;
 
 
 void ty_init(){
@@ -15,6 +19,15 @@ void ty_init(){
     ty_short = new_type(TY_INT, 2);
     ty_int = new_type(TY_INT, 4);
     ty_long = new_type(TY_INT, 8);
+    
+    ty_uchar = new_type(TY_INT, 1);
+    ty_uchar->is_unsigned = 1;
+    ty_ushort = new_type(TY_INT, 2);
+    ty_ushort->is_unsigned = 1;
+    ty_uint = new_type(TY_INT, 4);
+    ty_uint->is_unsigned = 1;
+    ty_ulong = new_type(TY_INT, 8);
+    ty_ulong->is_unsigned = 1;
 }
 
 Type* copy_type(Type* type){
