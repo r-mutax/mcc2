@@ -276,6 +276,33 @@ static Token* scan(char* src){
                     cur = new_token(TK_NUM, cur, p, 0);
                     cur->val = strtoul(p, &p, 10);
                     cur->len = p - cur->pos;
+
+                    /*
+                        1 : 'u' 'l'opt
+                        2 : 'u' 'll'opt
+                        3 : 'l' 'u'opt
+                        4 : 'll' 'u'opt
+                        なら読み飛ばす
+                    */
+                    if(toupper(*p) == 'U'){
+                        p++;
+                        if(toupper(*p) == 'L'){
+                            p++;
+                            if(toupper(*p) == 'L'){
+                                p++;
+                            }
+                        }
+                    } else if(toupper(*p) == 'L'){
+                        p++;
+                        if(toupper(*p) == 'U'){
+                            p++;
+                        } else if(toupper(*p) == 'L'){
+                            p++;
+                            if(toupper(*p) == 'U'){
+                                p++;
+                            }
+                        }
+                    }
                 } else if(isspace(c)){
                     cur = new_token(TK_SPACE, cur, p++ , 1);
                     // p++;
