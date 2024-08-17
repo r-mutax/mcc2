@@ -111,6 +111,8 @@ typedef enum TokenKind {
     TK_CONST,                   // const
     TK_RESTRICT,                // restrict
     TK_VOLATILE,                // volatile
+    TK_UNSIGNED,                // unsigned
+    TK_SIGNED,                  // signed
     TK_NEWLINE,                 // "\n"
 
     // preprocess
@@ -131,12 +133,12 @@ typedef enum TokenKind {
 } TokenKind;
 
 struct Token {
-    TokenKind   kind;   // トークンの種類
-    char*       pos;    // 位置
-    SrcFile*    file;   // ファイル
-    int         val;
-    int         len;
-    Token*      next;   // 次のトークン
+    TokenKind       kind;   // トークンの種類
+    char*           pos;    // 位置
+    SrcFile*        file;   // ファイル
+    unsigned long   val;
+    int             len;
+    Token*          next;   // 次のトークン
 };
 
 struct Macro {
@@ -163,7 +165,7 @@ struct Ident {
     int offset;             // ローカル変数ののオフセット
     int is_string_literal;  // 文字列リテラルか？のフラグ
     Scope* scope;           // 関数スコープ
-    int val;                // 数値(enum用)
+    unsigned long val;      // 数値(enum用)
 
     Node* funcbody;         // 関数のbody
     Parameter* params;
@@ -226,24 +228,24 @@ typedef enum NodeKind {
 } NodeKind;
 
 struct Node {
-    NodeKind    kind;
-    Node*       lhs;
-    Node*       rhs;
-    int         val;
-    Ident*      ident;
-    Type*       type;
-    Token*      pos;
-    Label*      label;
+    NodeKind        kind;
+    Node*           lhs;
+    Node*           rhs;
+    unsigned long   val;
+    Ident*          ident;
+    Type*           type;
+    Token*          pos;
+    Label*          label;
 
-    Node*       cond;
-    Node*       then;
-    Node*       elif;
-    Node*       body;
-    Node*       init;
-    Node*       incr;
+    Node*           cond;
+    Node*           then;
+    Node*           elif;
+    Node*           body;
+    Node*           init;
+    Node*           incr;
 
-    Node*       next_case;
-    Node*       default_label;
+    Node*           next_case;
+    Node*           default_label;
 
     // 関数呼び出しの引数
     Node*       params;
@@ -272,7 +274,7 @@ typedef enum RegKind {
 struct Reg {
     RegKind kind;
     int idx;
-    int val;
+    unsigned long val;
     bool is_unsigned;
     Ident*  ident;
     Reg*    addr;   // REG_ADDRのアドレスを格納しているところ

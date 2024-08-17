@@ -274,7 +274,7 @@ static Token* scan(char* src){
             default:
                 if(isdigit(c)){
                     cur = new_token(TK_NUM, cur, p, 0);
-                    cur->val = strtol(p, &p, 10);
+                    cur->val = strtoul(p, &p, 10);
                     cur->len = p - cur->pos;
                 } else if(isspace(c)){
                     cur = new_token(TK_SPACE, cur, p++ , 1);

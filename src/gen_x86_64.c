@@ -59,10 +59,10 @@ static CAST_CMD cast_table[][8] = {
 /* s:i32    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
 /* s:i64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
 
-/* s:u8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED  },
-/* s:u16    */ {    u64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED  },
-/* s:u32    */ {    u64_i8,  u64_i16,  NO_NEED,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED  },
-/* s:u64    */ {    u64_i8,  u64_i16,  u64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED  },
+/* s:u8     */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED  },
+/* s:u16    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED  },
+/* s:u32    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED  },
+/* s:u64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED  },
 };
 
 static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD);
@@ -126,9 +126,9 @@ static void activateReg(Reg* reg, int is_lhs){
         case REG_IMM:
             if(is_lhs){
                 assignReg(reg);
-                print("  mov %s, %d\n", reg->rreg, reg->val);
+                print("  mov %s, %lu\n", reg->rreg, reg->val);
             } else {
-                reg->rreg = format_string("%d\0", reg->val);
+                reg->rreg = format_string("%lu\0", reg->val);
             }
             break;
         case REG_REG:
@@ -247,6 +247,33 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
         case i64_i32:
             print("  movsxd %s, %s\n", t->rreg, rreg32[s1->idx]);
             break;
+        case u64_i8:
+            print("  movzx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            break;
+        case u64_i16:
+            print("  movzx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            break;
+        case u64_i32:
+            print("  mov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            break;
+        case i64_u8:
+            print("  movzx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            break;
+        case i64_u16:
+            print("  movzx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            break;
+        case i64_u32:
+            print("  mov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            break;
+        case u64_u8:
+            print("  movzx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            break;
+        case u64_u16:
+            print("  movzx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            break;
+        case u64_u32:
+            print("  mov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            break;
         default:
             error("invalid cast %d \n", cmd);
     }
@@ -356,7 +383,10 @@ void gen_x86(IR* ir){
                 break;
             case IR_EQUAL:
                 activateRegLhs(ir->s1);
-                activateRegRhs(ir->s2);
+
+                // cmp命令は直値は32bit幅までしか受け取れないので、
+                // 左辺値として割り当てる
+                activateRegLhs(ir->s2);
                 print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 print("  sete al\n");
                 print("  movzb %s, al\n", ir->s1->rreg);
@@ -437,20 +467,13 @@ void gen_x86(IR* ir){
                 } else if(ir->s1->size == 8){
                     print("  mov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
                 }
-                freeReg(ir->s2);
+                
 
                 if(ir->t){
                     activateRegLhs(ir->t);
-                    if(ir->s1->size == 1){
-                        print("  movsx %s, BYTE PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
-                    } else if(ir->s1->size == 2){
-                        print("  movsx %s, WORD PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
-                    } else if(ir->s1->size == 4){
-                        print("  movsxd %s, DWORD PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
-                    } else if(ir->s1->size == 8){
-                        print("  mov %s, QWORD PTR [%s]\n", ir->t->rreg, ir->s1->rreg);
-                    }
+                    print("  mov %s, %s\n", ir->t->rreg, ir->s2->rreg);
                 }
+                freeReg(ir->s2);
                 freeReg(ir->s1);
                 break;
             case IR_FN_CALL:
@@ -533,14 +556,26 @@ void gen_x86(IR* ir){
             case IR_LOAD:
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                if(ir->s2->size == 1){
-                    print("  movsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                } else if(ir->s2->size == 2){
-                    print("  movsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                 } else if(ir->s2->size == 4){
-                    print("  movsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                } else if(ir->s2->size == 8){
-                    print("  mov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                if(ir->s2->is_unsigned){
+                    if(ir->s2->size == 1){
+                        print("  movzx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 2){
+                        print("  movzx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 4){
+                        print("  mov %s, DWORD PTR [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
+                    } else if(ir->s2->size == 8){
+                        print("  mov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    }
+                } else {
+                    if(ir->s2->size == 1){
+                        print("  movsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 2){
+                        print("  movsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 4){
+                        print("  movsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 8){
+                        print("  mov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    }
                 }
                 freeReg(ir->s2);
                 break;
