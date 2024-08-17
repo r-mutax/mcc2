@@ -503,6 +503,16 @@ int test_primary(){
     printf("test of initialize..\n");
     int defini = 10;
     ASSERT(defini, 10);
+
+    unsigned long val = 123;
+    ASSERT(val, 123);
+    ASSERT(val, 123u);
+    ASSERT(val, 123ul);
+    ASSERT(val, 123ull);
+    ASSERT(val, 123l);
+    ASSERT(val, 123lu);
+    ASSERT(val, 123llu);
+
     return 0;
 }
 
@@ -718,7 +728,7 @@ int test_cast(){
     ASSERT((unsigned char)c, 255);
     ASSERT((unsigned short)c, 65535);
     ASSERT((unsigned int)c, 4294967295);
-    ASSERT((unsigned long)c, 18446744073709551615);
+    ASSERT((unsigned long)c, 18446744073709551615ul);
 
     // short cast to ...
     s = -1;
@@ -728,7 +738,7 @@ int test_cast(){
     ASSERT((unsigned char)s, 255);
     ASSERT((unsigned short)s, 65535);
     ASSERT((unsigned int)s, 4294967295);
-    ASSERT((unsigned long)s, 18446744073709551615);
+    ASSERT((unsigned long)s, 18446744073709551615ul);
 
     // int cast to ...
     i = -1;
@@ -738,7 +748,7 @@ int test_cast(){
     ASSERT((unsigned char)i, 255);
     ASSERT((unsigned short)i, 65535);
     ASSERT((unsigned int)i, 4294967295);
-    ASSERT((unsigned long)i, 18446744073709551615);
+    ASSERT((unsigned long)i, 18446744073709551615ul);
 
     // long cast to ...
     l = -1;
@@ -748,7 +758,7 @@ int test_cast(){
     ASSERT((unsigned char)l, 255);
     ASSERT((unsigned short)l, 65535);
     ASSERT((unsigned int)l, 4294967295);
-    ASSERT((unsigned long)l, 18446744073709551615);
+    ASSERT((unsigned long)l, 18446744073709551615ul);
 
     // unsigned char cast to ...
     uc = 255;
@@ -781,7 +791,7 @@ int test_cast(){
     ASSERT((unsigned long)ui, 4294967295);
 
     // unsigned long cast to ...
-    ul = 18446744073709551615;
+    ul = 18446744073709551615ul;
     ASSERT((char)ul, -1);
     ASSERT((short)ul, -1);
     ASSERT((int)ul, -1);
