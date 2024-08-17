@@ -282,7 +282,6 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
 
 void gen_x86(IR* ir){
     print(".intel_syntax noprefix\n");
-    print(".global main\n");
 
     while(ir){
         switch(ir->cmd){
@@ -306,6 +305,9 @@ void gen_x86(IR* ir){
                 print("  mov rsp, rbp\n");
                 pop("rbp");
                 print("  ret\n");
+                break;
+            case IR_EXTERN_LABEL:
+                print(".global %s\n", ir->s1->str);
                 break;
             case IR_STORE_ARG_REG:
 
