@@ -157,7 +157,7 @@ static void activateReg(Reg* reg, int is_lhs){
                         print("  mov %s, QWORD PTR[%s]\n", reg->rreg, ident->name);
                     }
                 }  else if(ident->kind == ID_GVAR && ident->is_string_literal){
-                    print("  mov %s, OFFSET FLAT:%s\n", reg->rreg, ident->name);
+                    print("  lea %s, [ rip + %s ]\n", reg->rreg, ident->name);
                 }
             }
             break;
@@ -494,7 +494,7 @@ void gen_x86(IR* ir){
                 if(ir->s1->ident->kind == ID_LVAR){
                     print("  lea %s, [rbp - %d]\n", ir->t->rreg, ir->s1->ident->offset);
                 } else if(ir->s1->ident->kind == ID_GVAR){
-                    print("  mov %s, OFFSET FLAT:%s\n", ir->t->rreg, ir->s1->ident->name);
+                    print("  lea %s, [ rip + %s ]\n", ir->t->rreg, ir->s1->ident->name);
                 }
                 break;
             case IR_CAST:
