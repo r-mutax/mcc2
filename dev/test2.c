@@ -3,5 +3,5 @@
 int main(){
 
     unsigned char uc = 255;
-    return ASSERT((char)uc, -1);
+    return ASSERT((char)uc, -11);
 }
