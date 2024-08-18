@@ -3,3 +3,7 @@ tmp
 tmp.s
 src/*.o
 src/*.d
+test.exe
+test/c/*.o
+test/c/*.d
+test/c/*.s

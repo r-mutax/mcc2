@@ -10,6 +10,7 @@ static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
 
+static void gen_extern(Ident* ident);
 static void gen_datas(Ident* ident);
 static void gen_funcs(Ident* ident);
 static void gen_function(Ident* func);
@@ -37,8 +38,18 @@ void gen_ir(){
     Scope* scope = get_global_scope();
     Ident* ident = scope->ident;
 
+    gen_extern(ident);
     gen_datas(ident);
     gen_funcs(ident);
+}
+
+static void gen_extern(Ident* ident){
+    while(ident){
+        if(ident->kind == ID_FUNC){
+            new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
+        }
+        ident = ident->next;
+    }
 }
 
 static void gen_datas(Ident* ident){

@@ -365,6 +365,9 @@ typedef enum IRCmd{
     IR_STORE_ARG_REG,
     IR_LOAD_ARG_REG,
     IR_SET_FLOAT_NUM,
+    IR_EXTERN_LABEL,
+        // externlabel (null) (ident) (imm)
+        // -> identというラベルを外部に公開する
 
     // DEBUG
     IR_COMMENT,
