@@ -33,6 +33,11 @@ static KEYWORD_MAP keyword_map[] = {
     {   "defined",      TK_DEFINED  },
     {   "signed",       TK_SIGNED   },
     {   "unsigned",     TK_UNSIGNED },
+    {   "typedef",      TK_TYPEDEF  },
+    {   "extern",       TK_EXTERN   },
+    {   "static",       TK_STATIC   },
+    {   "auto",         TK_AUTO     },
+    {   "register",     TK_REGISTER },
 };
 
 static KEYWORD_MAP preprocess_keyword_map[] = {
