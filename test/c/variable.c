@@ -4,6 +4,8 @@ int g_a;
 int g_b;
 int test_global_variable();
 
+extern int test_extern_int;
+
 int test_variable(){
     printf("test of local variable..\n");
     int a; a = 15;
@@ -40,6 +42,8 @@ int test_variable(){
     signed register int a2 = 2;
     unsigned short restrict a3 = 3;
     signed long volatile int a4 = 34;
+
+    ASSERT(test_extern_int, 10);
 
     printf("test of assignment..\n");
     return 0;

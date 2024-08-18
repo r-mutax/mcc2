@@ -40,7 +40,7 @@ void gen_ir(){
 
 static void gen_extern(Ident* ident){
     while(ident){
-        if(ident->kind == ID_FUNC){
+        if(!ident->is_string_literal && !ident->is_extern){
             new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
         }
         ident = ident->next;
@@ -49,7 +49,7 @@ static void gen_extern(Ident* ident){
 
 static void gen_datas(Ident* ident){
     while(ident){
-        if(ident->kind == ID_GVAR){
+        if(ident->kind == ID_GVAR && !ident->is_extern){
             new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(ident->type->size));
         }
         ident = ident->next;
