@@ -52,7 +52,7 @@ static void function();
 static Node* stmt();
 static Node* compound_stmt();
 static Node* declaration();
-static Ident* declare(Type* ty);
+static Ident* declare(Type* ty, StorageClassKind sck);
 static Type* declspec(StorageClassKind* sck);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
@@ -136,7 +136,7 @@ void Program(){
         } else {
             StorageClassKind sck = 0;
             Type* ty = declspec(&sck);
-            Ident* ident = declare(ty);
+            Ident* ident = declare(ty, sck);
             register_ident(ident);
             ident->kind = ID_GVAR;
             expect_token(TK_SEMICORON);
@@ -182,7 +182,7 @@ static void function(){
             } else {
                 StorageClassKind sck = 0;
                 Type* ty = declspec(&sck);
-                Ident* ident = declare(ty);
+                Ident* ident = declare(ty, sck);
                 register_ident(ident);
                 Parameter* param = calloc(1, sizeof(Parameter));
                 param->ident = ident;
@@ -266,7 +266,7 @@ static Node* stmt(){
             if(is_type()){
                 StorageClassKind sck = 0;
                 Type* ty = declspec(&sck);
-                Ident* ident = declare(ty);
+                Ident* ident = declare(ty, sck);
                 register_ident(ident);
                 if(consume_token(TK_ASSIGN)){
                     node->init = new_node(ND_ASSIGN, new_node_var(ident), assign());
@@ -415,7 +415,7 @@ static Node* declaration(){
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
 
-    Ident* ident = declare(ty);
+    Ident* ident = declare(ty, sck);
     register_ident(ident);
 
     Node* node = NULL;
@@ -427,7 +427,7 @@ static Node* declaration(){
     return node;
 }
 
-static Ident* declare(Type* ty){
+static Ident* declare(Type* ty, StorageClassKind sck){
     while(consume_token(TK_MUL)){
         ty = pointer_to(ty);
     }
@@ -439,7 +439,13 @@ static Ident* declare(Type* ty){
         expect_token(TK_R_SQUARE_BRACKET);
     }
 
-    return make_ident(ident_tok, ID_LVAR, ty);
+    Ident* ident = make_ident(ident_tok, ID_LVAR, ty);
+    if(sck == SCK_EXTERN){
+        ident->is_extern = true;
+        ident->kind = ID_GVAR;
+    }
+
+    return ident;
 }
 
 
@@ -621,7 +627,7 @@ static Member* struct_or_union_member(){
         cur = cur->next = calloc(1, sizeof(Member));
         StorageClassKind sck = 0;
         Type* ty = declspec(&sck);
-        cur->ident = declare(ty);
+        cur->ident = declare(ty, sck);
         expect_token(TK_SEMICORON);
     } while(!consume_token(TK_R_BRACKET));
     return head.next;

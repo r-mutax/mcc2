@@ -1,4 +1,4 @@
-int testinc;
+extern int testinc;
 
 // test utility
 #define ASSERT(X, Y)    ((X) == (Y) ? 0 : exit(1))

@@ -186,6 +186,7 @@ struct Ident {
     Parameter* params;
     int stack_size;         // 関数で使用するスタックサイズ
     int is_var_params;      // 可変長引数受け取るか？
+    int is_extern;          // externか？
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報

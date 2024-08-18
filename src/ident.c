@@ -47,10 +47,12 @@ Ident* make_ident(Token* tok, IdentKind kind, Type* ty){
 void register_ident(Ident* ident){
     Type* ty = ident->type;
     if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
-        if(ty->kind == TY_ARRAY){
-            stack_size += ty->size * ty->array_len;    
-        } else {
-            stack_size += ty->size;
+        if(!ident->is_extern){
+            if(ty->kind == TY_ARRAY){
+                stack_size += ty->size * ty->array_len;
+            } else {
+                stack_size += ty->size;
+            }
         }
     }
 
