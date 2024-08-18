@@ -1,7 +1,4 @@
-#include "error.h"
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "mcc2.h"
 
 void warn_tok(Token* tok, char* fmt, ...){
     va_list ap;

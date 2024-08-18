@@ -1,15 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdarg.h>
-#include "error.h"
 #include "mcc2.h"
 
 FILE* fp = NULL;
 
-SrcFile* read_file(char* path){
+SrcFile* read_file(const char* path){
 
     FILE *fp = fopen(path, "r");
     if(!fp){
@@ -53,7 +46,7 @@ SrcFile* read_file(char* path){
     }
 
     SrcFile* file = calloc(1, sizeof(SrcFile));
-    file->name = path;
+    file->name = (char*)path;
     file->body = buf2;
 
     return file;

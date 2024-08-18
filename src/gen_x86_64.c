@@ -1,12 +1,4 @@
-#include "gen_x86_64.h"
-#include "gen_ir.h"
-#include "tokenizer.h"
-#include "error.h"
-#include "utility.h"
-#include "file.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "mcc2.h"
 
 static const char *rreg8[] = {"r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
 static const char *rreg16[] = {"r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};

@@ -1,13 +1,4 @@
 #include "mcc2.h"
-#include "tokenizer.h"
-#include "ident.h"
-#include "error.h"
-#include "type.h"
-#include "utility.h"
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
 /*
     program = ( function | declaration )*

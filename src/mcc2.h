@@ -1,7 +1,17 @@
 #pragma once
 
-#include <stdbool.h>
+// include libraries
 #include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <unistd.h>
+#include <bits/getopt_core.h>
+
 
 typedef struct Token Token;
 typedef struct Node Node;
@@ -479,3 +489,93 @@ struct Warning {
     char*       warn;
     Warning*    next;
 };
+
+// ---------- function prototype ----------
+// error.c
+void error_tok(Token* tok, char* fmt, ...);
+void warn_tok(Token* tok, char* fmt, ...);
+void error_at_src(char* pos, SrcFile* src, char* fmt, ...);
+void warn_at_src(char* pos, SrcFile* src, char* fmt, ...);
+void error(char* fmt, ...);
+void unreachable();
+
+// file.c
+SrcFile* read_file(const char* filename);
+char* get_dirname(char* path);
+void file_init();
+void print(char* fmt, ...);
+void open_output_file(char* filename);
+void close_output_file();
+
+// gen_ir.c
+void gen_ir();
+IR* get_ir();
+
+
+// gen_x86_64.c
+void gen_x86_64_init();
+void gen_x86(IR* ir);
+
+// ident.c
+Ident* declare_ident(Token* ident, IdentKind kind, Type* ty);
+Ident* make_ident(Token* ident, IdentKind kind, Type* ty);
+void register_ident(Ident* ident);
+Ident* register_string_literal(Token* tok);
+void register_tag(Type* type);
+Ident* find_ident(Token* tok);
+Label* find_label(Token* tok);
+Type* find_tag(Token* tok);
+Label* register_label(Token* tok);
+void scope_in();
+void scope_out();
+int get_stack_size();
+Scope* get_current_scope();
+Scope* get_global_scope();
+
+// parse.c
+void parse(Token* tok);
+
+// preprocess.c
+Token* preprocess(Token* token);
+void add_include_path(char* path);
+void add_predefine_macro(char* path);
+
+// semantics.c
+void semantics();
+
+// tokenize.c
+Token* tokenize(char* path);
+bool is_equal_token(Token* lhs, Token* rhs);
+char* get_token_string(Token* tok);
+Token* next_newline(Token* tok);
+Token* next_token(Token* tok);
+Token* skip_to_next(Token* tok, TokenKind kind);
+Token* copy_token(Token* tok);
+Token* copy_token_list(Token* tok);
+Token* copy_token_eol(Token* tok);
+Token* get_tokens_tail(Token* tok);
+void output_token(Token* tok);
+
+// type.c
+extern Type* ty_int;
+extern Type* ty_char;
+extern Type* ty_short;
+extern Type* ty_long;
+extern Type* ty_uchar;
+extern Type* ty_ushort;
+extern Type* ty_uint;
+extern Type* ty_ulong;
+
+void ty_init();
+Type* copy_type(Type* type);
+Type* pointer_to(Type* base);
+Type* array_of(Type* base, int len);
+void add_type(Node* node);
+bool equal_type(Type* ty1, Type* ty2);
+Type* new_type(TypeKind kind, int size);
+Ident* get_member(Type* type, Token* tok);
+
+// utility.c
+char* strnewcpyn(char* src, int n);
+char* format_string(const char* format, ...);
+void printline(Token* loc);

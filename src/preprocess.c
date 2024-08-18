@@ -1,10 +1,4 @@
 #include "mcc2.h"
-#include "tokenizer.h"
-#include "utility.h"
-#include "error.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;

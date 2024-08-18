@@ -1,12 +1,4 @@
 #include "mcc2.h"
-#include "type.h"
-#include "utility.h"
-#include "tokenizer.h"
-#include <stdio.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 
 static Scope global_scope = {};
 static Scope* cur_scope = &global_scope;
