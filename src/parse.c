@@ -63,6 +63,7 @@ static Node* compound_stmt();
 static Node* declaration();
 static Ident* declare(Type* ty);
 static Type* declspec(StorageClassKind* sck);
+static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
 static Member* struct_or_union_member();
 static Type* struct_or_union_spec(bool is_union);
@@ -472,6 +473,38 @@ static void count_decl_spec(int* type_flg, int flg, Token* tok){
     *type_flg += flg;
 }
 
+static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok){
+    if(consume_token(TK_TYPEDEF)){
+        if(*sck != SCK_NONE){
+            error_tok(tok, "multiple storage classes in declaration specifies.");
+        }
+        *sck = SCK_TYPEDEF;
+        return true;
+    }
+    if(consume_token(TK_EXTERN)){
+        if(*sck != SCK_NONE){
+            error_tok(tok, "multiple storage classes in declaration specifies.");
+        }
+        *sck = SCK_EXTERN;
+        return true;
+    }
+
+    if(consume_token(TK_STATIC)){
+        if(*sck != SCK_NONE){
+            error_tok(tok, "multiple storage classes in declaration specifies.");
+        }
+        *sck = SCK_STATIC;
+        return true;
+    }
+
+    // these keyword is recognized but ignored.
+    if(consume_token(TK_AUTO)|| consume_token(TK_REGISTER)){
+        return true;
+    }
+
+    return false;
+}
+
 static Type* declspec(StorageClassKind* sck){
 
     int type_flg = 0;
@@ -481,6 +514,12 @@ static Type* declspec(StorageClassKind* sck){
     Type* ty = 0;
     while(is_type()){
         Token* tok = get_token();
+
+        // check storage class keyword.
+        if(check_storage_class_keyword(sck, tok)){
+            continue;
+        }
+
         if(consume_token(TK_STRUCT) || consume_token(TK_UNION)){
             if(ty || type_flg){
                 error_tok(tok, "duplicate type keyword.\n");
@@ -1300,6 +1339,11 @@ bool is_type(){
         || token->kind == TK_RESTRICT
         || token->kind == TK_SIGNED
         || token->kind == TK_UNSIGNED
+        || token->kind == TK_TYPEDEF
+        || token->kind == TK_AUTO
+        || token->kind == TK_REGISTER
+        || token->kind == TK_RESTRICT
+        || token->kind == TK_EXTERN
         || token->kind == TK_INT
         || token->kind == TK_LONG
         || token->kind == TK_SHORT

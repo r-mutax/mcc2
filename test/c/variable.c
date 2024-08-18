@@ -35,6 +35,12 @@ int test_variable(){
     arr[3]= 4;
     ASSERT(arr[3], 4);
 
+    typedef int INT_T;
+    int auto a1 = 1;
+    signed register int a2 = 2;
+    unsigned short restrict a3 = 3;
+    signed long volatile int a4 = 34;
+
     printf("test of assignment..\n");
     return 0;
 }

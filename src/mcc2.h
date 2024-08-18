@@ -113,6 +113,11 @@ typedef enum TokenKind {
     TK_VOLATILE,                // volatile
     TK_UNSIGNED,                // unsigned
     TK_SIGNED,                  // signed
+    TK_TYPEDEF,                 // typedef
+    TK_EXTERN,                  // extern
+    TK_STATIC,                  // static
+    TK_AUTO,                    // auto
+    TK_REGISTER,                // register
     TK_NEWLINE,                 // "\n"
 
     // preprocess
