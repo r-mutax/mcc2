@@ -1,9 +1,4 @@
-#include "gen_ir.h"
-#include "ident.h"
-#include "tokenizer.h"
-#include "error.h"
-#include <stdlib.h>
-#include <stdio.h>
+#include "mcc2.h"
 
 static long g_label = 0;
 static long g_break = -1;

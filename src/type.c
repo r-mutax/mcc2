@@ -1,8 +1,4 @@
 #include "mcc2.h"
-#include "type.h"
-#include "tokenizer.h"
-#include <stdlib.h>
-#include <string.h>
 
 Type* ty_char;
 Type* ty_int;

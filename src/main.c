@@ -1,20 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <unistd.h>
-
-#include "error.h"
-#include "type.h"
-#include "tokenizer.h"
-#include "preprocess.h"
-#include "parse.h"
-#include "file.h"
-#include "semantics.h"
-#include "gen_ir.h"
-#include "gen_x86_64.h"
-#include <bits/getopt_core.h>
+#include "mcc2.h"
 
 static char* filename = NULL;
 bool is_preprocess = false;

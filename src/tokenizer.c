@@ -1,11 +1,4 @@
-#include "tokenizer.h"
-#include "error.h"
-#include "file.h"
-#include "preprocess.h"
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdio.h>
+#include "mcc2.h"
 #include "keyword_map.h"
 
 Token* token;
