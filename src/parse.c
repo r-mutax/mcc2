@@ -443,6 +443,8 @@ static Ident* declare(Type* ty, StorageClassKind sck){
     if(sck == SCK_EXTERN){
         ident->is_extern = true;
         ident->kind = ID_GVAR;
+    } else if(sck == SCK_STATIC){
+        ident->is_static = true;
     }
 
     return ident;
@@ -1341,6 +1343,7 @@ bool is_type(){
         || token->kind == TK_REGISTER
         || token->kind == TK_RESTRICT
         || token->kind == TK_EXTERN
+        || token->kind == TK_STATIC
         || token->kind == TK_INT
         || token->kind == TK_LONG
         || token->kind == TK_SHORT

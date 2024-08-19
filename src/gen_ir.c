@@ -49,8 +49,12 @@ static void gen_extern(Ident* ident){
 
 static void gen_datas(Ident* ident){
     while(ident){
-        if(ident->kind == ID_GVAR && !ident->is_extern){
-            new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(ident->type->size));
+        if(ident->kind == ID_GVAR){
+            if(ident->is_extern){
+                // extern宣言のときは実体を作らない
+            } else {
+                new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(ident->type->size));
+            }
         }
         ident = ident->next;
     }
