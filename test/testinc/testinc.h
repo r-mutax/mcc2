@@ -4,6 +4,8 @@ extern int testinc;
 #define ASSERT(X, Y)    ((X) == (Y) ? 0 : exit(1))
 #define TEST_MACRO 123
 
+static int test_static;
+
 int exit(int ret);
 int printf(char* fmt, ...);
 

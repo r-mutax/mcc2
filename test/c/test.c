@@ -6,6 +6,7 @@ int main(){
     printf("mcc2 test...\n\n");
 
     test_extern_int = 10;
+    test_static = 20;
 
     test_expression();
     test_statement();
@@ -16,6 +17,8 @@ int main(){
     test_assignment();
     test_preprocess();
     test_cast();
+
+    ASSERT(test_static, 20);
 
     printf("test is complete!!!\n");
     return 0;

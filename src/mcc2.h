@@ -187,6 +187,7 @@ struct Ident {
     int stack_size;         // 関数で使用するスタックサイズ
     int is_var_params;      // 可変長引数受け取るか？
     int is_extern;          // externか？
+    int is_static;          // staticか？
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
@@ -378,6 +379,10 @@ typedef enum IRCmd{
         // gvarlabel (null) (ident) (imm)
         // -> identというグローバル変数を定義する
         //    immグローバル変数のサイズ
+    IR_STATIC_GVAR_LABEL,
+        // staticgvarlabel (null) (ident) (imm)
+        // -> identというファイルスコープの静的変数を定義する
+        //    imm静的変数のサイズ
     IR_STORE_ARG_REG,
     IR_LOAD_ARG_REG,
     IR_SET_FLOAT_NUM,

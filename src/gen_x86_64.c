@@ -141,12 +141,22 @@ static void activateReg(Reg* reg, int is_lhs){
                         print("  mov %s, QWORD PTR[rbp - %d]\n", reg->rreg, ident->offset);
                     }
                 } else if(ident->kind == ID_GVAR){
-                    if(size == 1){
-                        print("  movsx %s, BYTE PTR[%s]\n", reg->rreg, ident->name);
-                    } else if(size == 2){
-                        print("  movsx %s, WORD PTR[%s]\n", reg->rreg, ident->name);
-                    } else if(size == 8){
-                        print("  mov %s, QWORD PTR[%s]\n", reg->rreg, ident->name);
+                    if(ident->is_static){
+                        if(size == 1){
+                            print("  movsx %s, BYTE PTR[.L%s]\n", reg->rreg, ident->name);
+                        } else if(size == 2){
+                            print("  movsx %s, WORD PTR[.L%s]\n", reg->rreg, ident->name);
+                        } else if(size == 8){
+                            print("  mov %s, QWORD PTR[.L%s]\n", reg->rreg, ident->name);
+                        }
+                    } else {
+                        if(size == 1){
+                            print("  movsx %s, BYTE PTR[%s]\n", reg->rreg, ident->name);
+                        } else if(size == 2){
+                            print("  movsx %s, WORD PTR[%s]\n", reg->rreg, ident->name);
+                        } else if(size == 8){
+                            print("  mov %s, QWORD PTR[%s]\n", reg->rreg, ident->name);
+                        }
                     }
                 }  else if(ident->kind == ID_GVAR && ident->is_string_literal){
                     print("  lea %s, [ rip + %s ]\n", reg->rreg, ident->name);
@@ -335,6 +345,10 @@ void gen_x86(IR* ir){
                     print("  .data\n");
                     print("%s:\n", ident->name);
                     print("  .string \"%s\"\n", get_token_string(ident->tok));
+                } else if(ident->is_static) {
+                    print("  .bss\n");
+                    print(".L%s:\n", ir->s1->ident->name);
+                    print("  .zero %d\n", ir->s2->val);
                 } else {
                     print("  .bss\n");
                     print("%s:\n", ir->s1->ident->name);
@@ -488,7 +502,11 @@ void gen_x86(IR* ir){
                 if(ir->s1->ident->kind == ID_LVAR){
                     print("  lea %s, [rbp - %d]\n", ir->t->rreg, ir->s1->ident->offset);
                 } else if(ir->s1->ident->kind == ID_GVAR){
-                    print("  lea %s, [ rip + %s ]\n", ir->t->rreg, ir->s1->ident->name);
+                    if(ir->s1->ident->is_static){
+                        print("  lea %s, [ rip + .L%s ]\n", ir->t->rreg, ir->s1->ident->name);
+                    } else {
+                        print("  lea %s, [ rip + %s ]\n", ir->t->rreg, ir->s1->ident->name);
+                    }
                 }
                 break;
             case IR_CAST:

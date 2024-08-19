@@ -45,6 +45,8 @@ int test_variable(){
 
     ASSERT(test_extern_int, 10);
 
+    test_static = 30;
+
     printf("test of assignment..\n");
     return 0;
 }
