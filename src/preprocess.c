@@ -586,8 +586,28 @@ static Token* expand_defined(Token* tok){
     return head.next;
 }
 
+static Token* expand_macros(Token* token){
+    Token head = {};
+    Token* cur = &head;
+    cur->next = token;
+
+    while(cur && cur->next){
+        Token* target = next_token(cur);
+        if(target->kind == TK_IDENT){
+            Macro* m = find_macro(target, macros);
+            if(m){
+                cur->next = replace_token(target, m, NULL);
+            }
+        }
+        cur = next_token(cur);
+    }
+
+    return head.next;
+}
+
 static bool eval_expr(Token* token){
     token = expand_defined(token);
+    token = expand_macros(token);
     return pp_constant_expr(token);
 }
 

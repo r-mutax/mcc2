@@ -104,6 +104,12 @@ int test_preprocess()
     ASSERT(1, 0);
 #endif
 
+// test if directive expression expanding macro
+#define TEST_MACRO_EXPAND 2
+#if TEST_MACRO_EXPAND - 2
+    ASSERT(1, 0);
+#endif
+
 // TODO : 8進数をトークナイザが読めるようにする
 // #if 0567 - 375
 //     ASSERT(1, 0);
