@@ -97,6 +97,7 @@ bool consume_token(TokenKind kind);
 Token* consume_ident();
 Token* expect_ident();
 Token* consume_string_literal();
+Token* consume_typedef_name();
 unsigned long expect_num();
 bool is_eof();
 bool is_type();
@@ -416,11 +417,16 @@ static Node* declaration(){
     }
 
     Ident* ident = declare(ty, sck);
-    register_ident(ident);
-
     Node* node = NULL;
-    if(consume_token(TK_ASSIGN)){
-        node = new_node(ND_ASSIGN, new_node_var(ident), assign());
+    if(sck == SCK_TYPEDEF){
+        register_typedef(ident, ty);
+        node = new_node(ND_VOID_STMT, NULL, NULL);
+    } else {
+        register_ident(ident);
+
+        if(consume_token(TK_ASSIGN)){
+            node = new_node(ND_ASSIGN, new_node_var(ident), assign());
+        }
     }
 
     expect_token(TK_SEMICORON);
@@ -555,6 +561,17 @@ static Type* declspec(StorageClassKind* sck){
             continue;
         }
 
+        // check user type
+        Token* typedef_name = consume_typedef_name();
+        if(typedef_name){
+            if(ty || type_flg){
+                error_tok(tok, "duplicate type keyword.\n");
+            }
+            ty = find_typedef(typedef_name)->type;
+            type_flg += K_USER;
+            continue;
+        }
+
         if(consume_token(TK_CHAR))
             count_decl_spec(&type_flg, K_CHAR, tok);
         if(consume_token(TK_SHORT))
@@ -614,7 +631,7 @@ static Type* declspec(StorageClassKind* sck){
     }
 
     ty = copy_type(ty);
-    
+
     if(is_const){
         ty->is_const = true;
     }
@@ -1316,6 +1333,15 @@ Token* consume_string_literal(){
     return tok;
 }
 
+Token* consume_typedef_name(){
+    if(token->kind != TK_IDENT) return NULL;
+    Ident* ident = find_typedef(token);
+    if(ident == NULL) return NULL;
+    Token* typedef_token = token;
+    token = token->next;
+    return typedef_token;
+}
+
 Token* expect_ident(){
     Token* tok = consume_ident();
     if(tok == NULL){
@@ -1330,6 +1356,13 @@ bool is_eof(){
 
 
 bool is_type(){
+
+    // is token registerd as typedef name?
+    Ident* ident = find_typedef(token);
+    if(ident){
+        return true;
+    }
+
     return token->kind == TK_STRUCT
         || token->kind == TK_UNION
         || token->kind == TK_ENUM

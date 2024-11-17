@@ -480,6 +480,8 @@ struct Type {
     int         is_unsigned;
     int         array_len;
     bool        is_const;
+    bool        is_user_def;
+    Type*       base_type;
     Type*       ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー
     Type*       next;
@@ -529,6 +531,7 @@ void register_ident(Ident* ident);
 Ident* register_string_literal(Token* tok);
 void register_tag(Type* type);
 Ident* find_ident(Token* tok);
+Ident* find_typedef(Token* tok);
 Label* find_label(Token* tok);
 Type* find_tag(Token* tok);
 Label* register_label(Token* tok);
@@ -580,6 +583,7 @@ void add_type(Node* node);
 bool equal_type(Type* ty1, Type* ty2);
 Type* new_type(TypeKind kind, int size);
 Ident* get_member(Type* type, Token* tok);
+Type* register_typedef(Ident* ident, Type* ty);
 
 // utility.c
 char* strnewcpyn(char* src, int n);

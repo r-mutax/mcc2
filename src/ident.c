@@ -119,6 +119,21 @@ Ident* find_ident(Token* tok){
     return NULL;
 }
 
+Ident* find_typedef(Token* tok){
+    for(Scope* sc = cur_scope; sc; sc = sc->parent){
+        for(Ident* id = sc->ident; id; id = id->next){
+            if(id->kind == ID_TYPE){
+                Token* lhs = tok;
+                if((lhs->len == strlen(id->name))
+                        && (!memcmp(lhs->pos, id->name, lhs->len))){
+                    return id;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
 Type* find_tag(Token* tok){
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
         for(Type* ty = sc->type_tag; ty; ty = ty->next){

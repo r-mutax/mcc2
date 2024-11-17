@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/mcc2",
-            "args": ["-c", "${workspaceFolder}/test/test2.c", "-o", "${workspaceFolder}/tmp.s", "-d", "PREDEFINED_MACRO"],
+            "args": ["-c", "${workspaceFolder}/dev/test2.c", "-o", "${workspaceFolder}/tmp.s", "-d", "PREDEFINED_MACRO"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

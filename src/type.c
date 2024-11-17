@@ -55,6 +55,13 @@ Type* new_type(TypeKind kind, int size){
     return type;
 }
 
+Type* register_typedef(Ident* ident, Type* ty){
+    ident->type = ty;
+    ident->kind = ID_TYPE;
+    register_ident(ident);
+    return ty;
+}
+
 void add_type(Node* node){
     if(node == NULL){
         return;
