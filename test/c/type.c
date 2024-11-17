@@ -120,6 +120,16 @@ int test_type(){
     ASSERT(iii_ABC, 100);
     ASSERT(iii_DEF, 200);
 
+    typedef struct {
+        int a;
+        short s;
+    } typedef_struct;
+    typedef_struct ts;
+    ts.a = 10;
+    ts.s = 20;
+    ASSERT(ts.a, 10);
+    ASSERT(ts.s, 20);
+
     printf("test of type qualifier..\n");
     const int const_a = 0;
     volatile int volatile_b = 0;
