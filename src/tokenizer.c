@@ -24,6 +24,15 @@ Token* tokenize(char* path){
     return tok;
 }
 
+Token* tokenize_string(char* src){
+    cur_file = NULL;
+    Token* tok = scan(src);
+    tok = preprocess(tok);
+    if(!is_preprocess)
+        tok = delete_newline_token(tok);
+    return tok;
+}
+
 static Token* scan(char* src){
     char* p = src;
     Token head = {};

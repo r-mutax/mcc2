@@ -55,6 +55,7 @@ int main(int argc, char **argv){
     // initialize
     ty_init();
     file_init();
+    init_preprocess();
 
     if(argc > 2){
         analy_opt(argc, argv);

@@ -115,6 +115,9 @@ int test_preprocess()
 //     ASSERT(1, 0);
 // #endif
 
+#ifndef MCC
+    ASSERT(1, 0);
+#endif
 
 #define TEST_DEF 1
 #if defined ( TEST_DEF ) - 1

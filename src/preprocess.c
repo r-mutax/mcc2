@@ -3,6 +3,7 @@
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;
 extern bool is_preprocess;
+extern char* PRE_MACRO[];
 
 Token tok_zero = {
     .kind = TK_NUM,
@@ -75,6 +76,12 @@ static int get_token_int(Token* token);
 
 // for debug
 static void print_macros();
+
+void init_preprocess(){
+    for(int i = 0; i < 1; i++){
+        tokenize_string(PRE_MACRO[i]);
+    }
+}
 
 Token* preprocess(Token* token){
     Token head = {};
