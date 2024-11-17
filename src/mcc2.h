@@ -548,6 +548,7 @@ void parse(Token* tok);
 Token* preprocess(Token* token);
 void add_include_path(char* path);
 void add_predefine_macro(char* path);
+void init_preprocess();
 
 // semantics.c
 void semantics();
@@ -564,6 +565,7 @@ Token* copy_token_list(Token* tok);
 Token* copy_token_eol(Token* tok);
 Token* get_tokens_tail(Token* tok);
 void output_token(Token* tok);
+Token* tokenize_string(char* src);
 
 // type.c
 extern Type* ty_int;
