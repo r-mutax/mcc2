@@ -521,6 +521,9 @@ static Token* read_if(Token* token){
                     endif = true;
                     cur = next_newline(target);
                     break;
+                default:
+                    cur = cur->next;
+                    break;
             }
             if(endif) break;
         } else {
