@@ -1,3 +1,9 @@
+#pragma once
+#ifdef TESTINC_H
+#define DOUBLE_INCLUDE 1
+#endif
+#define TESTINC_H 1
+
 extern int testinc;
 
 // test utility

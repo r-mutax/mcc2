@@ -5,6 +5,10 @@ IncludePath* std_include_paths = NULL;
 extern bool is_preprocess;
 extern char* PRE_MACRO[];
 
+// pragma once されたヘッダのパスリスト
+char* once_header_paths[1024];
+int once_header_paths_cnt = 0;
+
 Token tok_zero = {
     .kind = TK_NUM,
     .val = 0,
@@ -53,6 +57,9 @@ static int pp_mul();
 static int pp_unary();
 static int pp_primary();
 
+// pragma
+static int check_pragma_once_include(char* path);
+
 static bool pp_consume(TokenKind kind);
 static int get_token_int(Token* token);
 
@@ -99,20 +106,26 @@ Token* preprocess(Token* token){
                         if(!path){
                             error("file not found: %s", filepath);
                         }
-                        Token* inlcude = tokenize(path);
-                        Token* newline = next_newline(target);
-                        cur->next = inlcude;
 
-                        // get tail of tokenlist from include
-                        Token* tail = inlcude;
-                        while(next_token(tail)){
-                            if(next_token(tail)->kind != TK_EOF){
-                                tail = next_token(tail);
-                            } else {
-                                break;
+                        Token* newline = next_newline(target);
+                        if(!check_pragma_once_include(path))
+                        {
+                            Token* inlcude = tokenize(path);
+                            cur->next = inlcude;
+
+                            // get tail of tokenlist from include
+                            Token* tail = inlcude;
+                            while(next_token(tail)){
+                                if(next_token(tail)->kind != TK_EOF){
+                                    tail = next_token(tail);
+                                } else {
+                                    break;
+                                }
                             }
+                            tail->next = next_token(newline);
+                        } else {
+                            cur->next = next_token(newline);
                         }
-                        tail->next = next_token(newline);
                         continue;
                     }
                     break;
@@ -137,6 +150,20 @@ Token* preprocess(Token* token){
                 case TK_PP_IFDEF:
                 case TK_PP_IFNDEF:
                     cur->next = read_if(target);
+                    break;
+                case TK_PRAGMA:
+                    {
+                        Token* command = next_token(target);
+                        if(command->kind == TK_IDENT){
+                            if(strcmp(get_token_string(command), "once") == 0){
+                                if(once_header_paths_cnt >= 1024){
+                                    error("too many once header paths");
+                                }
+                                once_header_paths[once_header_paths_cnt++] = target->file->name;
+                            }
+                        }
+                    }
+                    cur->next = next_newline(target);
                     break;
                 default:
                     break;
@@ -806,6 +833,15 @@ static int get_token_int(Token* token){
         error("not a number");
         return 0;
     }
+}
+
+static int check_pragma_once_include(char* path){
+    for(int i = 0; i < once_header_paths_cnt; i++){
+        if(strcmp(path, once_header_paths[i]) == 0){
+            return 1;
+        }
+    }
+    return 0;
 }
 
 // for debug

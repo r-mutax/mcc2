@@ -1,6 +1,8 @@
 #include "testinc.h"
+#include "testinc.h"
 
 #define TEST_MACRO_2 1 + 2
+
 int test_preprocess()
 {
     printf("test of preprocess..\n");
@@ -148,6 +150,10 @@ int TEST_CIRC_A = 30;
 #define FUNC_MULTILINE(X)   (X + 1 \
                             + 2)
     ASSERT(FUNC_MULTILINE(3), 6);
+
+#ifdef DOUBLE_INCLUDE
+    ASSERT(1, 0);
+#endif
 
     return 0;
 }

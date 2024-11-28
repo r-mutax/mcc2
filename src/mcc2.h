@@ -1,6 +1,10 @@
+
 #pragma once
 
 // include libraries
+#ifdef MCC
+
+#else
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -11,7 +15,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <bits/getopt_core.h>
-
+#endif
 
 typedef struct Token Token;
 typedef struct Node Node;
@@ -134,6 +138,8 @@ typedef enum TokenKind {
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
     TK_UNDEF,                   // #undef
+    TK_PRAGMA,                  // #pragma
+    TK_ONCE,                    // #pragma once
     TK_PP_IF,
     TK_PP_IFDEF,
     TK_PP_IFNDEF,

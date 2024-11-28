@@ -50,4 +50,5 @@ static KEYWORD_MAP preprocess_keyword_map[] = {
     {   "elif",         TK_PP_ELIF     },
     {   "else",         TK_PP_ELSE     },
     {   "endif",        TK_PP_ENDIF    },
+    {   "pragma",       TK_PRAGMA    },
 };
