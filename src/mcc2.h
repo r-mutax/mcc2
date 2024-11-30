@@ -487,6 +487,7 @@ struct Type {
     int         array_len;
     bool        is_const;
     bool        is_user_def;
+    bool        is_imcomplete;
     Type*       base_type;
     Type*       ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー

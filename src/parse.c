@@ -630,7 +630,9 @@ static Type* declspec(StorageClassKind* sck){
         }
     }
 
-    ty = copy_type(ty);
+    if(sck && *sck != SCK_TYPEDEF){
+        ty = copy_type(ty);
+    }
 
     if(is_const){
         ty->is_const = true;
@@ -653,36 +655,88 @@ static Member* struct_or_union_member(){
 }
 
 static Type* struct_or_union_spec(bool is_union){
+    /*
+        1. 名前付き構造体
+        struct ident {
+            declspec ident;
+            ...
+        }
+
+        2. 不完全な名前付き構造体
+        struct ident;
+
+        3. 無名構造体
+        struct {
+            declspec ident;
+            ...
+        }
+    */
+
     Token* tok = consume_ident();
     if(tok){
-        // 名前付き構造体
         Type* ty = find_tag(tok);
 
-        if(!ty){
-            // まだ登録されていない構造体
-            ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
-            expect_token(TK_L_BRACKET);
-            ty->member = struct_or_union_member();
-
-            if(is_union){
-                int max_size = 0;
-                for(Member* cur = ty->member; cur; cur = cur->next){
-                    cur->ident->offset = 0;
-                    if(max_size < cur->ident->type->size){
-                        max_size = cur->ident->type->size;
+        if(consume_token(TK_L_BRACKET)){
+            // 名前付き構造体
+            if(ty && !ty->is_imcomplete){
+                error_tok(tok, "redefinition of struct.");
+            } else if(ty && ty->is_imcomplete){
+                // すでに宣言されているが、不完全な構造体
+                ty->member = struct_or_union_member();
+                ty->is_imcomplete = false;
+                
+                if(is_union){
+                    int max_size = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = 0;
+                        if(max_size < cur->ident->type->size){
+                            max_size = cur->ident->type->size;
+                        }
                     }
+                    ty->size = max_size;
+                } else {
+                    int offset = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = offset;
+                        offset += cur->ident->type->size;
+                    }
+                    ty->size = offset;
                 }
-                ty->size = max_size;
+
             } else {
-                int offset = 0;
-                for(Member* cur = ty->member; cur; cur = cur->next){
-                    cur->ident->offset = offset;
-                    offset += cur->ident->type->size;
+                // まだ登録されていない構造体
+                ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
+                ty->member = struct_or_union_member();
+                ty->name = tok;
+                ty->is_imcomplete = false;
+
+                if(is_union){
+                    int max_size = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = 0;
+                        if(max_size < cur->ident->type->size){
+                            max_size = cur->ident->type->size;
+                        }
+                    }
+                    ty->size = max_size;
+                } else {
+                    int offset = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = offset;
+                        offset += cur->ident->type->size;
+                    }
+                    ty->size = offset;
                 }
-                ty->size = offset;
+                register_tag(ty);
             }
-            ty->name = tok;
-            register_tag(ty);
+        } else {
+            // すでに作っている構造体か、不完全な名前付き構造体
+            if(!ty){
+                ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
+                ty->name = tok;
+                ty->is_imcomplete = true;
+                register_tag(ty);
+            }
         }
         return ty;
     } else {

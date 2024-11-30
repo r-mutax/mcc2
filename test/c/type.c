@@ -135,4 +135,18 @@ int test_type(){
     volatile int volatile_b = 0;
     // restrict int restrict_c = 0;
     // restrictキーワードはインテリセンスで怒られるので…
+
+    printf("test of imcomplete union..\n");
+    typedef struct IMCOMPLETE_STRUCT imcomplete_struct;
+    struct IMCOMPLETE_STRUCT {
+        int a;
+        short s;
+    };
+
+    imcomplete_struct ims;
+    ims.a = 10;
+    ims.s = 20;
+    ASSERT(ims.a, 10);
+
+    return 0;
 }
