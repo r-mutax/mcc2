@@ -135,12 +135,13 @@ void Program(){
         if(is_function()){
             function();
         } else {
-            StorageClassKind sck = 0;
-            Type* ty = declspec(&sck);
-            Ident* ident = declare(ty, sck);
-            register_ident(ident);
-            ident->kind = ID_GVAR;
-            expect_token(TK_SEMICORON);
+            declaration();
+            // StorageClassKind sck = 0;
+            // Type* ty = declspec(&sck);
+            // Ident* ident = declare(ty, sck);
+            // register_ident(ident);
+            // ident->kind = ID_GVAR;
+            // expect_token(TK_SEMICORON);
         }
     }
 
