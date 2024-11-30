@@ -40,7 +40,7 @@ void gen_ir(){
 
 static void gen_extern(Ident* ident){
     while(ident){
-        if(!ident->is_string_literal && !ident->is_extern){
+        if(!ident->is_string_literal){
             new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
         }
         ident = ident->next;

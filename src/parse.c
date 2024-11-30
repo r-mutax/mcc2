@@ -136,12 +136,6 @@ void Program(){
             function();
         } else {
             declaration();
-            // StorageClassKind sck = 0;
-            // Type* ty = declspec(&sck);
-            // Ident* ident = declare(ty, sck);
-            // register_ident(ident);
-            // ident->kind = ID_GVAR;
-            // expect_token(TK_SEMICORON);
         }
     }
 
@@ -423,6 +417,8 @@ static Node* declaration(){
         register_typedef(ident, ty);
         node = new_node(ND_VOID_STMT, NULL, NULL);
     } else {
+        // グローバルスコープならID_GVAR、それ以外はID_LVAR
+        ident->kind = (get_current_scope() == get_global_scope()) ? ID_GVAR : ID_LVAR;
         register_ident(ident);
 
         if(consume_token(TK_ASSIGN)){
@@ -573,6 +569,8 @@ static Type* declspec(StorageClassKind* sck){
             continue;
         }
 
+        if(consume_token(TK_VOID))
+            count_decl_spec(&type_flg, K_VOID, tok);
         if(consume_token(TK_CHAR))
             count_decl_spec(&type_flg, K_CHAR, tok);
         if(consume_token(TK_SHORT))
@@ -589,6 +587,9 @@ static Type* declspec(StorageClassKind* sck){
 
     if(!ty){
         switch(type_flg){
+            case K_VOID:
+                ty = ty_void;
+                break;
             case K_CHAR:
             case K_SIGNED + K_CHAR:
                 ty = ty_char;
@@ -1441,6 +1442,7 @@ bool is_type(){
         || token->kind == TK_RESTRICT
         || token->kind == TK_EXTERN
         || token->kind == TK_STATIC
+        || token->kind == TK_VOID
         || token->kind == TK_INT
         || token->kind == TK_LONG
         || token->kind == TK_SHORT

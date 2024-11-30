@@ -4,6 +4,9 @@
 // include libraries
 #ifdef MCC
 
+typedef void FILE;
+
+
 #else
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,8 +121,9 @@ typedef enum TokenKind {
     TK_INT,                     // "int"
     TK_CHAR,                    // "char"
     TK_SHORT,                   // "short"
-    TK_LONG,                    // "long" 
-    TK_STRUCT,                  //  "struct"
+    TK_LONG,                    // "long"
+    TK_VOID,                    // "void"
+    TK_STRUCT,                  // "struct"
     TK_ENUM,                    // "enum"
     TK_UNION,                   // "union"
     TK_CONST,                   // const
@@ -575,6 +579,7 @@ void output_token(Token* tok);
 Token* tokenize_string(char* src);
 
 // type.c
+extern Type* ty_void;
 extern Type* ty_int;
 extern Type* ty_char;
 extern Type* ty_short;
