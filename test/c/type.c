@@ -136,7 +136,7 @@ int test_type(){
     // restrict int restrict_c = 0;
     // restrictキーワードはインテリセンスで怒られるので…
 
-    printf("test of imcomplete union..\n");
+    printf("test of imcomplete struct..\n");
     typedef struct IMCOMPLETE_STRUCT imcomplete_struct;
     struct IMCOMPLETE_STRUCT {
         int a;
@@ -147,6 +147,18 @@ int test_type(){
     ims.a = 10;
     ims.s = 20;
     ASSERT(ims.a, 10);
+
+    printf("test of imcomplete enum..\n");
+    typedef enum IMCOMPLETE_ENUM imcomplete_enum;
+    enum IMCOMPLETE_ENUM {
+        A,
+        B,
+        C,
+    };
+
+    imcomplete_enum ime;
+    ime = B;
+    ASSERT(ime, 1);
 
     return 0;
 }

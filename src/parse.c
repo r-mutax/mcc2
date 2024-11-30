@@ -810,17 +810,26 @@ static Type* enum_spec(){
 
     if(tok){
         ty = find_tag(tok);
-        if(!ty){
-            // 新規追加
-            expect_token(TK_L_BRACKET);
-            ty = new_type(TY_ENUM, 4);
-            ty->name = tok;
-            ty->member = enum_member();
-            register_tag(ty);
-        } else {
-            if(consume_token(TK_L_BRACKET)){
-                // すでに登録してあるタグなのにあったらエラー
+
+        if(consume_token(TK_L_BRACKET)){
+            if(ty && !ty->is_imcomplete){
                 error_tok(tok, "redefinition of enum.");
+            } else if(ty && ty->is_imcomplete){
+                ty->member = enum_member();
+                ty->is_imcomplete = false;
+            } else {
+                ty = new_type(TY_ENUM, 4);
+                ty->name = tok;
+                ty->member = enum_member();
+                ty->is_imcomplete = false;
+                register_tag(ty);
+            }
+        } else {
+            if(!ty){
+                ty = new_type(TY_ENUM, 4);
+                ty->name = tok;
+                ty->is_imcomplete = true;
+                register_tag(ty);
             }
         }
     } else {
