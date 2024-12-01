@@ -160,5 +160,14 @@ int test_type(){
     ime = B;
     ASSERT(ime, 1);
 
+    printf("test of _Bool...\n");
+    _Bool b = 1;
+    ASSERT(b, 1);
+    ASSERT(sizeof(b), 1);
+    int okng = 0;
+    if(b)
+        okng = 1;
+    ASSERT(okng, 1);
+
     return 0;
 }

@@ -123,6 +123,7 @@ typedef enum TokenKind {
     TK_SHORT,                   // "short"
     TK_LONG,                    // "long"
     TK_VOID,                    // "void"
+    TK_BOOL,                    // "bool"
     TK_STRUCT,                  // "struct"
     TK_ENUM,                    // "enum"
     TK_UNION,                   // "union"
@@ -451,6 +452,8 @@ enum TypeKind{
     TY_INT,
     TY_POINTER,
     TY_ARRAY,
+    TY_BOOL,
+    TY_VOID,
     TY_FUNC,
     TY_STRUCT,
     TY_UNION,
@@ -580,6 +583,7 @@ Token* tokenize_string(char* src);
 
 // type.c
 extern Type* ty_void;
+extern Type* ty_bool;
 extern Type* ty_int;
 extern Type* ty_char;
 extern Type* ty_short;

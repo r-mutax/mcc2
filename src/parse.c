@@ -579,6 +579,8 @@ static Type* declspec(StorageClassKind* sck){
             continue;
         }
 
+        if(consume_token(TK_BOOL))
+            count_decl_spec(&type_flg, K_BOOL, tok);
         if(consume_token(TK_VOID))
             count_decl_spec(&type_flg, K_VOID, tok);
         if(consume_token(TK_CHAR))
@@ -599,6 +601,9 @@ static Type* declspec(StorageClassKind* sck){
         switch(type_flg){
             case K_VOID:
                 ty = ty_void;
+                break;
+            case K_BOOL:
+                ty = ty_bool;
                 break;
             case K_CHAR:
             case K_SIGNED + K_CHAR:
@@ -1448,6 +1453,7 @@ bool is_type(){
         || token->kind == TK_RESTRICT
         || token->kind == TK_EXTERN
         || token->kind == TK_STATIC
+        || token->kind == TK_BOOL
         || token->kind == TK_VOID
         || token->kind == TK_INT
         || token->kind == TK_LONG
