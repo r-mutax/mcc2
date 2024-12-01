@@ -350,7 +350,14 @@ static Reg* gen_expr(Node* node){
                 Node* var = dref->lhs;
                 reg_lvar->size = var->type->ptr_to->size;
             }
-            new_IR(IR_ASSIGN, reg, reg_lvar, gen_expr(node->rhs));
+            Reg* reg_expr = gen_expr(node->rhs);
+            if(node->lhs->type->kind == TY_BOOL){
+                Reg* reg2 = new_Reg();
+                new_IR(IR_NOT_EQUAL, reg2, reg_expr, new_RegImm(0));
+                reg_expr = reg2;
+            }
+
+            new_IR(IR_ASSIGN, reg, reg_lvar, reg_expr);
             return reg;
         }
         case ND_LOGIC_OR:

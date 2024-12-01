@@ -169,5 +169,12 @@ int test_type(){
         okng = 1;
     ASSERT(okng, 1);
 
+    b = 5;
+    ASSERT(b, 1);
+    b = 0;
+    ASSERT(b, 0);
+    b = -1;
+    ASSERT(b, 1);
+
     return 0;
 }

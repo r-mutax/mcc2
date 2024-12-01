@@ -5,7 +5,9 @@
 #ifdef MCC
 
 typedef void FILE;
-
+#define bool _Bool
+#define true 1
+#define false 0
 
 #else
 #include <stdio.h>
@@ -40,7 +42,6 @@ typedef struct Warning Warning;
 typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
-extern Type* ty_int;
 extern FILE* fp;
 
 struct IncludePath {
