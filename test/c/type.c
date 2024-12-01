@@ -113,12 +113,22 @@ int test_type(){
     enum iii{
         iii_ABC = 100,
         iii_DEF = 200,
+        iii_GHI = 1 + 1,
+        iii_JKL = 2 - 1,
+        iii_MNO = 3 * 1,
+        iii_PQR = 4 / 2,
+        iii_STU = 5 % 2,
     } ddd2;
     ASSERT(AAA, 0);
     ASSERT(DEF, 200);
     ASSERT(GHI, 201);
     ASSERT(iii_ABC, 100);
     ASSERT(iii_DEF, 200);
+    ASSERT(iii_GHI, 2);
+    ASSERT(iii_JKL, 1);
+    ASSERT(iii_MNO, 3);
+    ASSERT(iii_PQR, 2);
+    ASSERT(iii_STU, 1);
 
     typedef struct {
         int a;

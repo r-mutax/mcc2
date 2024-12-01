@@ -60,6 +60,7 @@ static Member* struct_or_union_member();
 static Type* struct_or_union_spec(bool is_union);
 static Type* enum_spec();
 static Member* enum_member();
+static Node* exchange_constant_expr(Node* expr);
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -795,7 +796,9 @@ static Member* enum_member(){
     cur = cur->next = calloc(1, sizeof(Member));
     Token* tok = expect_ident();
     if(consume_token(TK_ASSIGN)){
-        val = expect_num();
+        Node* node = cond_expr();
+        node = exchange_constant_expr(node);
+        val = node->val;
     }
     cur->ident = make_ident(tok, ID_ENUM, ty);
     cur->ident->val = val++;
@@ -811,7 +814,9 @@ static Member* enum_member(){
             }
             cur = cur->next = calloc(1, sizeof(Member));
             if(consume_token(TK_ASSIGN)){
-                val = expect_num();
+                Node* node = cond_expr();
+                node = exchange_constant_expr(node);
+                val = node->val;
             }
             cur->ident = make_ident(tok, ID_ENUM, ty);
             cur->ident->val = val++;
@@ -864,6 +869,80 @@ static Node* expr(){
         node = new_node(ND_COMMA, node, assign());
     }
     return node;
+}
+
+static Node* exchange_constant_expr(Node* expr){
+
+    if(expr->kind == ND_NUM){
+        return expr;
+    }
+
+    expr->lhs = exchange_constant_expr(expr->lhs);
+    expr->rhs = exchange_constant_expr(expr->rhs);
+
+    int retval = 0;
+    int lhs = expr->lhs->val;
+    int rhs = expr->rhs->val;
+    switch(expr->kind){
+        case ND_ADD:
+            retval = lhs + rhs;
+            break;
+        case ND_SUB:
+            retval = lhs - rhs;
+            break;
+        case ND_MUL:
+            retval = lhs * rhs;
+            break;
+        case ND_DIV:
+            retval = lhs / rhs;
+            break;
+        case ND_MOD:
+            retval = lhs % rhs;
+            break;
+        case ND_EQUAL:
+            retval = lhs == rhs;
+            break;
+        case ND_NOT_EQUAL:
+            retval = lhs != rhs;
+            break;
+        case ND_LT:
+            retval = lhs < rhs;
+            break;
+        case ND_LE:
+            retval = lhs <= rhs;
+            break;
+        case ND_BIT_AND:
+            retval = lhs & rhs;
+            break;
+        case ND_BIT_OR:
+            retval = lhs | rhs;
+            break;
+        case ND_BIT_XOR:
+            retval = lhs ^ rhs;
+            break;
+        case ND_LOGIC_AND:
+            retval = lhs && rhs;
+            break;
+        case ND_LOGIC_OR:
+            retval = lhs || rhs;
+            break;
+        case ND_L_BITSHIFT:
+            retval = lhs << rhs;
+            break;
+        case ND_R_BITSHIFT:
+            retval = lhs >> rhs;
+            break;
+        case ND_COND_EXPR:
+        {
+            expr->cond = exchange_constant_expr(expr->cond);
+            int cond = expr->cond->val;
+            retval = cond ? lhs : rhs;
+            break;
+        }
+        default:
+            error("It is not constant expression.\n");
+    }
+    return new_node_num(retval);
 }
 
 static Node* assign(){
