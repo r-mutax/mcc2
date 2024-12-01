@@ -48,10 +48,10 @@ static Node* switch_node = NULL;
 static Token* token = NULL;
 
 static void Program();
-static void function();
+static void function(Type* ty, StorageClassKind sck);
 static Node* stmt();
 static Node* compound_stmt();
-static Node* declaration();
+static Node* declaration(Type* ty, StorageClassKind sck);
 static Ident* declare(Type* ty, StorageClassKind sck);
 static Type* declspec(StorageClassKind* sck);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
@@ -132,19 +132,24 @@ void parse(Token* tok){
 
 void Program(){
     while(!is_eof()){
+        StorageClassKind sck = SCK_NONE;
+        Type* ty = declspec(&sck);
+
+        if(consume_token(TK_SEMICORON)){
+            continue;
+        }
+
         if(is_function()){
-            function();
+            function(ty, sck);
         } else {
-            declaration();
+            declaration(ty, sck);
         }
     }
 
     return;
 }
 
-static void function(){
-    StorageClassKind sck = 0;
-    Type* func_type = declspec(&sck);
+static void function(Type* func_type, StorageClassKind sck){
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
@@ -378,7 +383,14 @@ static Node* compound_stmt(){
     Node* cur = &head;
     while(!consume_token(TK_R_BRACKET)){
         if(is_type()){
-            Node* node = declaration();
+            StorageClassKind sck = SCK_NONE;
+            Type* ty = declspec(&sck);
+
+            if(consume_token(TK_SEMICORON)){
+                continue;
+            }
+
+            Node* node = declaration(ty, sck);
             if(node){
                 cur = cur->next = node;
             }
@@ -392,9 +404,7 @@ static Node* compound_stmt(){
     return node;
 }
 
-static Node* declaration(){
-    StorageClassKind sck = 0;
-    Type* ty = declspec(&sck);
+static Node* declaration(Type* ty, StorageClassKind sck){
 
     if(ty->kind == TY_STRUCT && consume_token(TK_SEMICORON)){
         // 構造体の登録を行う
@@ -1336,10 +1346,6 @@ static Node* new_dec(Node* var){
 static bool is_function(){
     Token* bkup = get_token();
     bool retval = false;
-
-    // 型の読み取り
-    StorageClassKind sck = 0;
-    Type* ty = declspec(&sck);
 
     // ポインタの読み取り
     while(consume_token(TK_MUL)){
