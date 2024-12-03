@@ -379,7 +379,7 @@ bool is_equal_token(Token* lhs, Token* rhs){
 }
 
 char* get_token_string(Token* tok){
-    char* str = calloc(1, sizeof(char) * tok->len);
+    char* str = calloc(1, sizeof(char) * tok->len + 1);
     memcpy(str, tok->pos, tok->len);
     return str;
 }
