@@ -390,6 +390,7 @@ void gen_x86(IR* ir){
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_EQUAL:
+                activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
 
                 // cmp命令は直値は32bit幅までしか受け取れないので、
@@ -397,15 +398,16 @@ void gen_x86(IR* ir){
                 activateRegLhs(ir->s2);
                 print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 print("  sete al\n");
-                print("  movzb %s, al\n", ir->s1->rreg);
+                print("  movzb %s, al\n", ir->t->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_NOT_EQUAL:
+                activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
                 print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 print("  setne al\n");
-                print("  movzb %s, al\n", ir->s1->rreg);
+                print("  movzb %s, al\n", ir->t->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_LT:

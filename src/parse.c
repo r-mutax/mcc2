@@ -151,6 +151,11 @@ void Program(){
 }
 
 static void function(Type* func_type, StorageClassKind sck){
+
+    while(consume_token(TK_MUL)){
+        func_type = pointer_to(func_type);
+    }
+
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
