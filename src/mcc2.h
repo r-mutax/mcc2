@@ -1,6 +1,15 @@
+
 #pragma once
 
 // include libraries
+#ifdef MCC
+
+typedef void FILE;
+#define bool _Bool
+#define true 1
+#define false 0
+
+#else
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -11,7 +20,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <bits/getopt_core.h>
-
+#endif
 
 typedef struct Token Token;
 typedef struct Node Node;
@@ -33,7 +42,6 @@ typedef struct Warning Warning;
 typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
-extern Type* ty_int;
 extern FILE* fp;
 
 struct IncludePath {
@@ -114,8 +122,10 @@ typedef enum TokenKind {
     TK_INT,                     // "int"
     TK_CHAR,                    // "char"
     TK_SHORT,                   // "short"
-    TK_LONG,                    // "long" 
-    TK_STRUCT,                  //  "struct"
+    TK_LONG,                    // "long"
+    TK_VOID,                    // "void"
+    TK_BOOL,                    // "bool"
+    TK_STRUCT,                  // "struct"
     TK_ENUM,                    // "enum"
     TK_UNION,                   // "union"
     TK_CONST,                   // const
@@ -134,6 +144,8 @@ typedef enum TokenKind {
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
     TK_UNDEF,                   // #undef
+    TK_PRAGMA,                  // #pragma
+    TK_ONCE,                    // #pragma once
     TK_PP_IF,
     TK_PP_IFDEF,
     TK_PP_IFNDEF,
@@ -441,6 +453,8 @@ enum TypeKind{
     TY_INT,
     TY_POINTER,
     TY_ARRAY,
+    TY_BOOL,
+    TY_VOID,
     TY_FUNC,
     TY_STRUCT,
     TY_UNION,
@@ -481,6 +495,7 @@ struct Type {
     int         array_len;
     bool        is_const;
     bool        is_user_def;
+    bool        is_imcomplete;
     Type*       base_type;
     Type*       ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー
@@ -568,6 +583,8 @@ void output_token(Token* tok);
 Token* tokenize_string(char* src);
 
 // type.c
+extern Type* ty_void;
+extern Type* ty_bool;
 extern Type* ty_int;
 extern Type* ty_char;
 extern Type* ty_short;

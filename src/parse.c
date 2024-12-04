@@ -48,10 +48,10 @@ static Node* switch_node = NULL;
 static Token* token = NULL;
 
 static void Program();
-static void function();
+static void function(Type* ty, StorageClassKind sck);
 static Node* stmt();
 static Node* compound_stmt();
-static Node* declaration();
+static Node* declaration(Type* ty, StorageClassKind sck);
 static Ident* declare(Type* ty, StorageClassKind sck);
 static Type* declspec(StorageClassKind* sck);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
@@ -60,6 +60,7 @@ static Member* struct_or_union_member();
 static Type* struct_or_union_spec(bool is_union);
 static Type* enum_spec();
 static Member* enum_member();
+static Node* exchange_constant_expr(Node* expr);
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -132,24 +133,29 @@ void parse(Token* tok){
 
 void Program(){
     while(!is_eof()){
+        StorageClassKind sck = SCK_NONE;
+        Type* ty = declspec(&sck);
+
+        if(consume_token(TK_SEMICORON)){
+            continue;
+        }
+
         if(is_function()){
-            function();
+            function(ty, sck);
         } else {
-            StorageClassKind sck = 0;
-            Type* ty = declspec(&sck);
-            Ident* ident = declare(ty, sck);
-            register_ident(ident);
-            ident->kind = ID_GVAR;
-            expect_token(TK_SEMICORON);
+            declaration(ty, sck);
         }
     }
 
     return;
 }
 
-static void function(){
-    StorageClassKind sck = 0;
-    Type* func_type = declspec(&sck);
+static void function(Type* func_type, StorageClassKind sck){
+
+    while(consume_token(TK_MUL)){
+        func_type = pointer_to(func_type);
+    }
+
     Token* tok = consume_ident();
     if(!tok){
         // 識別子がない場合は、関数宣言がない
@@ -383,7 +389,14 @@ static Node* compound_stmt(){
     Node* cur = &head;
     while(!consume_token(TK_R_BRACKET)){
         if(is_type()){
-            Node* node = declaration();
+            StorageClassKind sck = SCK_NONE;
+            Type* ty = declspec(&sck);
+
+            if(consume_token(TK_SEMICORON)){
+                continue;
+            }
+
+            Node* node = declaration(ty, sck);
             if(node){
                 cur = cur->next = node;
             }
@@ -397,9 +410,7 @@ static Node* compound_stmt(){
     return node;
 }
 
-static Node* declaration(){
-    StorageClassKind sck = 0;
-    Type* ty = declspec(&sck);
+static Node* declaration(Type* ty, StorageClassKind sck){
 
     if(ty->kind == TY_STRUCT && consume_token(TK_SEMICORON)){
         // 構造体の登録を行う
@@ -422,6 +433,8 @@ static Node* declaration(){
         register_typedef(ident, ty);
         node = new_node(ND_VOID_STMT, NULL, NULL);
     } else {
+        // グローバルスコープならID_GVAR、それ以外はID_LVAR
+        ident->kind = (get_current_scope() == get_global_scope()) ? ID_GVAR : ID_LVAR;
         register_ident(ident);
 
         if(consume_token(TK_ASSIGN)){
@@ -572,6 +585,10 @@ static Type* declspec(StorageClassKind* sck){
             continue;
         }
 
+        if(consume_token(TK_BOOL))
+            count_decl_spec(&type_flg, K_BOOL, tok);
+        if(consume_token(TK_VOID))
+            count_decl_spec(&type_flg, K_VOID, tok);
         if(consume_token(TK_CHAR))
             count_decl_spec(&type_flg, K_CHAR, tok);
         if(consume_token(TK_SHORT))
@@ -588,6 +605,12 @@ static Type* declspec(StorageClassKind* sck){
 
     if(!ty){
         switch(type_flg){
+            case K_VOID:
+                ty = ty_void;
+                break;
+            case K_BOOL:
+                ty = ty_bool;
+                break;
             case K_CHAR:
             case K_SIGNED + K_CHAR:
                 ty = ty_char;
@@ -630,7 +653,9 @@ static Type* declspec(StorageClassKind* sck){
         }
     }
 
-    ty = copy_type(ty);
+    if(sck && *sck != SCK_TYPEDEF){
+        ty = copy_type(ty);
+    }
 
     if(is_const){
         ty->is_const = true;
@@ -653,36 +678,88 @@ static Member* struct_or_union_member(){
 }
 
 static Type* struct_or_union_spec(bool is_union){
+    /*
+        1. 名前付き構造体
+        struct ident {
+            declspec ident;
+            ...
+        }
+
+        2. 不完全な名前付き構造体
+        struct ident;
+
+        3. 無名構造体
+        struct {
+            declspec ident;
+            ...
+        }
+    */
+
     Token* tok = consume_ident();
     if(tok){
-        // 名前付き構造体
         Type* ty = find_tag(tok);
 
-        if(!ty){
-            // まだ登録されていない構造体
-            ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
-            expect_token(TK_L_BRACKET);
-            ty->member = struct_or_union_member();
-
-            if(is_union){
-                int max_size = 0;
-                for(Member* cur = ty->member; cur; cur = cur->next){
-                    cur->ident->offset = 0;
-                    if(max_size < cur->ident->type->size){
-                        max_size = cur->ident->type->size;
+        if(consume_token(TK_L_BRACKET)){
+            // 名前付き構造体
+            if(ty && !ty->is_imcomplete){
+                error_tok(tok, "redefinition of struct.");
+            } else if(ty && ty->is_imcomplete){
+                // すでに宣言されているが、不完全な構造体
+                ty->member = struct_or_union_member();
+                ty->is_imcomplete = false;
+                
+                if(is_union){
+                    int max_size = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = 0;
+                        if(max_size < cur->ident->type->size){
+                            max_size = cur->ident->type->size;
+                        }
                     }
+                    ty->size = max_size;
+                } else {
+                    int offset = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = offset;
+                        offset += cur->ident->type->size;
+                    }
+                    ty->size = offset;
                 }
-                ty->size = max_size;
+
             } else {
-                int offset = 0;
-                for(Member* cur = ty->member; cur; cur = cur->next){
-                    cur->ident->offset = offset;
-                    offset += cur->ident->type->size;
+                // まだ登録されていない構造体
+                ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
+                ty->member = struct_or_union_member();
+                ty->name = tok;
+                ty->is_imcomplete = false;
+
+                if(is_union){
+                    int max_size = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = 0;
+                        if(max_size < cur->ident->type->size){
+                            max_size = cur->ident->type->size;
+                        }
+                    }
+                    ty->size = max_size;
+                } else {
+                    int offset = 0;
+                    for(Member* cur = ty->member; cur; cur = cur->next){
+                        cur->ident->offset = offset;
+                        offset += cur->ident->type->size;
+                    }
+                    ty->size = offset;
                 }
-                ty->size = offset;
+                register_tag(ty);
             }
-            ty->name = tok;
-            register_tag(ty);
+        } else {
+            // すでに作っている構造体か、不完全な名前付き構造体
+            if(!ty){
+                ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
+                ty->name = tok;
+                ty->is_imcomplete = true;
+                register_tag(ty);
+            }
         }
         return ty;
     } else {
@@ -724,7 +801,9 @@ static Member* enum_member(){
     cur = cur->next = calloc(1, sizeof(Member));
     Token* tok = expect_ident();
     if(consume_token(TK_ASSIGN)){
-        val = expect_num();
+        Node* node = cond_expr();
+        node = exchange_constant_expr(node);
+        val = node->val;
     }
     cur->ident = make_ident(tok, ID_ENUM, ty);
     cur->ident->val = val++;
@@ -740,7 +819,9 @@ static Member* enum_member(){
             }
             cur = cur->next = calloc(1, sizeof(Member));
             if(consume_token(TK_ASSIGN)){
-                val = expect_num();
+                Node* node = cond_expr();
+                node = exchange_constant_expr(node);
+                val = node->val;
             }
             cur->ident = make_ident(tok, ID_ENUM, ty);
             cur->ident->val = val++;
@@ -756,17 +837,26 @@ static Type* enum_spec(){
 
     if(tok){
         ty = find_tag(tok);
-        if(!ty){
-            // 新規追加
-            expect_token(TK_L_BRACKET);
-            ty = new_type(TY_ENUM, 4);
-            ty->name = tok;
-            ty->member = enum_member();
-            register_tag(ty);
-        } else {
-            if(consume_token(TK_L_BRACKET)){
-                // すでに登録してあるタグなのにあったらエラー
+
+        if(consume_token(TK_L_BRACKET)){
+            if(ty && !ty->is_imcomplete){
                 error_tok(tok, "redefinition of enum.");
+            } else if(ty && ty->is_imcomplete){
+                ty->member = enum_member();
+                ty->is_imcomplete = false;
+            } else {
+                ty = new_type(TY_ENUM, 4);
+                ty->name = tok;
+                ty->member = enum_member();
+                ty->is_imcomplete = false;
+                register_tag(ty);
+            }
+        } else {
+            if(!ty){
+                ty = new_type(TY_ENUM, 4);
+                ty->name = tok;
+                ty->is_imcomplete = true;
+                register_tag(ty);
             }
         }
     } else {
@@ -784,6 +874,80 @@ static Node* expr(){
         node = new_node(ND_COMMA, node, assign());
     }
     return node;
+}
+
+static Node* exchange_constant_expr(Node* expr){
+
+    if(expr->kind == ND_NUM){
+        return expr;
+    }
+
+    expr->lhs = exchange_constant_expr(expr->lhs);
+    expr->rhs = exchange_constant_expr(expr->rhs);
+
+    int retval = 0;
+    int lhs = expr->lhs->val;
+    int rhs = expr->rhs->val;
+    switch(expr->kind){
+        case ND_ADD:
+            retval = lhs + rhs;
+            break;
+        case ND_SUB:
+            retval = lhs - rhs;
+            break;
+        case ND_MUL:
+            retval = lhs * rhs;
+            break;
+        case ND_DIV:
+            retval = lhs / rhs;
+            break;
+        case ND_MOD:
+            retval = lhs % rhs;
+            break;
+        case ND_EQUAL:
+            retval = lhs == rhs;
+            break;
+        case ND_NOT_EQUAL:
+            retval = lhs != rhs;
+            break;
+        case ND_LT:
+            retval = lhs < rhs;
+            break;
+        case ND_LE:
+            retval = lhs <= rhs;
+            break;
+        case ND_BIT_AND:
+            retval = lhs & rhs;
+            break;
+        case ND_BIT_OR:
+            retval = lhs | rhs;
+            break;
+        case ND_BIT_XOR:
+            retval = lhs ^ rhs;
+            break;
+        case ND_LOGIC_AND:
+            retval = lhs && rhs;
+            break;
+        case ND_LOGIC_OR:
+            retval = lhs || rhs;
+            break;
+        case ND_L_BITSHIFT:
+            retval = lhs << rhs;
+            break;
+        case ND_R_BITSHIFT:
+            retval = lhs >> rhs;
+            break;
+        case ND_COND_EXPR:
+        {
+            expr->cond = exchange_constant_expr(expr->cond);
+            int cond = expr->cond->val;
+            retval = cond ? lhs : rhs;
+            break;
+        }
+        default:
+            error("It is not constant expression.\n");
+    }
+    return new_node_num(retval);
 }
 
 static Node* assign(){
@@ -1272,10 +1436,6 @@ static bool is_function(){
     Token* bkup = get_token();
     bool retval = false;
 
-    // 型の読み取り
-    StorageClassKind sck = 0;
-    Type* ty = declspec(&sck);
-
     // ポインタの読み取り
     while(consume_token(TK_MUL)){
         ;
@@ -1377,6 +1537,8 @@ bool is_type(){
         || token->kind == TK_RESTRICT
         || token->kind == TK_EXTERN
         || token->kind == TK_STATIC
+        || token->kind == TK_BOOL
+        || token->kind == TK_VOID
         || token->kind == TK_INT
         || token->kind == TK_LONG
         || token->kind == TK_SHORT

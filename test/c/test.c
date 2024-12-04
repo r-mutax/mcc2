@@ -17,6 +17,7 @@ int main(){
     test_assignment();
     test_preprocess();
     test_cast();
+    test_function();
 
     ASSERT(test_static, 20);
 

@@ -16,6 +16,8 @@ static KEYWORD_MAP keyword_map[] = {
     {   "short",        TK_SHORT    },
     {   "int",          TK_INT      },
     {   "long",         TK_LONG     },
+    {   "void",         TK_VOID     },
+    {   "_Bool",        TK_BOOL     },
     {   "sizeof",       TK_SIZEOF   },
     {   "break",        TK_BREAK    },
     {   "continue",     TK_CONTINUE },
@@ -50,4 +52,5 @@ static KEYWORD_MAP preprocess_keyword_map[] = {
     {   "elif",         TK_PP_ELIF     },
     {   "else",         TK_PP_ELSE     },
     {   "endif",        TK_PP_ENDIF    },
+    {   "pragma",       TK_PRAGMA    },
 };

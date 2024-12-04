@@ -113,12 +113,22 @@ int test_type(){
     enum iii{
         iii_ABC = 100,
         iii_DEF = 200,
+        iii_GHI = 1 + 1,
+        iii_JKL = 2 - 1,
+        iii_MNO = 3 * 1,
+        iii_PQR = 4 / 2,
+        iii_STU = 5 % 2,
     } ddd2;
     ASSERT(AAA, 0);
     ASSERT(DEF, 200);
     ASSERT(GHI, 201);
     ASSERT(iii_ABC, 100);
     ASSERT(iii_DEF, 200);
+    ASSERT(iii_GHI, 2);
+    ASSERT(iii_JKL, 1);
+    ASSERT(iii_MNO, 3);
+    ASSERT(iii_PQR, 2);
+    ASSERT(iii_STU, 1);
 
     typedef struct {
         int a;
@@ -135,4 +145,47 @@ int test_type(){
     volatile int volatile_b = 0;
     // restrict int restrict_c = 0;
     // restrictキーワードはインテリセンスで怒られるので…
+
+    printf("test of imcomplete struct..\n");
+    typedef struct IMCOMPLETE_STRUCT imcomplete_struct;
+    struct IMCOMPLETE_STRUCT {
+        int a;
+        short s;
+    };
+
+    imcomplete_struct ims;
+    ims.a = 10;
+    ims.s = 20;
+    ASSERT(ims.a, 10);
+
+    printf("test of imcomplete enum..\n");
+    typedef enum IMCOMPLETE_ENUM imcomplete_enum;
+    enum IMCOMPLETE_ENUM {
+        A,
+        B,
+        C,
+    };
+
+    imcomplete_enum ime;
+    ime = B;
+    ASSERT(ime, 1);
+
+    printf("test of _Bool...\n");
+    _Bool b = 1;
+    ASSERT(b, 1);
+
+    ASSERT(sizeof(b), 1);
+    int okng = 0;
+    if(b)
+        okng = 1;
+    ASSERT(okng, 1);
+
+    b = 5;
+    ASSERT(b, 1);
+    b = 0;
+    ASSERT(b, 0);
+    b = -1;
+    ASSERT(b, 1);
+
+    return 0;
 }

@@ -1,5 +1,7 @@
 #include "mcc2.h"
 
+Type* ty_void;
+Type* ty_bool;
 Type* ty_char;
 Type* ty_int;
 Type* ty_short;
@@ -11,6 +13,9 @@ Type* ty_ulong;
 
 
 void ty_init(){
+    ty_void = new_type(TY_VOID, 1);
+    ty_bool = new_type(TY_BOOL, 1);
+
     ty_char = new_type(TY_INT, 1);
     ty_short = new_type(TY_INT, 2);
     ty_int = new_type(TY_INT, 4);

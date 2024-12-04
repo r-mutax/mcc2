@@ -1,3 +1,9 @@
+#pragma once
+#ifdef TESTINC_H
+#define DOUBLE_INCLUDE 1
+#endif
+#define TESTINC_H 1
+
 extern int testinc;
 
 // test utility
@@ -19,3 +25,4 @@ int test_pointer();
 int test_assignment();
 int test_preprocess();
 int test_cast();
+int test_function();

@@ -40,7 +40,7 @@ void gen_ir(){
 
 static void gen_extern(Ident* ident){
     while(ident){
-        if(!ident->is_string_literal && !ident->is_extern){
+        if(!ident->is_string_literal){
             new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
         }
         ident = ident->next;
@@ -340,6 +340,15 @@ static Reg* gen_expr(Node* node){
         }
         case ND_ASSIGN:
         {
+            // 書き込む値を取得
+            Reg* reg_expr = gen_expr(node->rhs);
+            if(node->lhs->type->kind == TY_BOOL){
+                Reg* reg2 = new_Reg();
+                new_IR(IR_NOT_EQUAL, reg2, reg_expr, new_RegImm(0));
+                reg_expr = reg2;
+            }
+
+            // 左辺値のアドレスを取得
             if(node->lhs->type->kind == TY_ARRAY){
                 error("incompatible types in assignment to array.");
             }
@@ -350,7 +359,9 @@ static Reg* gen_expr(Node* node){
                 Node* var = dref->lhs;
                 reg_lvar->size = var->type->ptr_to->size;
             }
-            new_IR(IR_ASSIGN, reg, reg_lvar, gen_expr(node->rhs));
+
+            // 代入
+            new_IR(IR_ASSIGN, reg, reg_lvar, reg_expr);
             return reg;
         }
         case ND_LOGIC_OR:
@@ -444,10 +455,16 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_MOD, NULL, r1, r2);
             break;
         case ND_EQUAL:
-            new_IR(IR_EQUAL, NULL, r1, r2);
+            {
+                ret = new_Reg();
+                new_IR(IR_EQUAL, ret, r1, r2);
+            }
             break;
         case ND_NOT_EQUAL:
-            new_IR(IR_NOT_EQUAL, NULL, r1, r2);
+            {
+                ret = new_Reg();
+                new_IR(IR_NOT_EQUAL, ret, r1, r2);
+            }
             break;
         case ND_LT:
             {
