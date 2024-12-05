@@ -1190,6 +1190,8 @@ static Node* unary(){
         add_type(node);
         if(node->type->kind == TY_ARRAY){
             return new_node_num(node->type->array_len * node->type->size);
+        } else if(node->type->kind == TY_STRUCT || node->type->kind == TY_UNION){
+            return new_node_num(node->type->size);
         } else {
             return new_node_num(node->type->size);
         }

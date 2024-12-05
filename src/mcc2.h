@@ -10,7 +10,30 @@ typedef void FILE;
 #define false 0
 #define NULL 0
 
+typedef unsigned long   __kernel_size_t;
+typedef __kernel_size_t         size_t;
+
+// stdio.h
+#define SEEK_SET 0
+#define SEEK_END 2
 FILE *fopen(const char *filename, const char *mode);
+int fseek(FILE *stream, long int offset, int origin);
+int fclose(FILE *stream);
+size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
+long int ftell(FILE *stream);
+
+// stdlib.h
+void *calloc(size_t num, size_t size);
+
+// string.h
+char *strerror(int errnum);
+
+// errno.h
+extern int errno;
+
+// ctype.h
+/* excluding space */
+int isspace(int c);
 
 #else
 #include <stdio.h>
