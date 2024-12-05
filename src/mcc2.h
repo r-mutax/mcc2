@@ -8,6 +8,9 @@ typedef void FILE;
 #define bool _Bool
 #define true 1
 #define false 0
+#define NULL 0
+
+FILE *fopen(const char *filename, const char *mode);
 
 #else
 #include <stdio.h>
@@ -225,6 +228,7 @@ typedef enum NodeKind {
     ND_LT,
     ND_LE,
     ND_COND_EXPR,
+    ND_NOT,
     ND_LOGIC_OR,
     ND_LOGIC_AND,
     ND_BIT_AND,
