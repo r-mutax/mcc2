@@ -84,5 +84,9 @@ int test_expression(){
     ASSERT(*incp, 1);
     ASSERT(*(--incp), 0);
 
+    printf("test of not operator...\n");
+    ASSERT(!6, 0);
+    ASSERT(!0, 1);
+
     return 0;
 }
