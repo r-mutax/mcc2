@@ -88,5 +88,18 @@ int test_expression(){
     ASSERT(!6, 0);
     ASSERT(!0, 1);
 
+    printf("test of sizeof operator...\n");
+    ASSERT(sizeof(int), 4);
+    ASSERT(sizeof(char), 1);
+    ASSERT(sizeof(int*), 8);
+    ASSERT(sizeof(char*), 8);
+
+    typedef struct {
+        int a;
+        short b;
+    } TestStruct;
+    ASSERT(sizeof(TestStruct), 6);
+    ASSERT(sizeof(TestStruct*), 8);
+
     return 0;
 }

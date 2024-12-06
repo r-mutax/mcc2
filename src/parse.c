@@ -1186,15 +1186,33 @@ static Node* unary(){
         Node* node = unary();
         return new_node(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
     } else if(consume_token(TK_SIZEOF)){
-        Node* node = unary();
-        add_type(node);
-        if(node->type->kind == TY_ARRAY){
-            return new_node_num(node->type->array_len * node->type->size);
-        } else if(node->type->kind == TY_STRUCT || node->type->kind == TY_UNION){
-            return new_node_num(node->type->size);
-        } else {
-            return new_node_num(node->type->size);
+        bool is_l_paren = consume_token(TK_L_PAREN);
+        Node* node = NULL;
+        if(is_type())
+        {
+            StorageClassKind sck = 0;
+            Type* ty = declspec(&sck);
+            while(consume_token(TK_MUL)){
+                ty = pointer_to(ty);
+            }
+            node = new_node_num(ty->size);
         }
+        else
+        {
+            Node* node = unary();
+            add_type(node);
+            if(node->type->kind == TY_ARRAY){
+                node = new_node_num(node->type->array_len * node->type->size);
+            } else if(node->type->kind == TY_STRUCT || node->type->kind == TY_UNION){
+                node =  new_node_num(node->type->size);
+            } else {
+                node =  new_node_num(node->type->size);
+            }
+        }
+        if(is_l_paren){
+            expect_token(TK_R_PAREN);
+        }
+        return node;
     }
     return postfix();
 }
