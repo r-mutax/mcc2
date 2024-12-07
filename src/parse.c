@@ -1254,6 +1254,23 @@ static Node* postfix(){
             continue;
         }
 
+        if(consume_token(TK_ARROW)){
+            node = new_node(ND_DREF, node, NULL);
+            add_type(node);
+            node = new_node(ND_MEMBER, node, NULL);
+
+            // find a member
+            Token* tok = expect_ident();
+            Ident* ident = get_member(node->lhs->type, tok);
+            if(!ident){
+                error_tok(tok, "Not a member.\n");
+            }
+
+            node->type = ident->type;
+            node->val = ident->offset;
+            continue;
+        }
+
         return node;
     }
 }

@@ -70,6 +70,9 @@ static Token* scan(char* src){
                 } else if(*(p + 1) == '=') {
                     cur = new_token(TK_MINUS_EQUAL, cur, p, 2);
                     p += 2;
+                } else if(*(p + 1) == '>') {
+                    cur = new_token(TK_ARROW, cur, p, 2);
+                    p += 2;
                 } else {
                     cur = new_token(TK_MINUS, cur, p++, 1);
                 }

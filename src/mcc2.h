@@ -130,6 +130,7 @@ typedef enum TokenKind {
     TK_SEMICORON,               // ;
     TK_DOT,                     // .
     TK_DOT_DOT_DOT,             // ...
+    TK_ARROW,                   // ->
     TK_COLON,                   // :
     TK_COMMA,                   // ,
     TK_RETURN,                  // return
