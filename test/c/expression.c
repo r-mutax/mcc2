@@ -88,5 +88,34 @@ int test_expression(){
     ASSERT(!6, 0);
     ASSERT(!0, 1);
 
+    printf("test of sizeof ...\n");
+    ASSERT(sizeof(1), 4);
+    ASSERT(sizeof(1), 4);
+    int sint = 0;
+    ASSERT(sizeof(sint), 4);
+    int* sintp = &sint;
+    ASSERT(sizeof(sintp), 8);
+    ASSERT(sizeof(*sintp), 4);
+    ASSERT(sizeof(int), 4);
+    ASSERT(sizeof(int*), 8);
+    ASSERT(sizeof(int**), 8);
+    ASSERT(sizeof(char), 1);
+    ASSERT(sizeof(char*), 8);
+    ASSERT(sizeof(char**), 8);
+    ASSERT(sizeof(short), 2);
+    ASSERT(sizeof(long), 8);
+    typedef struct {
+        short a;
+        int b;
+    } TestStruct;
+    ASSERT(sizeof(TestStruct), 6);
+    ASSERT(sizeof(TestStruct*), 8);
+
+    typedef union {
+        short a;
+        int b;
+    } TestUnion;
+    ASSERT(sizeof(TestUnion), 4);
+
     return 0;
 }
