@@ -127,6 +127,7 @@ typedef enum TokenKind {
     TK_L_BITSHIFT_EQUAL,        // <<=
     TK_R_BITSHIFT,              // >>
     TK_R_BITSHIFT_EQUAL,        // >>=
+    TK_ARROW,                   // ->
     TK_SEMICORON,               // ;
     TK_DOT,                     // .
     TK_DOT_DOT_DOT,             // ...
