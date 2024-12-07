@@ -91,4 +91,9 @@ int test_cast(){
     ASSERT((unsigned char)ul, 255);
     ASSERT((unsigned short)ul, 65535);
     ASSERT((unsigned int)ul, 4294967295);
+
+    // pointer cast to ...
+    i = 5555;
+    int* pi = &i;
+    ASSERT(*(char*)pi, -77);
 }
