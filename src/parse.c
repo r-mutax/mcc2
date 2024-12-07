@@ -1156,16 +1156,11 @@ static Node* cast(){
         }
         expect_token(TK_R_PAREN);
 
-        Node* node;
-        if(!ty->ptr_to){
-            node = new_node(ND_CAST, unary(), NULL);
-        } else {
-            node = cast();
-            node->type = ty;
-            return node;
-        }
-
+        Node* node = cast();
+        add_type(node);
+        node = new_node(ND_CAST, node, NULL);
         node->type = ty;
+
         return node;
     }
     return unary();

@@ -93,7 +93,28 @@ int test_cast(){
     ASSERT((unsigned int)ul, 4294967295);
 
     // pointer cast to ...
+    printf("test of pointer cast..\n");
     i = 5555;
     int* pi = &i;
     ASSERT(*(char*)pi, -77);
+
+    typedef struct {
+        char a;
+        char b;
+        char c;
+        char d;
+    } PointerCastStruct;
+    PointerCastStruct* pcs;
+    long a = 123456;
+    ASSERT(((PointerCastStruct*)&a)->a, 64);
+
+    PointerCastStruct pcs2;
+    pcs2.a = 1;
+    pcs2.b = 12;
+    typedef struct {
+        char a;
+        char b;
+    } PointerCastStruct2;
+    (PointerCastStruct2*)&pcs2;
+    ASSERT(((PointerCastStruct2*)&pcs2)->b, 12);
 }
