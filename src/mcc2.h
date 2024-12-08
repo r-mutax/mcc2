@@ -22,11 +22,20 @@ int fclose(FILE *stream);
 size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
 long int ftell(FILE *stream);
 
+extern FILE *stdout;
+extern FILE *stderr;
+
+#define stdout stdout
+#define stderr stderr
+
 // stdlib.h
 void *calloc(size_t num, size_t size);
 
 // string.h
 char *strerror(int errnum);
+char *strrchr(const char *string, int c);
+size_t strlen(const char *string);
+char *strncpy(char *string1, const char *string2, size_t count);
 
 // errno.h
 extern int errno;
