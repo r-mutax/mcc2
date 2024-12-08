@@ -1151,18 +1151,16 @@ static Node* cast(){
     if(is_cast()){
         expect_token(TK_L_PAREN);
         Type* ty = declspec(NULL);
+        while(consume_token(TK_MUL)){
+            ty = pointer_to(ty);
+        }
         expect_token(TK_R_PAREN);
 
-        Node* node;
-        if(!ty->ptr_to){
-            node = new_node(ND_CAST, unary(), NULL);
-        } else {
-            node = cast();
-            node->type = ty;
-            return node;
-        }
-
+        Node* node = cast();
+        add_type(node);
+        node = new_node(ND_CAST, node, NULL);
         node->type = ty;
+
         return node;
     }
     return unary();
@@ -1170,15 +1168,15 @@ static Node* cast(){
 
 static Node* unary(){
     if(consume_token(TK_PLUS)){
-        return unary();
+        return cast();
     } else if(consume_token(TK_MINUS)){
-        return new_node_sub(new_node_num(0), unary());
+        return new_node_sub(new_node_num(0), cast());
     } else if(consume_token(TK_AND)){
-        return new_node(ND_ADDR, unary(), NULL);
+        return new_node(ND_ADDR, cast(), NULL);
     } else if(consume_token(TK_MUL)){
-        return new_node(ND_DREF, unary(), NULL);
+        return new_node(ND_DREF, cast(), NULL);
     } else if(consume_token(TK_NOT)){
-        return new_node(ND_NOT, unary(), NULL);
+        return new_node(ND_NOT, cast(), NULL);
     } else if(consume_token(TK_PLUS_PLUS)){
         Node* node = unary();
         return new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
@@ -1237,6 +1235,24 @@ static Node* postfix(){
         if(consume_token(TK_DOT)){
             add_type(node);
 
+            node = new_node(ND_MEMBER, node, NULL);
+
+            // find a member
+            Token* tok = expect_ident();
+            Ident* ident = get_member(node->lhs->type, tok);
+            if(!ident){
+                error_tok(tok, "Not a member.\n");
+            }
+
+            node->type = ident->type;
+            node->val = ident->offset;
+            continue;
+        }
+
+        if(consume_token(TK_ARROW)){
+            add_type(node);
+            node = new_node(ND_DREF, node, NULL);
+            add_type(node);
             node = new_node(ND_MEMBER, node, NULL);
 
             // find a member

@@ -55,7 +55,7 @@ SrcFile* read_file(const char* path){
 // ファイルパスからディレクトリの文字列を取得する
 char* get_dirname(char* path){
     char* yen_pos = strrchr(path, '/');
-    char* buf = calloc(1, sizeof(strlen(path) + (yen_pos - path) - 1));
+    char* buf = calloc(1, strlen(path) + (yen_pos - path) - 1);
     strncpy(buf, path, yen_pos - path);
     return buf;
 }

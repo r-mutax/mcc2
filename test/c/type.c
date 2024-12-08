@@ -88,6 +88,13 @@ int test_type(){
         int sss;
     };
 
+    printf("test of struct pointer..\n");
+    struct struct_decl* sptr;
+    struct struct_decl s;
+    sptr = &s;
+    sptr->sss = 100;
+    ASSERT(sptr->sss, 100);
+
     printf("test of union..\n");
     union {
         char c;

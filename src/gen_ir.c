@@ -414,8 +414,12 @@ static Reg* gen_expr(Node* node){
         }
         case ND_CAST:
         {
-            Reg* ret = new_Reg();
             Reg* target = gen_expr(node->lhs);
+            if(node->type->ptr_to){
+                return target;
+            }
+
+            Reg* ret = new_Reg();
 
             // サイズの設定
             ret->size = node->type->size;
