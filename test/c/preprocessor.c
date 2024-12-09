@@ -155,5 +155,10 @@ int TEST_CIRC_A = 30;
     ASSERT(1, 0);
 #endif
 
+#define FUNC_ARG_OWNER(X)   X
+    ASSERT(FUNC_ARG_OWNER(3), 3);
+    int func_arg_owner = 10;
+    ASSERT(FUNC_ARG_OWNER(func_arg_owner), 10);
+
     return 0;
 }

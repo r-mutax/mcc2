@@ -305,7 +305,6 @@ static Token* expand_funclike_macro_parameter(Token* tok, Macro* mac){
                 Token* tail = get_tokens_tail(val);
                 tail->next = cur->next->next;
                 cur->next = val;
-                continue;
             }
         }
         cur = cur->next;
