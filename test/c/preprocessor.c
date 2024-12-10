@@ -160,5 +160,9 @@ int TEST_CIRC_A = 30;
     int func_arg_owner = 10;
     ASSERT(FUNC_ARG_OWNER(func_arg_owner), 10);
 
+#define OBJLIKE_VACANCY_MACRO
+    OBJLIKE_VACANCY_MACRO;
+    FUNC_ARG_OWNER(OBJLIKE_VACANCY_MACRO);
+
     return 0;
 }

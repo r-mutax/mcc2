@@ -11,7 +11,7 @@ static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
 static TokenKind check_preprocess_keyword(char* p, int len);
-Token* delete_newline_token(Token* tok);
+Token* delete_skip_token(Token* tok);
 
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
@@ -20,7 +20,7 @@ Token* tokenize(char* path){
     Token* tok = scan(file->body);
     tok = preprocess(tok);
     if(!is_preprocess)
-        tok = delete_newline_token(tok);
+        tok = delete_skip_token(tok);
     return tok;
 }
 
@@ -29,7 +29,7 @@ Token* tokenize_string(char* src){
     Token* tok = scan(src);
     tok = preprocess(tok);
     if(!is_preprocess)
-        tok = delete_newline_token(tok);
+        tok = delete_skip_token(tok);
     return tok;
 }
 
@@ -387,12 +387,12 @@ char* get_token_string(Token* tok){
     return str;
 }
 
-Token* delete_newline_token(Token* tok){
+Token* delete_skip_token(Token* tok){
     Token head;
     head.next = tok;
     Token* cur = &head;
     while(cur->next){
-        if(cur->next->kind == TK_NEWLINE){
+        if(cur->next->kind == TK_NEWLINE || cur->next->kind == TK_PLACE_HOLDER){
             cur->next = cur->next->next;
         } else {
             cur = cur->next;

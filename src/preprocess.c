@@ -19,6 +19,10 @@ Token tok_one = {
     .val = 1,
 };
 
+Token tok_place_holder = {
+    .kind = TK_PLACE_HOLDER,
+};
+
 Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
@@ -400,7 +404,11 @@ static void add_macro_objlike(Token* target){
 
     Macro* m = calloc(1,sizeof(Macro));
     m->name = copy_token(name);
-    m->value = copy_token_eol(value);
+    if(value->kind != TK_NEWLINE){
+        m->value = copy_token_eol(value);
+    } else {
+        m->value = copy_token(&tok_place_holder);
+    }
     m->next = macros;
     macros = m;
 }
@@ -444,10 +452,7 @@ static void add_macro_funclike(Token* target){
 static void add_macro(Token* target){
     Token* name = next_token(target);
 
-    if(next_token(name)->kind == TK_NEWLINE){
-        // 今は空マクロは非対応
-        error("macro definition is empty");
-    } else if(next_token(name)->kind == TK_L_PAREN){
+    if(next_token(name)->kind == TK_L_PAREN){
         add_macro_funclike(target);
     } else {
         add_macro_objlike(target);

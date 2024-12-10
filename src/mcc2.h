@@ -25,8 +25,8 @@ long int ftell(FILE *stream);
 extern FILE *stdout;
 extern FILE *stderr;
 
-#define stdout stdout
-#define stderr stderr
+// #define stdout stdout
+// #define stderr stderr
 
 // stdlib.h
 void *calloc(size_t num, size_t size);
@@ -43,6 +43,21 @@ extern int errno;
 // ctype.h
 /* excluding space */
 int isspace(int c);
+
+// stdarg.h
+typedef struct {
+    unsigned int gp_offset;
+    unsigned int fp_offset;
+    void *overflow_arg_area;
+    void *reg_save_area;
+} __va_elem;
+
+typedef __va_elem va_list[1];
+
+#define va_start(ap, last) \
+  do { *(ap) = *(__va_elem *)__va_area__; } while (0)
+
+#define va_end(ap) ap = 0;
 
 #else
 #include <stdio.h>
@@ -192,6 +207,7 @@ typedef enum TokenKind {
     TK_HASH,
     TK_HASH_HASH,
     TK_SPACE,                   // 空白
+    TK_PLACE_HOLDER,            // 空マクロの置き換え
     TK_EOF                      // 終端記号
 } TokenKind;
 
