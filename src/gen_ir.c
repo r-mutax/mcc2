@@ -73,6 +73,20 @@ static void gen_function(Ident* func){
     func_name_str = new_RegStr(func->name);
     new_IR(IR_FN_LABEL, NULL, func_name_str, new_RegImm(func->stack_size));
 
+    // 可変長引数の場合は、__va_area__に引数をコピーする
+    if(func->va_area){
+        // 固定引数の数を数える
+        int gp = 0;
+        int fp = 0;
+        for(Parameter* param = func->params; param; param = param->next){
+            gp++;
+        }
+
+        // va_elem
+        new_IR(IR_VA_START, new_RegImm(func->va_area->offset), new_RegImm(gp), new_RegImm(fp));
+    }
+
+
     // パラメータの展開
     Parameter* param = func->params;
     for(int i = 0;

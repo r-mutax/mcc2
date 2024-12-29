@@ -57,7 +57,9 @@ typedef __va_elem va_list[1];
 #define va_start(ap, last) \
   do { *(ap) = *(__va_elem *)__va_area__; } while (0)
 
-#define va_end(ap) ap = 0;
+#define va_end(ap) 
+
+int vfprintf(FILE *  __restrict__stream, const char *  __restrict__format, va_list arg_ptr);
 
 #else
 #include <stdio.h>
@@ -190,7 +192,7 @@ typedef enum TokenKind {
     TK_AUTO,                    // auto
     TK_REGISTER,                // register
     TK_NEWLINE,                 // "\n"
-
+    
     // preprocess
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
@@ -252,6 +254,7 @@ struct Ident {
     int is_var_params;      // 可変長引数受け取るか？
     int is_extern;          // externか？
     int is_static;          // staticか？
+    Ident* va_area;         // 可変長引数のエリア
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
@@ -454,6 +457,12 @@ typedef enum IRCmd{
     IR_EXTERN_LABEL,
         // externlabel (null) (ident) (imm)
         // -> identというラベルを外部に公開する
+    IR_VA_START,
+        // va_start (target) (imm1) (imm2)
+        // 可変長引数を受け取る関数のプロローグ
+        // targetはva_elemの場所（rbpからのオフセット）
+        // imm1は固定引数の数
+        // imm2は浮動小数点引数の数
 
     // DEBUG
     IR_COMMENT,
@@ -656,6 +665,7 @@ bool equal_type(Type* ty1, Type* ty2);
 Type* new_type(TypeKind kind, int size);
 Ident* get_member(Type* type, Token* tok);
 Type* register_typedef(Ident* ident, Type* ty);
+bool is_integer_type(Type* type);
 
 // utility.c
 char* strnewcpyn(char* src, int n);

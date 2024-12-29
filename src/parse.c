@@ -125,6 +125,17 @@ Token unnamed_enum_token = {
     NULL,
 };
 
+Token va_arena_token = {
+    TK_IDENT,
+    "__va_area__",
+    NULL,
+    0,
+    sizeof("__va_area__"),
+    NULL,
+};
+
+#define VA_AREA_SIZE 24 + 8 * 6 + 8 * 8
+
 void parse(Token* tok){
     token = tok;
     Program();
@@ -211,6 +222,16 @@ static void function(Type* func_type, StorageClassKind sck){
             // すでに定義された関数のbodyがあるのに、ここでも定義している
             error_tok(tok, "Conflict function definition.");
         }
+    }
+
+    // ここまで来たら関数の定義
+    // 可変長引数ありの関数の場合は、__va_area__を宣言
+    if(func->is_var_params){
+        Ident* va_area = make_ident(&va_arena_token, ID_LVAR, ty_char);
+        va_area->type = array_of(ty_char, VA_AREA_SIZE);
+        register_ident(va_area);
+
+        func->va_area = va_area;
     }
 
     expect_token(TK_L_BRACKET);
@@ -430,7 +451,7 @@ static Node* declaration(Type* ty, StorageClassKind sck){
     Ident* ident = declare(ty, sck);
     Node* node = NULL;
     if(sck == SCK_TYPEDEF){
-        register_typedef(ident, ty);
+        register_typedef(ident, ident->type);
         node = new_node(ND_VOID_STMT, NULL, NULL);
     } else {
         // グローバルスコープならID_GVAR、それ以外はID_LVAR

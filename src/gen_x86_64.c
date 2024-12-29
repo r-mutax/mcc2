@@ -308,6 +308,50 @@ void gen_x86(IR* ir){
                 pop("rbp");
                 print("  ret\n");
                 break;
+            case IR_VA_START:
+            {
+                int offset = ir->t->val;
+                int gp = ir->s1->val;
+                int fp = ir->s2->val;
+
+                // +----------------------------+----------------------------+
+                // | gp_offset (4 byte)         | fp_offset (4 byte)         | 0
+                // +----------------------------+----------------------------+
+                // | overflow_arg_area (8 byte)                              | 8
+                // +---------------------------------------------------------+
+                // | reg_save_area (8 byte)                                  | 16
+                // +---------------------------------------------------------+
+                // | register save area (8 * 6 byte)                         | 24
+                // +---------------------------------------------------------+
+                // | float register save area (8 * 8 byte)                   | 56
+                // +---------------------------------------------------------+
+
+                // va_elemの初期化
+                print("  mov DWORD PTR [rbp - %d], %d\n",       offset, gp * 8);        // gp_offset
+                print("  mov DWORD PTR [rbp - %d + 4], %d\n",   offset, 48 + fp * 8);   // fp_offset
+                print("  lea rax, [rbp - %d + 16]\n",           offset);                // overflow_arg_area
+                print("  mov QWORD PTR [rbp - %d + 8], rax\n",  offset);
+                print("  lea rax, [rbp - %d + 24]\n",           offset);                // reg_save_area
+                print("  mov QWORD PTR [rbp - %d + 16], rax\n", offset);
+                
+                // 引数の退避
+                print("  mov QWORD PTR [rbp - %d + 24], rdi\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 32], rsi\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 40], rdx\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 48], rcx\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 56], r8\n",  offset);
+                print("  mov QWORD PTR [rbp - %d + 64], r9\n",  offset);
+
+                print("  movsd QWORD PTR [rbp - %d + 72], xmm0\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 80], xmm1\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 88], xmm2\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 96], xmm3\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 104], xmm4\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 112], xmm5\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 120], xmm6\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 128], xmm7\n", offset);
+            }
+                break;
             case IR_EXTERN_LABEL:
                 print(".global %s\n", ir->s1->str);
                 break;
