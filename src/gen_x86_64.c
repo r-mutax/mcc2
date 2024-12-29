@@ -12,6 +12,8 @@ static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
 
+int debug_regis = 1;
+
 /*
     CAST CMD のルール
     1. 拡張長方向のキャスト
@@ -640,6 +642,18 @@ void gen_x86(IR* ir){
             case IR_COMMENT:
                 print("#");
                 printline(ir->s1->tok);
+                if(debug_regis)
+                {
+                    print("#");
+                    int remreg = 6;
+                    for(int i = 0; i < 6; i++){
+                        if(realReg[i]){
+                            remreg--;
+                        }
+                    }
+                    print(" remain register num : %d\n", remreg);
+                }
+
                 break;
             default:
                 unreachable();

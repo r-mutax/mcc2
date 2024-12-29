@@ -598,6 +598,7 @@ IR* get_ir();
 
 
 // gen_x86_64.c
+extern int debug_regis;
 void gen_x86_64_init();
 void gen_x86(IR* ir);
 
