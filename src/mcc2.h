@@ -310,6 +310,8 @@ typedef enum NodeKind {
     ND_GOTO,
     ND_MEMBER,
     ND_CAST,
+    ND_POST_INC,
+    ND_POST_DEC,
 } NodeKind;
 
 struct Node {
@@ -409,6 +411,7 @@ typedef enum IRCmd{
         // mov (null) s1 s2
         //  s2 -> s1
     IR_RELEASE_REG,
+    IR_RELEASE_REG_ALL,
         // relese all real register
     IR_LEA,
         // lea (null) s1 s2

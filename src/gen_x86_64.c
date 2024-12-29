@@ -576,9 +576,12 @@ void gen_x86(IR* ir){
                 print("  mov %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
-            case IR_RELEASE_REG:
+            case IR_RELEASE_REG_ALL:
                 print("# free reg\n");
                 freeRegAllForce();
+                break;
+            case IR_RELEASE_REG:
+                freeReg(ir->t);
                 break;
             case IR_LABEL:
                 print(".L%d:\n", ir->s1->val);

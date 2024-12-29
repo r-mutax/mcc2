@@ -238,7 +238,7 @@ static void function(Type* func_type, StorageClassKind sck){
     func->funcbody = compound_stmt();
     func->stack_size = get_stack_size();
     scope_out();
-    add_type(func->funcbody);   
+    add_type(func->funcbody);
 
     return;
 }
@@ -1392,7 +1392,7 @@ static Node* new_node_add(Node* lhs, Node* rhs){
     
     // pointer + pointer
     if(lhs->type->ptr_to && rhs->type->ptr_to){
-        error("tTry add pointer and pointer.");
+        error("Try add pointer and pointer.");
     }
     
     // num + pointer
@@ -1449,43 +1449,11 @@ static Node* new_node_mod(Node* lhs, Node* rhs){
 }
 
 static Node* new_inc(Node* var){
-    Token tok;
-    tok.pos = "tmp";
-    tok.len = 3;
-    tok.kind = TK_IDENT;
-    scope_in();
-    Type* ty = calloc(1, sizeof(Type));
-    memcpy(ty, var->type, sizeof(Type));
-
-    Ident* tmp = declare_ident(&tok, ID_LVAR, ty);
-
-    Node* node_tmp = new_node_var(tmp);
-    Node* node_assign = new_node(ND_ASSIGN, node_tmp, var);
-    Node* node_inc = new_node(ND_ASSIGN, var, new_node_add(var, new_node_num(1)));
-    Node* node = new_node(ND_COMMA, node_assign, new_node(ND_COMMA, node_inc, node_tmp));
-
-    scope_out();
-    return node;
+    return new_node(ND_POST_INC, var, NULL);
 }
 
 static Node* new_dec(Node* var){
-    Token tok;
-    tok.pos = "tmp";
-    tok.len = 3;
-    tok.kind = TK_IDENT;
-    scope_in();
-    Type* ty = calloc(1, sizeof(Type));
-    memcpy(ty, var->type, sizeof(Type));
-
-    Ident* tmp = declare_ident(&tok, ID_LVAR, ty);
-
-    Node* node_tmp = new_node_var(tmp);
-    Node* node_assign = new_node(ND_ASSIGN, node_tmp, var);
-    Node* node_inc = new_node(ND_ASSIGN, var, new_node_sub(var, new_node_num(1)));
-    Node* node = new_node(ND_COMMA, node_assign, new_node(ND_COMMA, node_inc, node_tmp));
-
-    scope_out();
-    return node;
+    return new_node(ND_POST_DEC, var, NULL);
 }
 
 static bool is_function(){
