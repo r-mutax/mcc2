@@ -134,6 +134,15 @@ Token va_arena_token = {
     NULL,
 };
 
+Token spill_area_token = {
+    TK_IDENT,
+    "__spill_area__",
+    NULL,
+    0,
+    sizeof("__spill_area__"),
+    NULL,
+};
+
 #define VA_AREA_SIZE 24 + 8 * 6 + 8 * 8
 
 void parse(Token* tok){
@@ -223,6 +232,11 @@ static void function(Type* func_type, StorageClassKind sck){
             error_tok(tok, "Conflict function definition.");
         }
     }
+
+    // 実レジスタ対費用の領域を確保(とりあえず30個確保する)
+    Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, ty_char);
+    spill_area->type = array_of(ty_char, 8 * 30);
+    register_ident(spill_area);
 
     // ここまで来たら関数の定義
     // 可変長引数ありの関数の場合は、__va_area__を宣言

@@ -564,6 +564,7 @@ static Reg* new_Reg(){
     Reg* reg = calloc(1, sizeof(Reg));
     reg->idx = -1;
     reg->size = 8;
+    reg->spill_idx = -1;
     return reg;
 }
 

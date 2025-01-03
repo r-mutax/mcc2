@@ -359,6 +359,7 @@ typedef enum RegKind {
 struct Reg {
     RegKind kind;
     int idx;
+    int spill_idx;
     unsigned long val;
     bool is_unsigned;
     Ident*  ident;
