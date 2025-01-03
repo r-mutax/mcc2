@@ -3,6 +3,16 @@
 static char* filename = NULL;
 bool is_preprocess = false;
 
+// デバッグモードを有効化する関数
+void enable_debug_mode(const char *mode) {
+    if (strcmp(mode, "register") == 0) {
+        debug_regis = 1;
+    } else {
+        fprintf(stderr, "Unknown debug mode: %s\n", mode);
+        exit(1); // 不明なモードの場合は終了
+    }
+}
+
 char* get_filename(char* path){
     char* yen_pos = strrchr(path, '/');
     char* buf = calloc(1, sizeof(strlen(path) + (yen_pos - path) - 1));
@@ -12,7 +22,7 @@ char* get_filename(char* path){
 
 void analy_opt(int argc, char** argv){
     int opt;
-    while((opt = getopt(argc, argv, "c:o:i:d:E")) != -1){
+    while((opt = getopt(argc, argv, "c:o:i:d:x:E")) != -1){
         switch(opt){
             case 'c':
                 filename = optarg;
@@ -41,6 +51,9 @@ void analy_opt(int argc, char** argv){
                     fprintf(stderr, "macro is not specified.\n");
                     exit(1);
                 }
+                break;
+            case 'x':
+                enable_debug_mode(optarg);
                 break;
             case 'E':
                 is_preprocess = true;

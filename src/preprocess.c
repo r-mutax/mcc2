@@ -19,6 +19,10 @@ Token tok_one = {
     .val = 1,
 };
 
+Token tok_place_holder = {
+    .kind = TK_PLACE_HOLDER,
+};
+
 Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
@@ -28,7 +32,7 @@ static void add_macro_objlike(Token* target);
 static void add_macro_funclike(Token* target);
 static void delete_macro(Macro* m);
 static Macro* find_macro(Token* name, Macro* mac);
-static Token* delete_space(Token* token);
+static Token* delete_space_placeholder(Token* token);
 static Token* replace_token(Token* tok, Macro* mac, Macro* list);
 static Macro* copy_macro(Macro* mac);
 static bool is_expand(Token* tok, Macro* list);
@@ -180,7 +184,7 @@ Token* preprocess(Token* token){
     }
 
     if(!is_preprocess)
-        head.next = delete_space(head.next);
+        head.next = delete_space_placeholder(head.next);
 
     return head.next;
 }
@@ -205,7 +209,7 @@ void add_predefine_macro(char* name){
     macros = m;
 }
 
-static Token* delete_space(Token* token){
+static Token* delete_space_placeholder(Token* token){
     Token head = {};
     head.next = token;
     Token* cur = &head;
@@ -213,6 +217,8 @@ static Token* delete_space(Token* token){
     while(cur->next){
         Token* target = cur->next;
         if(target->kind == TK_SPACE){
+            cur->next = target->next;
+        } else if(target->kind == TK_PLACE_HOLDER){
             cur->next = target->next;
         } else {
             cur = cur->next;
@@ -305,7 +311,6 @@ static Token* expand_funclike_macro_parameter(Token* tok, Macro* mac){
                 Token* tail = get_tokens_tail(val);
                 tail->next = cur->next->next;
                 cur->next = val;
-                continue;
             }
         }
         cur = cur->next;
@@ -401,7 +406,11 @@ static void add_macro_objlike(Token* target){
 
     Macro* m = calloc(1,sizeof(Macro));
     m->name = copy_token(name);
-    m->value = copy_token_eol(value);
+    if(value->kind != TK_NEWLINE){
+        m->value = copy_token_eol(value);
+    } else {
+        m->value = copy_token(&tok_place_holder);
+    }
     m->next = macros;
     macros = m;
 }
@@ -411,6 +420,7 @@ static void add_macro_funclike(Token* target){
     target = next_token(name);
     target = next_token(target);
 
+    // 引数リストを作る
     Token head;
     Token* cur = &head;
     while(target->kind != TK_R_PAREN){
@@ -436,7 +446,11 @@ static void add_macro_funclike(Token* target){
     Macro* m = calloc(1, sizeof(Macro));
     m->name = copy_token(name);
     m->params = head.next;
-    m->value = copy_token_eol(target);
+    if(target->kind != TK_NEWLINE){
+        m->value = copy_token_eol(target);
+    } else {
+        m->value = copy_token(&tok_place_holder);
+    }
     m->is_func = true;
     m->next = macros;
     macros = m;
@@ -445,10 +459,7 @@ static void add_macro_funclike(Token* target){
 static void add_macro(Token* target){
     Token* name = next_token(target);
 
-    if(next_token(name)->kind == TK_NEWLINE){
-        // 今は空マクロは非対応
-        error("macro definition is empty");
-    } else if(next_token(name)->kind == TK_L_PAREN){
+    if(next_token(name)->kind == TK_L_PAREN){
         add_macro_funclike(target);
     } else {
         add_macro_objlike(target);

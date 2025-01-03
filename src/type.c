@@ -168,3 +168,10 @@ Ident* get_member(Type* type, Token* tok){
     return NULL;
 }
 
+bool is_integer_type(Type* type){
+    TypeKind kind = type->kind;
+
+    if(kind == TY_INT || kind == TY_ENUM || kind == TY_BOOL || kind == TY_POINTER){
+        return true;
+    }
+}

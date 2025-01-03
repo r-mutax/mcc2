@@ -117,5 +117,20 @@ int test_expression(){
     } TestUnion;
     ASSERT(sizeof(TestUnion), 4);
 
+    printf("test of full of register ...\n");
+    int reg1[3];
+    int reg2[3];
+    for(int i = 0; i < 3; i++){
+        reg1[i] = 3 - i;
+    }
+    int *preg1 = reg1;
+    int *preg2 = reg2;
+    for(int i = 0; i < 3; i++){
+        *preg2++ = *preg1++;
+    }
+    ASSERT(reg2[0], 3);
+    ASSERT(reg2[1], 2);
+    ASSERT(reg2[2], 1);
+
     return 0;
 }

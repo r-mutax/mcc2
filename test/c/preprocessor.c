@@ -155,5 +155,18 @@ int TEST_CIRC_A = 30;
     ASSERT(1, 0);
 #endif
 
+#define FUNC_ARG_OWNER(X)   X
+    ASSERT(FUNC_ARG_OWNER(3), 3);
+    int func_arg_owner = 10;
+    ASSERT(FUNC_ARG_OWNER(func_arg_owner), 10);
+
+#define OBJLIKE_VACANCY_MACRO
+    OBJLIKE_VACANCY_MACRO;
+    FUNC_ARG_OWNER(OBJLIKE_VACANCY_MACRO);
+
+#define FUNC_MACRO_VACANCY(X)
+    FUNC_MACRO_VACANCY(3);
+    FUNC_MACRO_VACANCY(XXXXXXX_NODEFINED);
+
     return 0;
 }

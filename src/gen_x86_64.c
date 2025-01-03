@@ -6,11 +6,16 @@ static const char *rreg32[] = {"r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
 static const char *rreg64[] = {"r10", "r11", "r12", "r13", "r14", "r15"};
 static Reg* realReg[6] = { } ;
 
+static int spillReg[30] = { } ; // 仮想レジスタの退避領域（1: 退避済み, 0: 未退避）
+static int useReg[3] = { -1 };     // 処理対象の中間命令で使用する実レジスタのインデックス
+
 static const char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static const char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
 static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
+
+int debug_regis = 1;
 
 /*
     CAST CMD のルール
@@ -80,14 +85,55 @@ static void push(char* reg){
     --depth;
 }
 
+static int findSpillReg(){
+    for(int i = 0; i < 30; i++){
+        if(!spillReg[i]){
+            return i;
+        }
+    }
+    error("full of spill register\n");
+    return -1;
+}
+
 static int findReg(){
     for(int i = 0; i < 6; i++){
         if(!realReg[i]){
             return i;
         }
     }
-    error("full of register\n");
-    return -1;
+
+    // 実レジスタをすべて使用しているので、spillする
+    // 1. spill先を見つける。
+    int spill_idx = findSpillReg();
+
+    // 2. spillするレジスタを見つける。realRegを見て、markしていないものを探す
+    int src_reg_idx = -1;
+    for(int i = 0; i < 6; i++){
+        if(realReg[i]){
+            bool is_use = false;
+            for(int j = 0; j < 3; j++){
+                if(useReg[j] == i){
+                    is_use = true;
+                    break;
+                }
+            }
+            if(is_use) continue;
+            // 割当済の実レジスタで、使用中でないレジスタのidxを取得
+            src_reg_idx = i;
+            break;
+        }
+    }
+
+    // 3. spillする
+    if(debug_regis){
+        print("# spill %s to [rbp - %d]\n", rreg64[src_reg_idx], 8 * spill_idx);
+    }
+
+    print("  mov QWORD PTR [rbp - 240 + %d], %s\n", 8 * spill_idx, rreg64[src_reg_idx]);
+    spillReg[spill_idx] = 1;
+    realReg[src_reg_idx]->spill_idx = spill_idx;
+
+    return src_reg_idx;
 }
 
 // レジスタを割り当てる
@@ -112,6 +158,18 @@ static void activateRegRhs(Reg* reg){
 
 // レジスタをアクティベートする
 static void activateReg(Reg* reg, int is_lhs){
+    if(reg->spill_idx != -1){
+        // スピルレジスタからロードする
+        if(debug_regis){
+            print("# back from spill [rbp - %d] to %s\n", 8 * reg->spill_idx, rreg64[reg->idx]);
+        }
+
+        print("  mov %s, QWORD PTR [rbp - 240 + %d]\n", rreg64[reg->idx], 8 * reg->spill_idx);
+        spillReg[reg->spill_idx] = 0;
+        reg->spill_idx = -1;
+        return;
+    }
+
     if(reg->rreg) return;
 
     switch(reg->kind){
@@ -163,6 +221,14 @@ static void activateReg(Reg* reg, int is_lhs){
                 }
             }
             break;
+    }
+
+    // 使用するレジスタはマークする
+    for(int i = 0; i < 3; i++){
+        if(useReg[i] == -1){
+            useReg[i] = reg->idx;
+            break;
+        }
     }
 }
 
@@ -307,6 +373,50 @@ void gen_x86(IR* ir){
                 print("  mov rsp, rbp\n");
                 pop("rbp");
                 print("  ret\n");
+                break;
+            case IR_VA_START:
+            {
+                int offset = ir->t->val;
+                int gp = ir->s1->val;
+                int fp = ir->s2->val;
+
+                // +----------------------------+----------------------------+
+                // | gp_offset (4 byte)         | fp_offset (4 byte)         | 0
+                // +----------------------------+----------------------------+
+                // | overflow_arg_area (8 byte)                              | 8
+                // +---------------------------------------------------------+
+                // | reg_save_area (8 byte)                                  | 16
+                // +---------------------------------------------------------+
+                // | register save area (8 * 6 byte)                         | 24
+                // +---------------------------------------------------------+
+                // | float register save area (8 * 8 byte)                   | 56
+                // +---------------------------------------------------------+
+
+                // va_elemの初期化
+                print("  mov DWORD PTR [rbp - %d], %d\n",       offset, gp * 8);        // gp_offset
+                print("  mov DWORD PTR [rbp - %d + 4], %d\n",   offset, 48 + fp * 8);   // fp_offset
+                print("  lea rax, [rbp - %d + 16]\n",           offset);                // overflow_arg_area
+                print("  mov QWORD PTR [rbp - %d + 8], rax\n",  offset);
+                print("  lea rax, [rbp - %d + 24]\n",           offset);                // reg_save_area
+                print("  mov QWORD PTR [rbp - %d + 16], rax\n", offset);
+                
+                // 引数の退避
+                print("  mov QWORD PTR [rbp - %d + 24], rdi\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 32], rsi\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 40], rdx\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 48], rcx\n", offset);
+                print("  mov QWORD PTR [rbp - %d + 56], r8\n",  offset);
+                print("  mov QWORD PTR [rbp - %d + 64], r9\n",  offset);
+
+                print("  movsd QWORD PTR [rbp - %d + 72], xmm0\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 80], xmm1\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 88], xmm2\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 96], xmm3\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 104], xmm4\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 112], xmm5\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 120], xmm6\n", offset);
+                print("  movsd QWORD PTR [rbp - %d + 128], xmm7\n", offset);
+            }
                 break;
             case IR_EXTERN_LABEL:
                 print(".global %s\n", ir->s1->str);
@@ -530,9 +640,12 @@ void gen_x86(IR* ir){
                 print("  mov %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
-            case IR_RELEASE_REG:
+            case IR_RELEASE_REG_ALL:
                 print("# free reg\n");
                 freeRegAllForce();
+                break;
+            case IR_RELEASE_REG:
+                freeReg(ir->t);
                 break;
             case IR_LABEL:
                 print(".L%d:\n", ir->s1->val);
@@ -596,10 +709,27 @@ void gen_x86(IR* ir){
             case IR_COMMENT:
                 print("#");
                 printline(ir->s1->tok);
+                if(debug_regis)
+                {
+                    print("#");
+                    int remreg = 6;
+                    for(int i = 0; i < 6; i++){
+                        if(realReg[i]){
+                            remreg--;
+                        }
+                    }
+                    print(" remain register num : %d\n", remreg);
+                }
+
                 break;
             default:
                 unreachable();
         }
         ir = ir->next;
+
+        // レジスタの使用状況をクリア
+        for(int i = 0; i < 3; i++){
+            useReg[i] = -1;
+        }
     }
 }

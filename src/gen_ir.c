@@ -73,6 +73,20 @@ static void gen_function(Ident* func){
     func_name_str = new_RegStr(func->name);
     new_IR(IR_FN_LABEL, NULL, func_name_str, new_RegImm(func->stack_size));
 
+    // 可変長引数の場合は、__va_area__に引数をコピーする
+    if(func->va_area){
+        // 固定引数の数を数える
+        int gp = 0;
+        int fp = 0;
+        for(Parameter* param = func->params; param; param = param->next){
+            gp++;
+        }
+
+        // va_elem
+        new_IR(IR_VA_START, new_RegImm(func->va_area->offset), new_RegImm(gp), new_RegImm(fp));
+    }
+
+
     // パラメータの展開
     Parameter* param = func->params;
     for(int i = 0;
@@ -262,7 +276,7 @@ static void gen_stmt(Node* node){
             gen_expr(node);
             break;
     }
-    new_IR(IR_RELEASE_REG, NULL, NULL, NULL);
+    new_IR(IR_RELEASE_REG_ALL, NULL, NULL, NULL);
 }
 
 static Reg* gen_lvar(Node*  node){
@@ -369,12 +383,16 @@ static Reg* gen_expr(Node* node){
             Reg* ret = new_Reg();
             long l_true = get_label();
             long l_end = get_label();
-            new_IR(IR_JNZ, NULL, gen_expr(node->lhs), new_RegImm(l_true));
-            new_IR(IR_JNZ, NULL, gen_expr(node->rhs), new_RegImm(l_true));
-            
+            Reg* lreg = gen_expr(node->lhs);
+            Reg* rreg = gen_expr(node->rhs);
+            new_IR(IR_JNZ, NULL, lreg, new_RegImm(l_true));
+            new_IR(IR_JNZ, NULL, rreg, new_RegImm(l_true));
+            new_IR(IR_RELEASE_REG, lreg, NULL, NULL);
+            new_IR(IR_RELEASE_REG, rreg, NULL, NULL);
+
             new_IR(IR_MOV, NULL, ret, new_RegImm(0));
             new_IR(IR_JMP, NULL, new_RegImm(l_end), NULL);
-            
+
             new_IRLabel(l_true);
             new_IR(IR_MOV, NULL, ret, new_RegImm(1));
             new_IRLabel(l_end);
@@ -385,8 +403,13 @@ static Reg* gen_expr(Node* node){
             Reg* ret = new_Reg();
             long l_false = get_label();
             long l_end = get_label();
-            new_IR(IR_JZ, NULL, gen_expr(node->lhs), new_RegImm(l_false));
-            new_IR(IR_JZ, NULL, gen_expr(node->rhs), new_RegImm(l_false));
+
+            Reg* lreg = gen_expr(node->lhs);
+            Reg* rreg = gen_expr(node->rhs);
+            new_IR(IR_JZ, NULL, lreg, new_RegImm(l_false));
+            new_IR(IR_JZ, NULL, rreg, new_RegImm(l_false));
+            new_IR(IR_RELEASE_REG, lreg, NULL, NULL);
+            new_IR(IR_RELEASE_REG, rreg, NULL, NULL);
 
             new_IR(IR_MOV, NULL, ret, new_RegImm(1));
             new_IR(IR_JMP, NULL, new_RegImm(l_end), NULL);
@@ -541,6 +564,7 @@ static Reg* new_Reg(){
     Reg* reg = calloc(1, sizeof(Reg));
     reg->idx = -1;
     reg->size = 8;
+    reg->spill_idx = -1;
     return reg;
 }
 

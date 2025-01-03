@@ -25,8 +25,8 @@ long int ftell(FILE *stream);
 extern FILE *stdout;
 extern FILE *stderr;
 
-#define stdout stdout
-#define stderr stderr
+// #define stdout stdout
+// #define stderr stderr
 
 // stdlib.h
 void *calloc(size_t num, size_t size);
@@ -43,6 +43,23 @@ extern int errno;
 // ctype.h
 /* excluding space */
 int isspace(int c);
+
+// stdarg.h
+typedef struct {
+    unsigned int gp_offset;
+    unsigned int fp_offset;
+    void *overflow_arg_area;
+    void *reg_save_area;
+} __va_elem;
+
+typedef __va_elem va_list[1];
+
+#define va_start(ap, last) \
+  do { *(ap) = *(__va_elem *)__va_area__; } while (0)
+
+#define va_end(ap) 
+
+int vfprintf(FILE *  __restrict__stream, const char *  __restrict__format, va_list arg_ptr);
 
 #else
 #include <stdio.h>
@@ -175,7 +192,7 @@ typedef enum TokenKind {
     TK_AUTO,                    // auto
     TK_REGISTER,                // register
     TK_NEWLINE,                 // "\n"
-
+    
     // preprocess
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
@@ -192,6 +209,7 @@ typedef enum TokenKind {
     TK_HASH,
     TK_HASH_HASH,
     TK_SPACE,                   // 空白
+    TK_PLACE_HOLDER,            // 空マクロの置き換え
     TK_EOF                      // 終端記号
 } TokenKind;
 
@@ -236,6 +254,7 @@ struct Ident {
     int is_var_params;      // 可変長引数受け取るか？
     int is_extern;          // externか？
     int is_static;          // staticか？
+    Ident* va_area;         // 可変長引数のエリア
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
@@ -340,6 +359,7 @@ typedef enum RegKind {
 struct Reg {
     RegKind kind;
     int idx;
+    int spill_idx;
     unsigned long val;
     bool is_unsigned;
     Ident*  ident;
@@ -390,6 +410,7 @@ typedef enum IRCmd{
         // mov (null) s1 s2
         //  s2 -> s1
     IR_RELEASE_REG,
+    IR_RELEASE_REG_ALL,
         // relese all real register
     IR_LEA,
         // lea (null) s1 s2
@@ -438,6 +459,12 @@ typedef enum IRCmd{
     IR_EXTERN_LABEL,
         // externlabel (null) (ident) (imm)
         // -> identというラベルを外部に公開する
+    IR_VA_START,
+        // va_start (target) (imm1) (imm2)
+        // 可変長引数を受け取る関数のプロローグ
+        // targetはva_elemの場所（rbpからのオフセット）
+        // imm1は固定引数の数
+        // imm2は浮動小数点引数の数
 
     // DEBUG
     IR_COMMENT,
@@ -573,6 +600,7 @@ IR* get_ir();
 
 
 // gen_x86_64.c
+extern int debug_regis;
 void gen_x86_64_init();
 void gen_x86(IR* ir);
 
@@ -640,6 +668,7 @@ bool equal_type(Type* ty1, Type* ty2);
 Type* new_type(TypeKind kind, int size);
 Ident* get_member(Type* type, Token* tok);
 Type* register_typedef(Ident* ident, Type* ty);
+bool is_integer_type(Type* type);
 
 // utility.c
 char* strnewcpyn(char* src, int n);
