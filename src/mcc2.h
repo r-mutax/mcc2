@@ -310,8 +310,6 @@ typedef enum NodeKind {
     ND_GOTO,
     ND_MEMBER,
     ND_CAST,
-    ND_POST_INC,
-    ND_POST_DEC,
 } NodeKind;
 
 struct Node {

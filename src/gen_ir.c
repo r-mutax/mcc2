@@ -464,24 +464,6 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_EQUAL, ret, gen_expr(node->lhs), new_RegImm(0));
             return ret;
         }
-        case ND_POST_INC:
-        {
-            Reg* ret = new_Reg();
-            Reg* lvar = gen_lvar(node->lhs);
-            new_IR(IR_ASSIGN, ret, lvar, lvar);
-            new_IR(IR_ADD, NULL, lvar, new_RegImm(1));
-            new_IR(IR_RELEASE_REG, lvar, NULL, NULL);
-            return ret;
-        }
-        case ND_POST_DEC:
-        {
-            Reg* ret = new_Reg();
-            Reg* lvar = gen_lvar(node->lhs);
-            new_IR(IR_ASSIGN, ret, lvar, lvar);
-            new_IR(IR_SUB, NULL, lvar, new_RegImm(1));
-            new_IR(IR_RELEASE_REG, lvar, NULL, NULL);
-            return ret;
-        }
         default:
             break;
     }

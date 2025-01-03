@@ -109,8 +109,6 @@ void add_type(Node* node){
         case ND_L_BITSHIFT:         // 左bitシフト
         case ND_R_BITSHIFT:         // 右bitシフト
         case ND_ASSIGN:             // 代入
-        case ND_POST_INC:           // 後置インクリメント
-        case ND_POST_DEC:           // 後置デクリメント
             node->type = node->lhs->type;
             break;
         case ND_ADDR:               // & 演算子
