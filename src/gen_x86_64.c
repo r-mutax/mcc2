@@ -1,5 +1,7 @@
 #include "mcc2.h"
 
+static void convert_ir2x86asm(IR* ir);
+
 static const char *rreg8[] = {"r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
 static const char *rreg16[] = {"r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
 static const char *rreg32[] = {"r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
@@ -348,9 +350,36 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
     freeReg(s1);
 }
 
-void gen_x86(IR* ir){
+void gen_x86(){
+    Scope* global_scope = get_global_scope();
+
     print(".intel_syntax noprefix\n");
 
+    // extern宣言
+    IR* ir = global_scope->ir_cmd;
+    convert_ir2x86asm(ir);
+
+    // グローバル変数の出力
+    Ident* ident = global_scope->ident;
+    while(ident){
+        if(ident->kind == ID_GVAR && !ident->is_extern){
+            convert_ir2x86asm(ident->ir_cmd);
+        }
+    }
+
+    // 関数定義
+    ident = global_scope->ident;
+    while(ident){
+        if(ident->kind == ID_FUNC && ident->funcbody){
+            IR* ir = ident->ir_cmd;
+            convert_ir2x86asm(ir);
+        }
+        ident = ident->next;
+    }
+}
+
+
+static void convert_ir2x86asm(IR* ir){
     while(ir){
         switch(ir->cmd){
             case IR_FN_LABEL:
@@ -641,7 +670,6 @@ void gen_x86(IR* ir){
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_RELEASE_REG_ALL:
-                print("# free reg\n");
                 freeRegAllForce();
                 break;
             case IR_RELEASE_REG:

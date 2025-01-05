@@ -256,6 +256,8 @@ struct Ident {
     int is_static;          // staticか？
     Ident* va_area;         // 可変長引数のエリア
 
+    IR* ir_cmd;          // 中間命令の先頭
+
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
     Type*  type;
@@ -510,6 +512,7 @@ struct Scope {
     StringLiteral*  string_literal;
     Scope*          parent;
     Label*          label;
+    IR*             ir_cmd;
     Type*           type_tag;
 };
 
@@ -596,13 +599,11 @@ void close_output_file();
 
 // gen_ir.c
 void gen_ir();
-IR* get_ir();
-
 
 // gen_x86_64.c
 extern int debug_regis;
 void gen_x86_64_init();
-void gen_x86(IR* ir);
+void gen_x86();
 
 // ident.c
 Ident* declare_ident(Token* ident, IdentKind kind, Type* ty);

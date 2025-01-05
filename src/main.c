@@ -98,7 +98,7 @@ int main(int argc, char **argv){
 
     // generate
     gen_ir();
-    gen_x86(get_ir());
+    gen_x86();
 
     close_output_file();
 
