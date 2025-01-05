@@ -48,8 +48,12 @@ static void gen_extern(Scope* global_scope){
 
     Ident* ident = global_scope->ident;
     while(ident){
-        if(!ident->is_string_literal){
+        if(ident->kind == ID_FUNC && ident->funcbody){
             new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
+        } else if(ident->kind == ID_GVAR && !ident->is_extern){
+            if(!ident->is_string_literal){
+                new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
+            }
         }
         ident = ident->next;
     }
