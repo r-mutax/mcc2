@@ -1,6 +1,7 @@
 #include "mcc2.h"
 
-static void convert_ir2x86asm(IR* ir);
+static void convert_ir2x86asm(IR* ir);                  // IR->x86アセンブリ変換
+static void dprint_Ident(Ident* ident, int level);     // 識別子のデバッグ出力
 
 static const char *rreg8[] = {"r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
 static const char *rreg16[] = {"r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
@@ -17,7 +18,8 @@ static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
 
-int debug_regis = 1;
+int debug_regis = 0;    // レジスタのデバッグモード
+int debug_plvar = 0;    // ローカル変数のデバッグモード
 
 /*
     CAST CMD のルール
@@ -365,13 +367,25 @@ void gen_x86(){
         if(ident->kind == ID_GVAR && !ident->is_extern){
             convert_ir2x86asm(ident->ir_cmd);
         }
+        ident = ident->next;
     }
 
     // 関数定義
     ident = global_scope->ident;
     while(ident){
-        if(ident->kind == ID_FUNC && ident->funcbody){
+        if(ident->kind == ID_FUNC && ident->ir_cmd){
             IR* ir = ident->ir_cmd;
+            if(debug_plvar){
+                print("# %s\n", ident->name);
+                print("#\t stack size: %d\n", ident->stack_size);
+                for(Ident* it = ident->scope->ident; it; it = it->next){
+                    if(it->kind == ID_LVAR){
+                        // TODO : スコープは木構造になっていて、子スコープの識別子は今は出せない。
+                        // そのためには、子供のスコープを覚えるようにしなければならない
+                        dprint_Ident(it, 0);
+                    }
+                }
+            }
             convert_ir2x86asm(ir);
         }
         ident = ident->next;
@@ -759,5 +773,11 @@ static void convert_ir2x86asm(IR* ir){
         for(int i = 0; i < 3; i++){
             useReg[i] = -1;
         }
+    }
+}
+
+static void dprint_Ident(Ident* ident, int level){
+    if(ident->kind == ID_LVAR){
+        print("#\t %s( ofs: %d, size: %d) : level%d\n", ident->name, ident->offset, ident->type->size, level);
     }
 }

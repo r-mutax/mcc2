@@ -602,6 +602,7 @@ void gen_ir();
 
 // gen_x86_64.c
 extern int debug_regis;
+extern int debug_plvar;
 void gen_x86_64_init();
 void gen_x86();
 

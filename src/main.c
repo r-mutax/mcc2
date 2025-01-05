@@ -7,6 +7,8 @@ bool is_preprocess = false;
 void enable_debug_mode(const char *mode) {
     if (strcmp(mode, "register") == 0) {
         debug_regis = 1;
+    } else if (strcmp(mode, "plvar") == 0){
+        debug_plvar = 1;
     } else {
         fprintf(stderr, "Unknown debug mode: %s\n", mode);
         exit(1); // 不明なモードの場合は終了
