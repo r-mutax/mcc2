@@ -15,7 +15,7 @@ mcc2: $(OBJS)
 -include $(DEPS)
 
 test/c/%.o: test/c/%.c
-	./mcc2 -c $< -o $@.s -i ./test/testinc -d PREDEFINED_MACRO
+	./mcc2 -c $< -o $@.s -i ./test/testinc -i ./src -d PREDEFINED_MACRO -x plvar
 	cc -c -o $@ $@.s -static
 
 test : mcc2 $(TEST_OBJS)
@@ -23,7 +23,7 @@ test : mcc2 $(TEST_OBJS)
 	./test.exe
 
 test2: mcc2
-	./mcc2 -c ./dev/test2.c -o ./tmp.s -i ./test/testinc -x plvar
+	./mcc2 -c ./dev/test2.c -o ./tmp.s -i ./test/testinc -i ./src -x plvar
 	cc -o ./dev/tmp -no-pie tmp.s -lc
 	./dev/tmp
 
