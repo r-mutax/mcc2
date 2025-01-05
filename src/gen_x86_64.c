@@ -1,5 +1,8 @@
 #include "mcc2.h"
 
+static void convert_ir2x86asm(IR* ir);                  // IR->x86アセンブリ変換
+static void dprint_Ident(Ident* ident, int level);     // 識別子のデバッグ出力
+
 static const char *rreg8[] = {"r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
 static const char *rreg16[] = {"r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
 static const char *rreg32[] = {"r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
@@ -15,7 +18,8 @@ static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
 
-int debug_regis = 1;
+int debug_regis = 0;    // レジスタのデバッグモード
+int debug_plvar = 0;    // ローカル変数のデバッグモード
 
 /*
     CAST CMD のルール
@@ -348,9 +352,48 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
     freeReg(s1);
 }
 
-void gen_x86(IR* ir){
+void gen_x86(){
+    Scope* global_scope = get_global_scope();
+
     print(".intel_syntax noprefix\n");
 
+    // extern宣言
+    IR* ir = global_scope->ir_cmd;
+    convert_ir2x86asm(ir);
+
+    // グローバル変数の出力
+    Ident* ident = global_scope->ident;
+    while(ident){
+        if(ident->kind == ID_GVAR && !ident->is_extern){
+            convert_ir2x86asm(ident->ir_cmd);
+        }
+        ident = ident->next;
+    }
+
+    // 関数定義
+    ident = global_scope->ident;
+    while(ident){
+        if(ident->kind == ID_FUNC && ident->ir_cmd){
+            IR* ir = ident->ir_cmd;
+            if(debug_plvar){
+                print("# %s\n", ident->name);
+                print("#\t stack size: %d\n", ident->stack_size);
+                for(Ident* it = ident->scope->ident; it; it = it->next){
+                    if(it->kind == ID_LVAR){
+                        // TODO : スコープは木構造になっていて、子スコープの識別子は今は出せない。
+                        // そのためには、子供のスコープを覚えるようにしなければならない
+                        dprint_Ident(it, 0);
+                    }
+                }
+            }
+            convert_ir2x86asm(ir);
+        }
+        ident = ident->next;
+    }
+}
+
+
+static void convert_ir2x86asm(IR* ir){
     while(ir){
         switch(ir->cmd){
             case IR_FN_LABEL:
@@ -641,7 +684,6 @@ void gen_x86(IR* ir){
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_RELEASE_REG_ALL:
-                print("# free reg\n");
                 freeRegAllForce();
                 break;
             case IR_RELEASE_REG:
@@ -731,5 +773,11 @@ void gen_x86(IR* ir){
         for(int i = 0; i < 3; i++){
             useReg[i] = -1;
         }
+    }
+}
+
+static void dprint_Ident(Ident* ident, int level){
+    if(ident->kind == ID_LVAR){
+        print("#\t %s( ofs: %d, size: %d) : level%d\n", ident->name, ident->offset, ident->type->size, level);
     }
 }

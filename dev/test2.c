@@ -3,6 +3,11 @@
 extern int a;
 int b;
 
+int func(int a, int b){
+    int c = 10;
+    return a + b;
+}
+
 int main(){
     typedef struct {
         int a;
@@ -13,5 +18,6 @@ int main(){
     ts.s = 20;
 
     unsigned char uc = 255;
+    int abc = 1000;
     return ASSERT((char)uc, -11);
 }

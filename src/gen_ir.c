@@ -5,17 +5,15 @@ static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
 
-static void gen_extern(Ident* ident);
+static void gen_extern(Scope* global_scope);
 static void gen_datas(Ident* ident);
-static void gen_funcs(Ident* ident);
 static void gen_function(Ident* func);
 static void gen_stmt(Node* stmt);
 static Reg* gen_lvar(Node* lvar);
 static long get_label();
 
 // レジスタマシン
-static IR head;
-static IR* ir = &head;
+static IR* ir = NULL;
 static IR* new_IR(IRCmd cmd, Reg* t, Reg* s1, Reg* s2);
 static IR* new_IRLabel(long label);
 static IR* new_IRJmp(long label);
@@ -33,43 +31,49 @@ void gen_ir(){
     Scope* scope = get_global_scope();
     Ident* ident = scope->ident;
 
-    gen_extern(ident);
-    gen_datas(ident);
-    gen_funcs(ident);
+    gen_extern(scope);
+
+    for(Ident* cur = ident; cur; cur = cur->next){
+        if(cur->kind == ID_FUNC && cur->funcbody){
+            gen_function(cur);
+        } else if (cur->kind == ID_GVAR){
+            gen_datas(cur);
+        }
+    }
 }
 
-static void gen_extern(Ident* ident){
+static void gen_extern(Scope* global_scope){
+    IR head;
+    ir = &head;
+
+    Ident* ident = global_scope->ident;
     while(ident){
         if(!ident->is_string_literal){
             new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
         }
         ident = ident->next;
     }
+
+    global_scope->ir_cmd = head.next;
 }
 
 static void gen_datas(Ident* ident){
-    while(ident){
-        if(ident->kind == ID_GVAR){
-            if(ident->is_extern){
-                // extern宣言のときは実体を作らない
-            } else {
-                new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(ident->type->size));
-            }
-        }
-        ident = ident->next;
-    }
-}
+    IR head;
+    ir = &head;
 
-static void gen_funcs(Ident* ident){
-    while(ident){
-        if(ident->kind == ID_FUNC && ident->funcbody){
-            gen_function(ident);
-        }
-        ident = ident->next;
+    if(ident->is_extern){
+        // extern宣言のときは実体を作らない
+    } else {
+        new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(ident->type->size));
     }
+
+    ident->ir_cmd = head.next;
 }
 
 static void gen_function(Ident* func){
+    IR head;
+    ir = &head;
+
     func_name_str = new_RegStr(func->name);
     new_IR(IR_FN_LABEL, NULL, func_name_str, new_RegImm(func->stack_size));
 
@@ -112,6 +116,8 @@ static void gen_function(Ident* func){
     }
 
     new_IR(IR_FN_END_LABEL, NULL, func_name_str, NULL);
+
+    func->ir_cmd = head.next;
 }
 
 static void gen_stmt(Node* node){
@@ -531,10 +537,6 @@ static Reg* gen_expr(Node* node){
     }
     
     return ret;
-}
-
-IR* get_ir(){
-    return head.next;
 }
 
 static long get_label(){

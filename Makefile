@@ -23,7 +23,7 @@ test : mcc2 $(TEST_OBJS)
 	./test.exe
 
 test2: mcc2
-	./mcc2 -c ./dev/test2.c -o ./tmp.s -i ./test/testinc
+	./mcc2 -c ./dev/test2.c -o ./tmp.s -i ./test/testinc -x plvar
 	cc -o ./dev/tmp -no-pie tmp.s -lc
 	./dev/tmp
 
