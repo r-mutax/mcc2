@@ -26,3 +26,4 @@ int test_assignment();
 int test_preprocess();
 int test_cast();
 int test_function();
+int test_varg();

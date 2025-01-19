@@ -5,7 +5,7 @@ Token* token;
 SrcFile* cur_file;
 extern bool is_preprocess;
 
-static Token* scan(char* src);
+Token* scan(char* src);
 static Token* new_token(TokenKind kind, Token* cur, char* p, int len);
 static bool is_ident1(char c);
 static bool is_ident2(char c);
@@ -33,7 +33,7 @@ Token* tokenize_string(char* src){
     return tok;
 }
 
-static Token* scan(char* src){
+Token* scan(char* src){
     char* p = src;
     Token head = {};
     Token* cur = &head;
@@ -473,4 +473,11 @@ void output_token(Token* tok){
         }
         tok = tok->next;
     }
+}
+
+Token* get_token_before_eof(Token* tok){
+    while(tok->next->kind != TK_EOF){
+        tok = tok->next;
+    }
+    return tok;
 }

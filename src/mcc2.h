@@ -40,6 +40,7 @@ typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
 extern FILE* fp;
+extern char* builtin_def;
 
 struct IncludePath {
     char* path;
@@ -597,8 +598,10 @@ Token* copy_token(Token* tok);
 Token* copy_token_list(Token* tok);
 Token* copy_token_eol(Token* tok);
 Token* get_tokens_tail(Token* tok);
+Token* get_token_before_eof(Token* tok);
 void output_token(Token* tok);
 Token* tokenize_string(char* src);
+Token* scan(char* src);
 
 // type.c
 extern Type* ty_void;

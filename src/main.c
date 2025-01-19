@@ -85,14 +85,18 @@ int main(int argc, char **argv){
     char* dir = get_dirname(filename);
     add_include_path(dir);
 
+    // builtin def scan
+    Token* tok = tokenize_string(builtin_def);
+
     // compile
-    Token* tok = tokenize(filename);
+    get_token_before_eof(tok)->next = tokenize(filename);
     if(is_preprocess){
         // プリプロセス出力のオプションが指定されている場合は、
         // トークンをプリプロセスして出力して終了する
         output_token(tok);
         return 0;
     }
+
     parse(tok);
 
     // semantics
