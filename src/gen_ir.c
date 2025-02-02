@@ -323,7 +323,9 @@ static Reg* gen_expr(Node* node){
         case ND_MEMBER:
         {
             Reg* regvar = gen_lvar(node);
-            if(node->type->kind != TY_ARRAY){
+            if(node->type->kind != TY_ARRAY
+             && node->type->kind != TY_STRUCT
+             && node->type->kind != TY_UNION){
                 Reg* reg = new_Reg();
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;
@@ -375,6 +377,13 @@ static Reg* gen_expr(Node* node){
             // 左辺値のアドレスを取得
             if(node->lhs->type->kind == TY_ARRAY){
                 error("incompatible types in assignment to array.");
+            }
+
+            // 構造体の代入の場合
+            if(node->lhs->type->kind == TY_STRUCT){
+                Reg* reg_lvar = gen_lvar(node->lhs);
+                new_IR(IR_COPY, reg_lvar, reg_expr, NULL);
+                return reg_lvar;
             }
             Reg* reg = new_Reg();
             Reg* reg_lvar = gen_lvar(node->lhs);

@@ -683,6 +683,19 @@ static void convert_ir2x86asm(IR* ir){
                 print("  mov %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
+            case IR_COPY:
+            {
+                activateRegLhs(ir->t);
+                activateRegLhs(ir->s1);
+                for(int i = 0; i < ir->s1->size; i++){
+                    // r8bレジスタにbyteデータコピー
+                    print("  mov r8b, BYTE PTR [%s + %d]\n", ir->s1->rreg, i);
+
+                    // r8bレジスタのデータをtのレジスタにコピー
+                    print("  mov BYTE PTR [%s + %d], r8b\n", ir->t->rreg, i);
+                }
+                freeReg(ir->s1);
+            }
             case IR_RELEASE_REG_ALL:
                 freeRegAllForce();
                 break;

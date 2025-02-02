@@ -373,6 +373,10 @@ typedef enum IRCmd{
         // load (null) s1 s2
         //  [s2] -> s1
 
+    IR_COPY,
+        // copy (null) s1 s2
+        //  s2 -> s1
+
     // CONTROL
     IR_RET,
         // ret (null) s1 -> return s1
