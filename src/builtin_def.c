@@ -4,6 +4,7 @@ char* builtin_def =
     " unsigned int fp_offset; \n"
     " void *overflow_arg_area; \n"
     " void *reg_save_area; \n"
-    " } __builtin_va_list[1]; \n"
+    " } __builtin_va_elem; \n"
+    "typedef __builtin_va_elem __builtin_va_list[1]; \n"
     "";
 

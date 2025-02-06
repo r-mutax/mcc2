@@ -106,13 +106,14 @@ bool is_label();
 Token* get_token();
 void set_token(Token* tok);
 
-
+// ビルトインのトークン定義
+//  sizeof(const string liteal) は終端0を含めるため-1している。
 Token unnamed_struct_token = {
     TK_IDENT,
     "__unnamed_struct",
     NULL,
     0,
-    sizeof("__unnamed_struct"),
+    sizeof("__unnamed_struct") - 1,
     NULL,
 };
 
@@ -121,7 +122,7 @@ Token unnamed_enum_token = {
     "__unnamed_enum",
     NULL,
     0,
-    sizeof("__unnamed_enum"),
+    sizeof("__unnamed_enum") - 1,
     NULL,
 };
 
@@ -130,7 +131,16 @@ Token va_arena_token = {
     "__va_area__",
     NULL,
     0,
-    sizeof("__va_area__"),
+    sizeof("__va_area__") - 1,
+    NULL,
+};
+
+Token builtin_va_elem_token = {
+    TK_IDENT,
+    "__builtin_va_elem",
+    NULL,
+    0,
+    sizeof("__builtin_va_elem") - 1,
     NULL,
 };
 
@@ -139,7 +149,7 @@ Token spill_area_token = {
     "__spill_area__",
     NULL,
     0,
-    sizeof("__spill_area__"),
+    sizeof("__spill_area__") - 1,
     NULL,
 };
 
@@ -1313,6 +1323,7 @@ static Node* primary(){
         return node;
     }
 
+    // 文字列リテラル
     Token* tok_str = consume_string_literal();
     if(tok_str){
         Ident* str_ident = register_string_literal(tok_str);
@@ -1322,6 +1333,38 @@ static Node* primary(){
         return node;
     }
 
+    // ビルトイン関数
+    if(consume_token(TK_VA_START)){
+        // 暗黙宣言している__va_arena__を取得
+        Ident* var_area_ident = find_ident(&va_arena_token);
+        Node* var_area_node = new_node_var(var_area_ident);
+
+        expect_token(TK_L_PAREN);
+        Node* arg1_node = assign();
+        expect_token(TK_COMMA);
+        Node* arg2_node = assign();
+        expect_token(TK_R_PAREN);
+
+        // 第１引数のポインタの参照を外す
+        Node* lhs_node = new_node(ND_DREF, arg1_node, NULL);
+
+        // __builtin_va_elem*型を取得
+        Ident* builtin_va_elem_ident = find_typedef(&builtin_va_elem_token);
+        Type* ty = builtin_va_elem_ident->type;
+        ty = pointer_to(ty);
+
+        // __va_area__を__builtin_va_elem*型にキャストする
+        Node* rhs_node = new_node(ND_CAST, var_area_node, NULL);
+        rhs_node->type = ty;
+
+        // (__builtin_va_elem*)__va_area__の参照を外す
+        rhs_node = new_node(ND_DREF, rhs_node, NULL);
+
+        Node* node = new_node(ND_ASSIGN, lhs_node, rhs_node);
+        return node;
+    }
+
+    // 変数
     Token* ident_token = consume_ident();
     if(ident_token){
         Ident* ident = find_ident(ident_token);
@@ -1357,6 +1400,7 @@ static Node* primary(){
         }
     }
 
+    // 数値リテラル
     return new_node_num(expect_num());
 }
 
@@ -1387,6 +1431,7 @@ static Node* new_node_var(Ident* ident){
     Node* result = calloc(1, sizeof(Node));
     result->kind = ND_VAR;
     result->ident = ident;
+    result->type = ident->type;
 
     return result;
 }

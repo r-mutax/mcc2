@@ -353,10 +353,16 @@ static Reg* gen_expr(Node* node){
         }
         case ND_DREF:
         {
+            Type* type = node->lhs->type;
             Reg* ret = new_Reg();
             Reg* pointer = gen_expr(node->lhs);
             pointer->size = node->lhs->type->ptr_to->size;
-            new_IR(IR_LOAD, NULL, ret, pointer);
+            if((type->ptr_to->kind != TY_STRUCT)
+                && (type->ptr_to->kind != TY_UNION)){
+                new_IR(IR_LOAD, NULL, ret, pointer);
+            } else {
+                ret = pointer;
+            }
             return ret;
         }
         case ND_COMMA:
@@ -380,7 +386,8 @@ static Reg* gen_expr(Node* node){
             }
 
             // 構造体の代入の場合
-            if(node->lhs->type->kind == TY_STRUCT){
+            if((node->lhs->type->kind == TY_STRUCT)
+                ||(node->lhs->type->kind == TY_UNION)){
                 Reg* reg_lvar = gen_lvar(node->lhs);
                 new_IR(IR_COPY, reg_lvar, reg_expr, NULL);
                 return reg_lvar;
