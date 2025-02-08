@@ -90,31 +90,58 @@ void add_type(Node* node){
 
 
     switch(node->kind){
+        case ND_LOGIC_OR:           // 論理和（1 or 0）
+        case ND_LOGIC_AND:          // 論理積（1 or 0）
+            if((node->lhs->type->kind == TY_VOID)
+                || (node->rhs->type->kind == TY_VOID)){
+                error_tok(node->pos, "invalid operands of types 'void' to binary 'operator'");
+            }
         case ND_NUM:
         case ND_EQUAL:              // 等価　（1 or 0）
         case ND_NOT_EQUAL:          // 非等価（1 or 0）
-        case ND_LOGIC_OR:           // 論理和（1 or 0）
-        case ND_LOGIC_AND:          // 論理積（1 or 0）
+            if(node->type && node->type->kind == TY_VOID){
+                error_tok(node->pos, "void is not allowed.");
+            }
             node->type = ty_int;
             break;
+        case ND_ASSIGN:             // 代入
+            if(node->lhs->type->kind == TY_VOID){
+                error_tok(node->lhs->pos, "variable or field declared void");
+            }
         case ND_ADD:                // 足し算
         case ND_SUB:                // 引き算
         case ND_MUL:                // 掛け算
         case ND_DIV:                // 割り算
         case ND_MOD:                // 余り
-        case ND_COND_EXPR:          // 三項演算子
         case ND_BIT_AND:            // bit論理積
         case ND_BIT_XOR:            // bit排他的論理和
         case ND_BIT_OR:             // bit論理和
         case ND_L_BITSHIFT:         // 左bitシフト
         case ND_R_BITSHIFT:         // 右bitシフト
-        case ND_ASSIGN:             // 代入
+            if((node->lhs->type->kind == TY_VOID)
+                || (node->rhs->type->kind == TY_VOID)){
+                error_tok(node->pos, "invalid operands of types 'void' to binary 'operator'");
+            }
+            node->type = node->lhs->type;
+            break;
+        case ND_COND_EXPR:          // 三項演算子
+            if((node->lhs->type->kind == TY_VOID)
+                || (node->rhs->type->kind == TY_VOID)
+                || (node->cond->type->kind == TY_VOID)){
+                error_tok(node->pos, "invalid operands of types 'void' ");
+            }
             node->type = node->lhs->type;
             break;
         case ND_ADDR:               // & 演算子
+            if(node->lhs->type->kind == TY_VOID){
+                error_tok(node->pos, "void is not allowed.");
+            }
             node->type = pointer_to(node->lhs->type);
             break;
         case ND_DREF:
+            if(node->lhs->type->kind == TY_VOID){
+                error_tok(node->pos, "illegal dereferencing void.");
+            }
             if(node->lhs->type->ptr_to){
                 node->type = node->lhs->type->ptr_to;
             } else {

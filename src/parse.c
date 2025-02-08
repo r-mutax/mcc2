@@ -346,7 +346,9 @@ static Node* stmt(){
                 Ident* ident = declare(ty, sck);
                 register_ident(ident);
                 if(consume_token(TK_ASSIGN)){
-                    node->init = new_node(ND_ASSIGN, new_node_var(ident), assign());
+                    Node* var_node = new_node_var(ident);
+                    var_node->pos = ident->tok;
+                    node->init = new_node(ND_ASSIGN, var_node, assign());
                 }
             } else {
                 node->init = expr();
@@ -508,7 +510,9 @@ static Node* declaration(Type* ty, StorageClassKind sck){
         register_ident(ident);
 
         if(consume_token(TK_ASSIGN)){
-            node = new_node(ND_ASSIGN, new_node_var(ident), assign());
+            Node* var_node = new_node_var(ident);
+            var_node->pos = ident->tok;
+            node = new_node(ND_ASSIGN, var_node, assign());
         }
     }
 
@@ -1055,7 +1059,7 @@ static Node* assign(){
 
 static Node* cond_expr(){
     Node* node = logicOr();
-
+    Token* tok = get_token();
     if(consume_token(TK_QUESTION)){
         Node* cnode = new_node(ND_COND_EXPR, NULL, NULL);
         cnode->cond = node;
@@ -1063,6 +1067,7 @@ static Node* cond_expr(){
         expect_token(TK_COLON);
         cnode->rhs = cond_expr();
         node = cnode;
+        node->pos = tok;
     }
     return node;
 }
@@ -1071,8 +1076,10 @@ static Node* logicOr(){
     Node* node = logicAnd();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_PIPE_PIPE)){
             node = new_node(ND_LOGIC_OR, node, logicAnd());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1083,8 +1090,10 @@ static Node* logicAnd(){
     Node* node = bitOr();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_AND_AND)){
             node = new_node(ND_LOGIC_AND, node, bitOr());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1095,8 +1104,10 @@ static Node* bitOr(){
     Node* node = bitXor();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_PIPE)){
             node = new_node(ND_BIT_OR, node, bitXor());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1107,8 +1118,10 @@ static Node* bitXor(){
     Node* node = bitAnd();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_HAT)){
             node = new_node(ND_BIT_XOR, node, bitAnd());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1119,8 +1132,10 @@ static Node* bitAnd(){
     Node* node = equality();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_AND)){
             node = new_node(ND_BIT_AND, node, equality());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1131,10 +1146,13 @@ static Node* equality(){
     Node* node = relational();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_EQUAL)){
             node = new_node(ND_EQUAL, node, relational());
+            node->pos = tok;
         } else if(consume_token(TK_NOT_EQUAL)){
             node = new_node(ND_NOT_EQUAL, node, relational());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1144,14 +1162,19 @@ static Node* equality(){
 static Node* relational(){
     Node* node = bitShift();
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_L_ANGLE_BRACKET)){
             node = new_node(ND_LT, node, bitShift());
+            node->pos = tok;
         } else if(consume_token(TK_L_ANGLE_BRACKET_EQUAL)){
             node = new_node(ND_LE, node, bitShift());
+            node->pos = tok;
         } else if(consume_token(TK_R_ANGLE_BRACKET)){
             node = new_node(ND_LT, bitShift(), node);
+            node->pos = tok;
         } else if(consume_token(TK_R_ANGLE_BRACKET_EQUAL)){
             node = new_node(ND_LE, bitShift(), node);
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1162,10 +1185,13 @@ static Node* bitShift(){
     Node* node = add();
 
     while(true) {
+        Token* tok = get_token();
         if(consume_token(TK_L_BITSHIFT)){
             node = new_node(ND_L_BITSHIFT, node, add());
+            node->pos = tok;
         } else if(consume_token(TK_R_BITSHIFT)){
             node = new_node(ND_R_BITSHIFT, node, add());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1176,10 +1202,13 @@ static Node* add(){
     Node* node = mul();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_PLUS)){
             node = new_node(ND_ADD, node, mul());
+            node->pos = tok;
         } else if(consume_token(TK_MINUS)){
             node = new_node(ND_SUB, node, mul());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1190,12 +1219,16 @@ static Node* mul(){
     Node* node = cast();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_MUL)){
             node = new_node(ND_MUL, node, cast());
+            node->pos = tok;
         } else if(consume_token(TK_DIV)){
             node = new_node(ND_DIV, node, cast());
+            node->pos = tok;
         } else if(consume_token(TK_PERCENT)){
             node = new_node(ND_MOD, node, cast());
+            node->pos = tok;
         } else {
             break;
         }
@@ -1219,6 +1252,7 @@ static bool is_cast(){
 
 static Node* cast(){
     if(is_cast()){
+        Token* tok = get_token();
         expect_token(TK_L_PAREN);
         Type* ty = declspec(NULL);
         while(consume_token(TK_MUL)){
@@ -1230,6 +1264,7 @@ static Node* cast(){
         add_type(node);
         node = new_node(ND_CAST, node, NULL);
         node->type = ty;
+        node->pos = tok;
 
         return node;
     }
@@ -1237,22 +1272,37 @@ static Node* cast(){
 }
 
 static Node* unary(){
+    Token* tok = get_token();
     if(consume_token(TK_PLUS)){
-        return cast();
+        Node* node = cast();
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_MINUS)){
-        return new_node_sub(new_node_num(0), cast());
+        Node* node = new_node_sub(new_node_num(0), cast());
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_AND)){
-        return new_node(ND_ADDR, cast(), NULL);
+        Node* node = new_node(ND_ADDR, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_MUL)){
-        return new_node(ND_DREF, cast(), NULL);
+        Node* node =  new_node(ND_DREF, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_NOT)){
-        return new_node(ND_NOT, cast(), NULL);
+        Node* node =  new_node(ND_NOT, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_PLUS_PLUS)){
         Node* node = unary();
-        return new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+        node = new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_MINUS_MINUS)){
         Node* node = unary();
-        return new_node(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
+        node = new_node(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_SIZEOF)){
         bool is_l_paren = consume_token(TK_L_PAREN);
         Node* node = NULL;
@@ -1400,6 +1450,7 @@ static Node* primary(){
                 Node* node = new_node(ND_VAR, 0, 0);
                 node->ident = ident;
                 node->type = ident->type;
+                node->pos = ident_token;
                 return node;
             } else if(ident->kind == ID_ENUM){
                 Node* node = new_node_num(ident->val);
@@ -1409,6 +1460,7 @@ static Node* primary(){
                     Node* node = new_node(ND_FUNCCALL, 0, 0);
                     node->ident = ident;
                     node->type = ident->type;
+                    node->pos = ident_token;
                     if(!consume_token(TK_R_PAREN)){
                         Node head = {};
                         Node* nd_param = &head;
