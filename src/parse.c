@@ -1392,6 +1392,8 @@ static Node* postfix(){
 }
 
 static Node* primary(){
+    Token* pos_tok = get_token();
+
     if(consume_token(TK_L_PAREN)){
         Node* node = expr();
         expect_token(TK_R_PAREN);
@@ -1436,6 +1438,16 @@ static Node* primary(){
         rhs_node = new_node(ND_DREF, rhs_node, NULL);
 
         Node* node = new_node(ND_ASSIGN, lhs_node, rhs_node);
+        return node;
+    }
+
+    if(consume_token(TK_VA_END)){
+        Node* node = new_node(ND_NOP, 0, 0);
+        node->type = ty_void;
+        node->pos = pos_tok;
+        expect_token(TK_L_PAREN);
+        Node* arg1_node = assign();
+        expect_token(TK_R_PAREN);
         return node;
     }
 

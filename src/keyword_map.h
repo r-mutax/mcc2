@@ -41,7 +41,7 @@ static KEYWORD_MAP keyword_map[] = {
     {   "auto",         TK_AUTO     },
     {   "register",     TK_REGISTER },
     {   "__builtin_va_start",       TK_VA_START },
-    // {   "__builtin_va_end",         TK_VA_END   },
+    {   "__builtin_va_end",         TK_VA_END   },
     // {   "__builtin_va_arg",         TK_VA_ARG   },
 };
 

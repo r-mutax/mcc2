@@ -506,6 +506,13 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_EQUAL, ret, gen_expr(node->lhs), new_RegImm(0));
             return ret;
         }
+        case ND_NOP:
+        {
+            // 現状ND_NOPとするのはva_end()のみ
+            // gen_ir()まで来ている場合、演算子の対象にva_end()となっていることはない
+            // -> なので、ND_NOPを返しても問題ない。（無視されるはず）
+            return new_RegImm(0);
+        }
         default:
             break;
     }

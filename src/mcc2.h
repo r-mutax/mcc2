@@ -264,6 +264,7 @@ typedef enum NodeKind {
     ND_GOTO,
     ND_MEMBER,
     ND_CAST,
+    ND_NOP,
 } NodeKind;
 
 struct Node {
