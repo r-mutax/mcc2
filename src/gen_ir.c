@@ -4,6 +4,7 @@ static long g_label = 0;
 static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
+static Type* func_type = NULL;
 
 static void gen_extern(Scope* global_scope);
 static void gen_datas(Ident* ident);
@@ -113,6 +114,7 @@ static void gen_function(Ident* func){
         }
     }
 
+    func_type = func->type;
     Node* cur = func->funcbody;
     while(cur){
         gen_stmt(cur);
@@ -130,7 +132,21 @@ static void gen_stmt(Node* node){
     }
     switch(node->kind){
         case ND_RETURN:
-            new_IR(IR_RET, NULL, gen_expr(node->lhs), func_name_str);
+            {
+                // return (val) がある場合は評価する
+                Reg* reg = NULL;
+                if(node->lhs){
+                    reg = gen_expr(node->lhs);
+                }
+
+                // 数値を返す
+                if(func_type->kind == TY_VOID){
+                    // void型の関数の場合は値を返さない
+                    new_IR(IR_RET, NULL, NULL, func_name_str);
+                } else {
+                    new_IR(IR_RET, NULL, reg, func_name_str);
+                }
+            }
             break;
         case ND_IF:
         {

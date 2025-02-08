@@ -45,6 +45,7 @@
 */
 
 static Node* switch_node = NULL;
+static Type* cur_func_type = NULL;
 static Token* token = NULL;
 
 static void Program();
@@ -243,7 +244,7 @@ static void function(Type* func_type, StorageClassKind sck){
         }
     }
 
-    // 実レジスタ対費用の領域を確保(とりあえず30個確保する)
+    // 実レジスタ退避用の領域を確保(とりあえず30個確保する)
     Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, ty_char);
     spill_area->type = array_of(ty_char, 8 * 30);
     register_ident(spill_area);
@@ -258,6 +259,10 @@ static void function(Type* func_type, StorageClassKind sck){
         func->va_area = va_area;
     }
 
+    // 関数の戻り値の型を保持しておく
+    cur_func_type = func_type;
+
+    // 関数のbodyをパース
     expect_token(TK_L_BRACKET);
     func->funcbody = compound_stmt();
     func->stack_size = get_stack_size();
@@ -270,10 +275,30 @@ static void function(Type* func_type, StorageClassKind sck){
 static Node* stmt(){
     Token* tok = get_token();
     if(consume_token(TK_RETURN)){
-        Node* node = new_node(ND_RETURN, expr(), NULL);
-        node->pos = tok;
-        expect_token(TK_SEMICORON);
-        return node;
+        Node* node = NULL;
+
+        if(cur_func_type->kind == TY_VOID){
+            if(consume_token(TK_SEMICORON)){
+                node = new_node(ND_RETURN, NULL, NULL);
+                node->pos = tok;
+                return node;
+            } else {
+                node = expr();
+                node = new_node(ND_RETURN, node, NULL);
+                node->pos = tok;
+                expect_token(TK_SEMICORON);
+                return node;
+            }
+        } else {
+            if(consume_token(TK_SEMICORON)){
+                error_tok(tok, "return value is not found.");
+            }
+            node = expr();
+            node = new_node(ND_RETURN, node, NULL);
+            node->pos = tok;
+            expect_token(TK_SEMICORON);
+            return node;
+        }
     } else if(consume_token(TK_IF)){
         Node* node = new_node(ND_IF, NULL, NULL);
         node->pos = tok;
