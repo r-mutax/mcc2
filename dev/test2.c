@@ -1,23 +1,26 @@
-#define ASSERT(X, Y)    ((X) == (Y) ? 0 : 1)
+// #define MCC
+// #include "../src/mcc2.h"
+#ifndef _VA_LIST
+typedef __builtin_va_list va_list;
+#define _VA_LIST
+#endif
 
-extern int a;
-int b;
+int vprintf ( const char * format, va_list arg );
 
-int func(int a, int b){
-    int c = 10;
-    return a + b;
+#define va_start(ap, param) __builtin_va_start(ap, param)
+#define va_end(ap)          __builtin_va_end(ap)
+#define va_arg(ap, type)    __builtin_va_arg(ap, type)
+
+int func(char* fmt, ...){
+    va_list ap;
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    return 0;
 }
 
 int main(){
-    typedef struct {
-        int a;
-        short s;
-    } typedef_struct;
-    typedef_struct ts;
-    ts.a = 10;
-    ts.s = 20;
+    int a = 0;
 
-    unsigned char uc = 255;
-    int abc = 1000;
-    return ASSERT((char)uc, -11);
+    return func("%d %d %d %d\n", 1, 2, 3, 4);
 }

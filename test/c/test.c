@@ -18,6 +18,7 @@ int main(){
     test_preprocess();
     test_cast();
     test_function();
+    test_varg();
 
     ASSERT(test_static, 20);
 

@@ -45,6 +45,7 @@
 */
 
 static Node* switch_node = NULL;
+static Type* cur_func_type = NULL;
 static Token* token = NULL;
 
 static void Program();
@@ -106,42 +107,17 @@ bool is_label();
 Token* get_token();
 void set_token(Token* tok);
 
-
-Token unnamed_struct_token = {
-    TK_IDENT,
-    "__unnamed_struct",
-    NULL,
-    0,
-    sizeof("__unnamed_struct"),
-    NULL,
-};
-
-Token unnamed_enum_token = {
-    TK_IDENT,
-    "__unnamed_enum",
-    NULL,
-    0,
-    sizeof("__unnamed_enum"),
-    NULL,
-};
-
-Token va_arena_token = {
-    TK_IDENT,
-    "__va_area__",
-    NULL,
-    0,
-    sizeof("__va_area__"),
-    NULL,
-};
-
-Token spill_area_token = {
-    TK_IDENT,
-    "__spill_area__",
-    NULL,
-    0,
-    sizeof("__spill_area__"),
-    NULL,
-};
+// ビルトインのトークン定義
+Token unnamed_struct_token = MAKE_TOKEN(TK_IDENT, "__unnamed_struct");
+Token unnamed_enum_token = MAKE_TOKEN(TK_IDENT, "__unnamed_enum");
+Token va_arena_token = MAKE_TOKEN(TK_IDENT, "__va_area__");
+Token builtin_va_elem_token = MAKE_TOKEN(TK_IDENT, "__builtin_va_elem");
+Token spill_area_token = MAKE_TOKEN(TK_IDENT, "__spill_area__");
+Token va_elem_gp_offset_token = MAKE_TOKEN(TK_IDENT, "gp_offset");
+Token va_elem_fp_offset_token = MAKE_TOKEN(TK_IDENT, "fp_offset");
+Token va_elem_overflow_arg_area_token = MAKE_TOKEN(TK_IDENT, "overflow_arg_area");
+Token va_elem_reg_save_area_token = MAKE_TOKEN(TK_IDENT, "reg_save_area");
+Token tmp_token = MAKE_TOKEN(TK_IDENT, "__tmp__");
 
 #define VA_AREA_SIZE 24 + 8 * 6 + 8 * 8
 
@@ -233,7 +209,7 @@ static void function(Type* func_type, StorageClassKind sck){
         }
     }
 
-    // 実レジスタ対費用の領域を確保(とりあえず30個確保する)
+    // 実レジスタ退避用の領域を確保(とりあえず30個確保する)
     Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, ty_char);
     spill_area->type = array_of(ty_char, 8 * 30);
     register_ident(spill_area);
@@ -248,6 +224,10 @@ static void function(Type* func_type, StorageClassKind sck){
         func->va_area = va_area;
     }
 
+    // 関数の戻り値の型を保持しておく
+    cur_func_type = func_type;
+
+    // 関数のbodyをパース
     expect_token(TK_L_BRACKET);
     func->funcbody = compound_stmt();
     func->stack_size = get_stack_size();
@@ -260,10 +240,30 @@ static void function(Type* func_type, StorageClassKind sck){
 static Node* stmt(){
     Token* tok = get_token();
     if(consume_token(TK_RETURN)){
-        Node* node = new_node(ND_RETURN, expr(), NULL);
-        node->pos = tok;
-        expect_token(TK_SEMICORON);
-        return node;
+        Node* node = NULL;
+
+        if(cur_func_type->kind == TY_VOID){
+            if(consume_token(TK_SEMICORON)){
+                node = new_node(ND_RETURN, NULL, NULL);
+                node->pos = tok;
+                return node;
+            } else {
+                node = expr();
+                node = new_node(ND_RETURN, node, NULL);
+                node->pos = tok;
+                expect_token(TK_SEMICORON);
+                return node;
+            }
+        } else {
+            if(consume_token(TK_SEMICORON)){
+                error_tok(tok, "return value is not found.");
+            }
+            node = expr();
+            node = new_node(ND_RETURN, node, NULL);
+            node->pos = tok;
+            expect_token(TK_SEMICORON);
+            return node;
+        }
     } else if(consume_token(TK_IF)){
         Node* node = new_node(ND_IF, NULL, NULL);
         node->pos = tok;
@@ -311,7 +311,9 @@ static Node* stmt(){
                 Ident* ident = declare(ty, sck);
                 register_ident(ident);
                 if(consume_token(TK_ASSIGN)){
-                    node->init = new_node(ND_ASSIGN, new_node_var(ident), assign());
+                    Node* var_node = new_node_var(ident);
+                    var_node->pos = ident->tok;
+                    node->init = new_node(ND_ASSIGN, var_node, assign());
                 }
             } else {
                 node->init = expr();
@@ -473,7 +475,9 @@ static Node* declaration(Type* ty, StorageClassKind sck){
         register_ident(ident);
 
         if(consume_token(TK_ASSIGN)){
-            node = new_node(ND_ASSIGN, new_node_var(ident), assign());
+            Node* var_node = new_node_var(ident);
+            var_node->pos = ident->tok;
+            node = new_node(ND_ASSIGN, var_node, assign());
         }
     }
 
@@ -1020,7 +1024,7 @@ static Node* assign(){
 
 static Node* cond_expr(){
     Node* node = logicOr();
-
+    Token* tok = get_token();
     if(consume_token(TK_QUESTION)){
         Node* cnode = new_node(ND_COND_EXPR, NULL, NULL);
         cnode->cond = node;
@@ -1028,6 +1032,7 @@ static Node* cond_expr(){
         expect_token(TK_COLON);
         cnode->rhs = cond_expr();
         node = cnode;
+        node->pos = tok;
     }
     return node;
 }
@@ -1036,8 +1041,10 @@ static Node* logicOr(){
     Node* node = logicAnd();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_PIPE_PIPE)){
             node = new_node(ND_LOGIC_OR, node, logicAnd());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1048,8 +1055,10 @@ static Node* logicAnd(){
     Node* node = bitOr();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_AND_AND)){
             node = new_node(ND_LOGIC_AND, node, bitOr());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1060,8 +1069,10 @@ static Node* bitOr(){
     Node* node = bitXor();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_PIPE)){
             node = new_node(ND_BIT_OR, node, bitXor());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1072,8 +1083,10 @@ static Node* bitXor(){
     Node* node = bitAnd();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_HAT)){
             node = new_node(ND_BIT_XOR, node, bitAnd());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1084,8 +1097,10 @@ static Node* bitAnd(){
     Node* node = equality();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_AND)){
             node = new_node(ND_BIT_AND, node, equality());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1096,10 +1111,13 @@ static Node* equality(){
     Node* node = relational();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_EQUAL)){
             node = new_node(ND_EQUAL, node, relational());
+            node->pos = tok;
         } else if(consume_token(TK_NOT_EQUAL)){
             node = new_node(ND_NOT_EQUAL, node, relational());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1109,14 +1127,19 @@ static Node* equality(){
 static Node* relational(){
     Node* node = bitShift();
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_L_ANGLE_BRACKET)){
             node = new_node(ND_LT, node, bitShift());
+            node->pos = tok;
         } else if(consume_token(TK_L_ANGLE_BRACKET_EQUAL)){
             node = new_node(ND_LE, node, bitShift());
+            node->pos = tok;
         } else if(consume_token(TK_R_ANGLE_BRACKET)){
             node = new_node(ND_LT, bitShift(), node);
+            node->pos = tok;
         } else if(consume_token(TK_R_ANGLE_BRACKET_EQUAL)){
             node = new_node(ND_LE, bitShift(), node);
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1127,10 +1150,13 @@ static Node* bitShift(){
     Node* node = add();
 
     while(true) {
+        Token* tok = get_token();
         if(consume_token(TK_L_BITSHIFT)){
             node = new_node(ND_L_BITSHIFT, node, add());
+            node->pos = tok;
         } else if(consume_token(TK_R_BITSHIFT)){
             node = new_node(ND_R_BITSHIFT, node, add());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1141,10 +1167,13 @@ static Node* add(){
     Node* node = mul();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_PLUS)){
             node = new_node(ND_ADD, node, mul());
+            node->pos = tok;
         } else if(consume_token(TK_MINUS)){
             node = new_node(ND_SUB, node, mul());
+            node->pos = tok;
         } else {
             return node;
         }
@@ -1155,12 +1184,16 @@ static Node* mul(){
     Node* node = cast();
 
     while(true){
+        Token* tok = get_token();
         if(consume_token(TK_MUL)){
             node = new_node(ND_MUL, node, cast());
+            node->pos = tok;
         } else if(consume_token(TK_DIV)){
             node = new_node(ND_DIV, node, cast());
+            node->pos = tok;
         } else if(consume_token(TK_PERCENT)){
             node = new_node(ND_MOD, node, cast());
+            node->pos = tok;
         } else {
             break;
         }
@@ -1184,6 +1217,7 @@ static bool is_cast(){
 
 static Node* cast(){
     if(is_cast()){
+        Token* tok = get_token();
         expect_token(TK_L_PAREN);
         Type* ty = declspec(NULL);
         while(consume_token(TK_MUL)){
@@ -1195,6 +1229,7 @@ static Node* cast(){
         add_type(node);
         node = new_node(ND_CAST, node, NULL);
         node->type = ty;
+        node->pos = tok;
 
         return node;
     }
@@ -1202,22 +1237,37 @@ static Node* cast(){
 }
 
 static Node* unary(){
+    Token* tok = get_token();
     if(consume_token(TK_PLUS)){
-        return cast();
+        Node* node = cast();
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_MINUS)){
-        return new_node_sub(new_node_num(0), cast());
+        Node* node = new_node_sub(new_node_num(0), cast());
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_AND)){
-        return new_node(ND_ADDR, cast(), NULL);
+        Node* node = new_node(ND_ADDR, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_MUL)){
-        return new_node(ND_DREF, cast(), NULL);
+        Node* node =  new_node(ND_DREF, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_NOT)){
-        return new_node(ND_NOT, cast(), NULL);
+        Node* node =  new_node(ND_NOT, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_PLUS_PLUS)){
         Node* node = unary();
-        return new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+        node = new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_MINUS_MINUS)){
         Node* node = unary();
-        return new_node(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
+        node = new_node(ND_ASSIGN, node, new_node_sub(node, new_node_num(1)));
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_SIZEOF)){
         bool is_l_paren = consume_token(TK_L_PAREN);
         Node* node = NULL;
@@ -1307,12 +1357,15 @@ static Node* postfix(){
 }
 
 static Node* primary(){
+    Token* pos_tok = get_token();
+
     if(consume_token(TK_L_PAREN)){
         Node* node = expr();
         expect_token(TK_R_PAREN);
         return node;
     }
 
+    // 文字列リテラル
     Token* tok_str = consume_string_literal();
     if(tok_str){
         Ident* str_ident = register_string_literal(tok_str);
@@ -1322,6 +1375,98 @@ static Node* primary(){
         return node;
     }
 
+    // ビルトイン関数
+    if(consume_token(TK_VA_START)){
+        // 暗黙宣言している__va_arena__を取得
+        Ident* var_area_ident = find_ident(&va_arena_token);
+        Node* var_area_node = new_node_var(var_area_ident);
+
+        expect_token(TK_L_PAREN);
+        Node* arg1_node = assign();
+        expect_token(TK_COMMA);
+        Node* arg2_node = assign();
+        expect_token(TK_R_PAREN);
+
+        // 第１引数のポインタの参照を外す
+        Node* lhs_node = new_node(ND_DREF, arg1_node, NULL);
+
+        // __builtin_va_elem*型を取得
+        Ident* builtin_va_elem_ident = find_typedef(&builtin_va_elem_token);
+        Type* ty = builtin_va_elem_ident->type;
+        ty = pointer_to(ty);
+
+        // __va_area__を__builtin_va_elem*型にキャストする
+        Node* rhs_node = new_node(ND_CAST, var_area_node, NULL);
+        rhs_node->type = ty;
+
+        // (__builtin_va_elem*)__va_area__の参照を外す
+        rhs_node = new_node(ND_DREF, rhs_node, NULL);
+
+        Node* node = new_node(ND_ASSIGN, lhs_node, rhs_node);
+        return node;
+    }
+
+    if(consume_token(TK_VA_ARG)){
+        expect_token(TK_L_PAREN);
+        Node* arg1_node = assign();
+        expect_token(TK_COMMA);
+        if(!is_type()){
+            // ここは型を受け取るべきところ
+            error_tok(pos_tok, "expected type keyword or specific type.");
+        }
+        StorageClassKind sck = 0;
+        Type* type = declspec(NULL);
+        expect_token(TK_R_PAREN);
+
+        if(is_integer_type(type)){
+            // TODO : 引数渡ししか対応していないので、そのようにする
+
+            // gp_offsetを見つける
+            arg1_node = new_node(ND_DREF, arg1_node, NULL);
+            add_type(arg1_node);
+            Node* gp_offset_node = new_node(ND_MEMBER, arg1_node, NULL);
+            Ident* gp_offset_ident = get_member(arg1_node->type, &va_elem_gp_offset_token);
+            if(!gp_offset_ident){
+                error_tok(pos_tok, "[Internal Error] Not found gp_offset.\n");
+            }
+            gp_offset_node->type = gp_offset_ident->type;
+            gp_offset_node->val = gp_offset_ident->offset;
+
+            // reg_save_areaを見つける
+            Node* reg_save_area_node = new_node(ND_MEMBER, arg1_node, NULL);
+            Ident* reg_save_area_ident = get_member(arg1_node->type, &va_elem_reg_save_area_token);
+            if(!reg_save_area_ident){
+                error_tok(pos_tok, "[Internal Error] Not found reg_save_area.\n");
+            }
+            reg_save_area_node->type = reg_save_area_ident->type;
+            reg_save_area_node->val = reg_save_area_ident->offset;
+
+            // gp_offset+=8, *(long*)(reg_save_area + (gp_offset - 8))
+            Node* gp_offset_inc = new_node(ND_ASSIGN, gp_offset_node, new_node_add(gp_offset_node, new_node_num(8)));
+
+            Node* calc_add = new_node_add(reg_save_area_node, new_node_sub(gp_offset_node, new_node_num(8)));
+            Node* cast_adr = new_node(ND_CAST, calc_add, NULL);
+            cast_adr->type = pointer_to(ty_long);
+            Node* va_arg_node = new_node(ND_DREF, cast_adr, NULL);
+
+            Node* canma_node = new_node(ND_COMMA, gp_offset_inc, va_arg_node);
+            return canma_node;
+        } else {
+            error_tok(pos_tok, "Not implemented va_arg to float type.");
+        }
+    }
+
+    if(consume_token(TK_VA_END)){
+        Node* node = new_node(ND_NOP, 0, 0);
+        node->type = ty_void;
+        node->pos = pos_tok;
+        expect_token(TK_L_PAREN);
+        Node* arg1_node = assign();
+        expect_token(TK_R_PAREN);
+        return node;
+    }
+
+    // 変数
     Token* ident_token = consume_ident();
     if(ident_token){
         Ident* ident = find_ident(ident_token);
@@ -1332,6 +1477,7 @@ static Node* primary(){
                 Node* node = new_node(ND_VAR, 0, 0);
                 node->ident = ident;
                 node->type = ident->type;
+                node->pos = ident_token;
                 return node;
             } else if(ident->kind == ID_ENUM){
                 Node* node = new_node_num(ident->val);
@@ -1341,6 +1487,7 @@ static Node* primary(){
                     Node* node = new_node(ND_FUNCCALL, 0, 0);
                     node->ident = ident;
                     node->type = ident->type;
+                    node->pos = ident_token;
                     if(!consume_token(TK_R_PAREN)){
                         Node head = {};
                         Node* nd_param = &head;
@@ -1357,6 +1504,7 @@ static Node* primary(){
         }
     }
 
+    // 数値リテラル
     return new_node_num(expect_num());
 }
 
@@ -1387,6 +1535,7 @@ static Node* new_node_var(Ident* ident){
     Node* result = calloc(1, sizeof(Node));
     result->kind = ND_VAR;
     result->ident = ident;
+    result->type = ident->type;
 
     return result;
 }

@@ -4,6 +4,7 @@ static long g_label = 0;
 static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
+static Type* func_type = NULL;
 
 static void gen_extern(Scope* global_scope);
 static void gen_datas(Ident* ident);
@@ -48,8 +49,12 @@ static void gen_extern(Scope* global_scope){
 
     Ident* ident = global_scope->ident;
     while(ident){
-        if(!ident->is_string_literal){
+        if(ident->kind == ID_FUNC && ident->funcbody){
             new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
+        } else if(ident->kind == ID_GVAR && !ident->is_extern){
+            if(!ident->is_string_literal){
+                new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
+            }
         }
         ident = ident->next;
     }
@@ -109,6 +114,7 @@ static void gen_function(Ident* func){
         }
     }
 
+    func_type = func->type;
     Node* cur = func->funcbody;
     while(cur){
         gen_stmt(cur);
@@ -126,7 +132,21 @@ static void gen_stmt(Node* node){
     }
     switch(node->kind){
         case ND_RETURN:
-            new_IR(IR_RET, NULL, gen_expr(node->lhs), func_name_str);
+            {
+                // return (val) がある場合は評価する
+                Reg* reg = NULL;
+                if(node->lhs){
+                    reg = gen_expr(node->lhs);
+                }
+
+                // 数値を返す
+                if(func_type->kind == TY_VOID){
+                    // void型の関数の場合は値を返さない
+                    new_IR(IR_RET, NULL, NULL, func_name_str);
+                } else {
+                    new_IR(IR_RET, NULL, reg, func_name_str);
+                }
+            }
             break;
         case ND_IF:
         {
@@ -319,7 +339,9 @@ static Reg* gen_expr(Node* node){
         case ND_MEMBER:
         {
             Reg* regvar = gen_lvar(node);
-            if(node->type->kind != TY_ARRAY){
+            if(node->type->kind != TY_ARRAY
+             && node->type->kind != TY_STRUCT
+             && node->type->kind != TY_UNION){
                 Reg* reg = new_Reg();
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;
@@ -347,10 +369,16 @@ static Reg* gen_expr(Node* node){
         }
         case ND_DREF:
         {
+            Type* type = node->lhs->type;
             Reg* ret = new_Reg();
             Reg* pointer = gen_expr(node->lhs);
             pointer->size = node->lhs->type->ptr_to->size;
-            new_IR(IR_LOAD, NULL, ret, pointer);
+            if((type->ptr_to->kind != TY_STRUCT)
+                && (type->ptr_to->kind != TY_UNION)){
+                new_IR(IR_LOAD, NULL, ret, pointer);
+            } else {
+                ret = pointer;
+            }
             return ret;
         }
         case ND_COMMA:
@@ -371,6 +399,14 @@ static Reg* gen_expr(Node* node){
             // 左辺値のアドレスを取得
             if(node->lhs->type->kind == TY_ARRAY){
                 error("incompatible types in assignment to array.");
+            }
+
+            // 構造体の代入の場合
+            if((node->lhs->type->kind == TY_STRUCT)
+                ||(node->lhs->type->kind == TY_UNION)){
+                Reg* reg_lvar = gen_lvar(node->lhs);
+                new_IR(IR_COPY, reg_lvar, reg_expr, NULL);
+                return reg_lvar;
             }
             Reg* reg = new_Reg();
             Reg* reg_lvar = gen_lvar(node->lhs);
@@ -469,6 +505,13 @@ static Reg* gen_expr(Node* node){
             Reg* ret = new_Reg();
             new_IR(IR_EQUAL, ret, gen_expr(node->lhs), new_RegImm(0));
             return ret;
+        }
+        case ND_NOP:
+        {
+            // 現状ND_NOPとするのはva_end()のみ
+            // gen_ir()まで来ている場合、演算子の対象にva_end()となっていることはない
+            // -> なので、ND_NOPを返しても問題ない。（無視されるはず）
+            return new_RegImm(0);
         }
         default:
             break;

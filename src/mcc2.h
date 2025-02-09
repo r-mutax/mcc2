@@ -4,62 +4,7 @@
 // include libraries
 #ifdef MCC
 
-typedef void FILE;
-#define bool _Bool
-#define true 1
-#define false 0
-#define NULL 0
-
-typedef unsigned long   __kernel_size_t;
-typedef __kernel_size_t         size_t;
-
-// stdio.h
-#define SEEK_SET 0
-#define SEEK_END 2
-FILE *fopen(const char *filename, const char *mode);
-int fseek(FILE *stream, long int offset, int origin);
-int fclose(FILE *stream);
-size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
-long int ftell(FILE *stream);
-
-extern FILE *stdout;
-extern FILE *stderr;
-
-// #define stdout stdout
-// #define stderr stderr
-
-// stdlib.h
-void *calloc(size_t num, size_t size);
-
-// string.h
-char *strerror(int errnum);
-char *strrchr(const char *string, int c);
-size_t strlen(const char *string);
-char *strncpy(char *string1, const char *string2, size_t count);
-
-// errno.h
-extern int errno;
-
-// ctype.h
-/* excluding space */
-int isspace(int c);
-
-// stdarg.h
-typedef struct {
-    unsigned int gp_offset;
-    unsigned int fp_offset;
-    void *overflow_arg_area;
-    void *reg_save_area;
-} __va_elem;
-
-typedef __va_elem va_list[1];
-
-#define va_start(ap, last) \
-  do { *(ap) = *(__va_elem *)__va_area__; } while (0)
-
-#define va_end(ap) 
-
-int vfprintf(FILE *  __restrict__stream, const char *  __restrict__format, va_list arg_ptr);
+#include "mcc2_lib.h"
 
 #else
 #include <stdio.h>
@@ -95,6 +40,7 @@ typedef struct IF_GROUP IF_GROUP;
 typedef enum TypeKind TypeKind;
 
 extern FILE* fp;
+extern char* builtin_def;
 
 struct IncludePath {
     char* path;
@@ -192,7 +138,13 @@ typedef enum TokenKind {
     TK_AUTO,                    // auto
     TK_REGISTER,                // register
     TK_NEWLINE,                 // "\n"
-    
+
+    // builtin
+    TK_VA_START,                // va_start
+    TK_VA_END,                  // va_end
+    TK_VA_ARG,                  // va_arg
+    TK_VA_LIST,                 // va_list
+
     // preprocess
     TK_INCLUDE,                 // #include
     TK_DEFINE,                  // #define
@@ -221,6 +173,10 @@ struct Token {
     int             len;
     Token*          next;   // 次のトークン
 };
+
+// ビルドイントークン定義マクロ
+//  sizeof(const string liteal) は終端0を含めるため-1している。
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, 0, sizeof(name) - 1, NULL,}
 
 struct Macro {
     Token*     name;
@@ -312,6 +268,7 @@ typedef enum NodeKind {
     ND_GOTO,
     ND_MEMBER,
     ND_CAST,
+    ND_NOP,
 } NodeKind;
 
 struct Node {
@@ -420,6 +377,10 @@ typedef enum IRCmd{
     IR_LOAD,
         // load (null) s1 s2
         //  [s2] -> s1
+
+    IR_COPY,
+        // copy (null) s1 s2
+        //  s2 -> s1
 
     // CONTROL
     IR_RET,
@@ -646,8 +607,10 @@ Token* copy_token(Token* tok);
 Token* copy_token_list(Token* tok);
 Token* copy_token_eol(Token* tok);
 Token* get_tokens_tail(Token* tok);
+Token* get_token_before_eof(Token* tok);
 void output_token(Token* tok);
 Token* tokenize_string(char* src);
+Token* scan(char* src);
 
 // type.c
 extern Type* ty_void;

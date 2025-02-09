@@ -11,9 +11,15 @@ extern int testinc;
 #define TEST_MACRO 123
 
 static int test_static;
+#ifndef _VA_LIST
+typedef __builtin_va_list va_list;
+#define _VA_LIST
+#endif
 
 int exit(int ret);
 int printf(char* fmt, ...);
+int vprintf ( const char * format, va_list arg );
+
 
 // test function
 int test_expression();
@@ -26,3 +32,4 @@ int test_assignment();
 int test_preprocess();
 int test_cast();
 int test_function();
+int test_varg();

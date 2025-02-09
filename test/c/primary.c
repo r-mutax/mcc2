@@ -31,6 +31,18 @@ int test_primary(){
     ASSERT(val, 123lu);
     ASSERT(val, 123llu);
 
+    printf("test of struct..\n");
+    struct st_copy {
+        int a;
+        int b;
+    } st1;
+    struct st_copy st2;
+    st1.a = 1;
+    st1.b = 2;
+    st2 = st1;
+    ASSERT(st2.a, 1);
+    ASSERT(st2.b, 2);
+
     return 0;
 }
 
