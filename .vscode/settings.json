@@ -6,6 +6,14 @@
         "array": "c",
         "string_view": "c",
         "initializer_list": "c",
-        "utility": "c"
+        "utility": "c",
+        "mcc2.h": "c",
+        "testinc.h": "c",
+        "mcc2_lib.h": "c",
+        "functional": "c",
+        "istream": "c",
+        "ostream": "c",
+        "tuple": "c",
+        "type_traits": "c"
     }
 }

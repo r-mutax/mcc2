@@ -174,6 +174,10 @@ struct Token {
     Token*          next;   // 次のトークン
 };
 
+// ビルドイントークン定義マクロ
+//  sizeof(const string liteal) は終端0を含めるため-1している。
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, 0, sizeof(name) - 1, NULL,}
+
 struct Macro {
     Token*     name;
     Token*     value;

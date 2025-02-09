@@ -108,51 +108,16 @@ Token* get_token();
 void set_token(Token* tok);
 
 // ビルトインのトークン定義
-//  sizeof(const string liteal) は終端0を含めるため-1している。
-Token unnamed_struct_token = {
-    TK_IDENT,
-    "__unnamed_struct",
-    NULL,
-    0,
-    sizeof("__unnamed_struct") - 1,
-    NULL,
-};
-
-Token unnamed_enum_token = {
-    TK_IDENT,
-    "__unnamed_enum",
-    NULL,
-    0,
-    sizeof("__unnamed_enum") - 1,
-    NULL,
-};
-
-Token va_arena_token = {
-    TK_IDENT,
-    "__va_area__",
-    NULL,
-    0,
-    sizeof("__va_area__") - 1,
-    NULL,
-};
-
-Token builtin_va_elem_token = {
-    TK_IDENT,
-    "__builtin_va_elem",
-    NULL,
-    0,
-    sizeof("__builtin_va_elem") - 1,
-    NULL,
-};
-
-Token spill_area_token = {
-    TK_IDENT,
-    "__spill_area__",
-    NULL,
-    0,
-    sizeof("__spill_area__") - 1,
-    NULL,
-};
+Token unnamed_struct_token = MAKE_TOKEN(TK_IDENT, "__unnamed_struct");
+Token unnamed_enum_token = MAKE_TOKEN(TK_IDENT, "__unnamed_enum");
+Token va_arena_token = MAKE_TOKEN(TK_IDENT, "__va_area__");
+Token builtin_va_elem_token = MAKE_TOKEN(TK_IDENT, "__builtin_va_elem");
+Token spill_area_token = MAKE_TOKEN(TK_IDENT, "__spill_area__");
+Token va_elem_gp_offset_token = MAKE_TOKEN(TK_IDENT, "gp_offset");
+Token va_elem_fp_offset_token = MAKE_TOKEN(TK_IDENT, "fp_offset");
+Token va_elem_overflow_arg_area_token = MAKE_TOKEN(TK_IDENT, "overflow_arg_area");
+Token va_elem_reg_save_area_token = MAKE_TOKEN(TK_IDENT, "reg_save_area");
+Token tmp_token = MAKE_TOKEN(TK_IDENT, "__tmp__");
 
 #define VA_AREA_SIZE 24 + 8 * 6 + 8 * 8
 
@@ -1439,6 +1404,56 @@ static Node* primary(){
 
         Node* node = new_node(ND_ASSIGN, lhs_node, rhs_node);
         return node;
+    }
+
+    if(consume_token(TK_VA_ARG)){
+        expect_token(TK_L_PAREN);
+        Node* arg1_node = assign();
+        expect_token(TK_COMMA);
+        if(!is_type()){
+            // ここは型を受け取るべきところ
+            error_tok(pos_tok, "expected type keyword or specific type.");
+        }
+        StorageClassKind sck = 0;
+        Type* type = declspec(NULL);
+        expect_token(TK_R_PAREN);
+
+        if(is_integer_type(type)){
+            // TODO : 引数渡ししか対応していないので、そのようにする
+
+            // gp_offsetを見つける
+            arg1_node = new_node(ND_DREF, arg1_node, NULL);
+            add_type(arg1_node);
+            Node* gp_offset_node = new_node(ND_MEMBER, arg1_node, NULL);
+            Ident* gp_offset_ident = get_member(arg1_node->type, &va_elem_gp_offset_token);
+            if(!gp_offset_ident){
+                error_tok(pos_tok, "[Internal Error] Not found gp_offset.\n");
+            }
+            gp_offset_node->type = gp_offset_ident->type;
+            gp_offset_node->val = gp_offset_ident->offset;
+
+            // reg_save_areaを見つける
+            Node* reg_save_area_node = new_node(ND_MEMBER, arg1_node, NULL);
+            Ident* reg_save_area_ident = get_member(arg1_node->type, &va_elem_reg_save_area_token);
+            if(!reg_save_area_ident){
+                error_tok(pos_tok, "[Internal Error] Not found reg_save_area.\n");
+            }
+            reg_save_area_node->type = reg_save_area_ident->type;
+            reg_save_area_node->val = reg_save_area_ident->offset;
+
+            // gp_offset+=8, *(long*)(reg_save_area + (gp_offset - 8))
+            Node* gp_offset_inc = new_node(ND_ASSIGN, gp_offset_node, new_node_add(gp_offset_node, new_node_num(8)));
+
+            Node* calc_add = new_node_add(reg_save_area_node, new_node_sub(gp_offset_node, new_node_num(8)));
+            Node* cast_adr = new_node(ND_CAST, calc_add, NULL);
+            cast_adr->type = pointer_to(ty_long);
+            Node* va_arg_node = new_node(ND_DREF, cast_adr, NULL);
+
+            Node* canma_node = new_node(ND_COMMA, gp_offset_inc, va_arg_node);
+            return canma_node;
+        } else {
+            error_tok(pos_tok, "Not implemented va_arg to float type.");
+        }
     }
 
     if(consume_token(TK_VA_END)){
