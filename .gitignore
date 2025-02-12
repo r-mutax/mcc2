@@ -7,3 +7,4 @@ test.exe
 test/c/*.o
 test/c/*.d
 test/c/*.s
+selfhost/*

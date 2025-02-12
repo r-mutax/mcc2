@@ -96,6 +96,8 @@ void add_type(Node* node){
                 || (node->rhs->type->kind == TY_VOID)){
                 error_tok(node->pos, "invalid operands of types 'void' to binary 'operator'");
             }
+        case ND_LT:
+        case ND_LE:
         case ND_NUM:
         case ND_EQUAL:              // 等価　（1 or 0）
         case ND_NOT_EQUAL:          // 非等価（1 or 0）
@@ -125,10 +127,8 @@ void add_type(Node* node){
             node->type = node->lhs->type;
             break;
         case ND_COND_EXPR:          // 三項演算子
-            if((node->lhs->type->kind == TY_VOID)
-                || (node->rhs->type->kind == TY_VOID)
-                || (node->cond->type->kind == TY_VOID)){
-                error_tok(node->pos, "invalid operands of types 'void' ");
+            if((node->cond->type->kind == TY_VOID)){
+                error_tok(node->pos, "invalid operands of types 'void' in cond");
             }
             node->type = node->lhs->type;
             break;

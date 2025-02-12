@@ -17,7 +17,7 @@ void enable_debug_mode(const char *mode) {
 
 char* get_filename(char* path){
     char* yen_pos = strrchr(path, '/');
-    char* buf = calloc(1, sizeof(strlen(path) + (yen_pos - path) - 1));
+    char* buf = calloc(1, strlen(path) + (yen_pos - path) - 1);
     strcpy(buf, yen_pos + 1);
     return buf;
 }

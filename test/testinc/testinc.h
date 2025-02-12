@@ -1,4 +1,7 @@
 #pragma once
+
+#include "../../src/mcc2_lib.h"
+
 #ifdef TESTINC_H
 #define DOUBLE_INCLUDE 1
 #endif
@@ -16,7 +19,6 @@ typedef __builtin_va_list va_list;
 #define _VA_LIST
 #endif
 
-int exit(int ret);
 int printf(char* fmt, ...);
 int vprintf ( const char * format, va_list arg );
 

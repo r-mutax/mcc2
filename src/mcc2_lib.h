@@ -15,6 +15,7 @@ typedef __kernel_size_t         size_t;
 FILE *fopen(const char *filename, const char *mode);
 int fseek(FILE *stream, long int offset, int origin);
 int fclose(FILE *stream);
+int fprintf(FILE *stream, const char *fmt, ...);
 size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
 long int ftell(FILE *stream);
 
@@ -26,12 +27,16 @@ extern FILE *stderr;
 
 // stdlib.h
 void *calloc(size_t num, size_t size);
+void exit(int status);
 
 // string.h
 char *strerror(int errnum);
 char *strrchr(const char *string, int c);
 size_t strlen(const char *string);
 char *strncpy(char *string1, const char *string2, size_t count);
+int strcmp(const char *string1, const char *string2);
+char *strcpy(char *string1, const char *string2);
+void *memcpy(void *dest, const void *src, size_t count);
 
 // errno.h
 extern int errno;
@@ -52,3 +57,5 @@ typedef __builtin_va_list va_list;
 
 int vfprintf(FILE *  __restrict__stream, const char *  __restrict__format, va_list arg_ptr);
 
+// getopt_core.
+// extern int getopt (int ___argc, char *const *___argv, const char *__shortopts);
