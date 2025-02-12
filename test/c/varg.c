@@ -1,5 +1,4 @@
 #include "testinc.h"
-#include "mcc2_lib.h"
 
 int vafunc(int a, ...){
     va_list ap;

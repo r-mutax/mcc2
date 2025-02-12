@@ -34,6 +34,13 @@ tmp: mcc2
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
+m2m: mcc2
+	./mcc2 -c ./src/error.c -d PREDEFINED_MACRO -o ./selfhost/error.s -i ./src -x plvar
+	cc -c -o ./selfhost/error.o -no-pie ./selfhost/error.s -lc -MD
+	./mcc2 -c ./src/file.c -d PREDEFINED_MACRO -o ./selfhost/file.s -i ./src -x plvar
+	cc -c -o ./selfhost/file.o -no-pie ./selfhost/file.s -lc -MD
+	cc -o ./selfhost/mcc2t $(OBJS) $(LDFLAGS)
+
 clean:
 	rm -f mcc2 src/*.o *~ tmp* src/*.d test/c/*.o test.exe test/c/*.s
 
