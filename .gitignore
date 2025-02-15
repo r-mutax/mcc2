@@ -10,3 +10,6 @@ test/c/*.s
 selfhost/*.o
 selfhost/*.s
 selfhost/mcc2
+selfhost/test/c/*.o
+selfhost/test/c/*.s
+selfhost/mcc2t

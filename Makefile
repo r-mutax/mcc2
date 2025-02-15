@@ -5,6 +5,7 @@ DEPS=$(SRCS:.c=.d)
 
 TESTS=$(wildcard ./test/c/*.c)
 TEST_OBJS=$(TESTS:.c=.o)
+TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
 
 mcc2: $(OBJS)
 	$(CC) -o mcc2 $(OBJS) $(LDFLAGS)
@@ -27,21 +28,30 @@ test2: mcc2
 	cc -o ./dev/tmp -no-pie tmp.s -lc
 	./dev/tmp
 
-test4: mcc2
-	./mcc2 -c ./test/test2.c -o ./tmp.s -d PREDEFINED_MACRO -E
-
 tmp: mcc2
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
-m2m: mcc2
+./selfhost/mcc2t: mcc2
 	./mcc2 -c ./src/error.c -d PREDEFINED_MACRO -o ./selfhost/error.s -i ./src -x plvar
 	cc -c -o ./selfhost/error.o -no-pie ./selfhost/error.s -lc -MD
+
 	./mcc2 -c ./src/file.c -d PREDEFINED_MACRO -o ./selfhost/file.s -i ./src -x plvar
 	cc -c -o ./selfhost/file.o -no-pie ./selfhost/file.s -lc -MD
+	
 	cc -o ./selfhost/mcc2t $(OBJS) $(LDFLAGS)
 
-clean:
-	rm -f mcc2 src/*.o *~ tmp* src/*.d test/c/*.o test.exe test/c/*.s
+self: ./selfhost/mcc2t
 
-.PHONY: test clean tmp test2 test3 test4
+./selfhost/test/c/%.o: test/c/%.c
+	./selfhost/mcc2t -c $< -o $@.s -i ./test/testinc -i ./src -d PREDEFINED_MACRO -x plvar
+	cc -c -o $@ $@.s -static
+
+selft: self $(TEST_SELF_OBJS)
+	cc -o test.exe $(TEST_SELF_OBJS)
+	./test.exe
+
+clean:
+	rm -f mcc2 src/*.o *~ tmp* src/*.d test/c/*.o test.exe test/c/*.s ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2
+
+.PHONY: test clean tmp test2 test3 test4 self selft
