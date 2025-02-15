@@ -7,4 +7,9 @@ test.exe
 test/c/*.o
 test/c/*.d
 test/c/*.s
-selfhost/*
+selfhost/*.o
+selfhost/*.s
+selfhost/mcc2
+selfhost/test/c/*.o
+selfhost/test/c/*.s
+selfhost/mcc2t
