@@ -186,6 +186,22 @@ Token* preprocess(Token* token){
     if(!is_preprocess)
         head.next = delete_space_placeholder(head.next);
 
+    // 隣接するstring literalを連結する
+    Token* cur2 = head.next;
+    while(cur2){
+        if(cur2->kind == TK_STRING_LITERAL){
+            Token* next = next_token(cur2);
+            if(next && next->kind == TK_STRING_LITERAL){
+                cur2->len += next->len;
+                cur2->pos = malloc(cur2->len);
+                memcpy(cur2->pos + cur2->len - next->len, next->pos, next->len);
+                cur2->next = next->next;
+                continue;
+            }
+        }
+        cur2 = cur2->next;
+    }
+
     return head.next;
 }
 
@@ -219,6 +235,8 @@ static Token* delete_space_placeholder(Token* token){
         if(target->kind == TK_SPACE){
             cur->next = target->next;
         } else if(target->kind == TK_PLACE_HOLDER){
+            cur->next = target->next;
+        } else if(target->kind == TK_NEWLINE){
             cur->next = target->next;
         } else {
             cur = cur->next;

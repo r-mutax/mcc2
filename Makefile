@@ -33,6 +33,9 @@ tmp: mcc2
 	./tmp
 
 ./selfhost/mcc2t: mcc2
+	./mcc2 -c ./src/builtin_def.c -d PREDEFINED_MACRO -o ./selfhost/builtin_def.s -i ./src -x plvar
+	cc -c -o ./selfhost/builtin_def.o -no-pie ./selfhost/builtin_def.s -lc -MD
+
 	./mcc2 -c ./src/error.c -d PREDEFINED_MACRO -o ./selfhost/error.s -i ./src -x plvar
 	cc -c -o ./selfhost/error.o -no-pie ./selfhost/error.s -lc -MD
 
