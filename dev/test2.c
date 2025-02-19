@@ -5,6 +5,7 @@ typedef __builtin_va_list va_list;
 #define _VA_LIST
 #endif
 
+int printf(const char * format, ...);
 int vprintf ( const char * format, va_list arg );
 
 #define va_start(ap, param) __builtin_va_start(ap, param)
@@ -21,6 +22,9 @@ int func(char* fmt, ...){
 
 int main(){
     int a = 0;
+    char* p = "string"
+    " string";
+    printf("%s\n", p);
 
     return func("%d %d %d %d\n", 1, 2, 3, 4);
 }
