@@ -90,6 +90,12 @@ void add_type(Node* node){
 
 
     switch(node->kind){
+        case ND_NOT:
+            if(node->lhs->type->kind == TY_VOID){
+                error_tok(node->pos, "invalid operands of types 'void' to unary 'operator'");
+            }
+            node->type = ty_int;
+            break;
         case ND_LOGIC_OR:           // 論理和（1 or 0）
         case ND_LOGIC_AND:          // 論理積（1 or 0）
             if((node->lhs->type->kind == TY_VOID)
