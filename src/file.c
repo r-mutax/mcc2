@@ -10,10 +10,10 @@ SrcFile* read_file(const char* path){
     }
 
     if (fseek(fp, 0, SEEK_END) == -1)
-        error("%s: fseek: %s", path, strerror(errno));
+        error("%s: fseek: %s", path, 0 /* strerror(errno)*/);
     size_t size = ftell(fp);
     if (fseek(fp, 0, SEEK_SET) == -1)
-        error("%s: fseek: %s", path, strerror(errno));
+        error("%s: fseek: %s", path, 0 /* strerror(errno)*/);
 
     char *buf = calloc(1, size + 2);
     fread(buf, size, 1, fp);

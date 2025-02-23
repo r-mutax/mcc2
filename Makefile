@@ -1,6 +1,7 @@
 CFLAGS=-std=c11 -g -static
 SRCS=$(wildcard ./src/*.c)
 OBJS=$(SRCS:.c=.o)
+SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
 DEPS=$(SRCS:.c=.d)
 
 TESTS=$(wildcard ./test/c/*.c)
@@ -43,12 +44,23 @@ tmp: mcc2
 	cc -c -o ./selfhost/file.o -no-pie ./selfhost/file.s -lc -MD
 
 	./mcc2 -c ./src/gen_ir.c -d PREDEFINED_MACRO -o ./selfhost/get_ir.s -i ./src -x plvar
-	cc -c -o ./selfhost/get_ir.o -no-pie ./selfhost/get_ir.s -lc -MD
+	cc -c -o ./selfhost/gen_ir.o -no-pie ./selfhost/get_ir.s -lc -MD
 
 	./mcc2 -c ./src/semantics.c -d PREDEFINED_MACRO -o ./selfhost/semantics.s -i ./src -x plvar
 	cc -c -o ./selfhost/semantics.o -no-pie ./selfhost/semantics.s -lc -MD
 
-	cc -o ./selfhost/mcc2t $(OBJS) $(LDFLAGS)
+	cp ./src/gen_x86_64.o ./selfhost/gen_x86_64.o
+	cp ./src/main.o ./selfhost/main.o
+	cp ./src/parse.o ./selfhost/parse.o
+	cp ./src/tokenizer.o ./selfhost/tokenizer.o
+	cp ./src/type.o ./selfhost/type.o
+	cp ./src/ident.o ./selfhost/ident.o
+	cp ./src/utility.o ./selfhost/utility.o
+	cp ./src/preprocess.o ./selfhost/preprocess.o
+	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
+
+
+	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)
 
 self: ./selfhost/mcc2t
 
