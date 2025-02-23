@@ -215,6 +215,7 @@ Token* scan(char* src){
                     }
                     cur = new_token(TK_STRING_LITERAL, cur, start, 0);
                     cur->len = p - start;
+                    cur->str = strnewcpyn(start, cur->len);
                     p++;
                 }
                 break;
@@ -384,6 +385,12 @@ bool is_equal_token(Token* lhs, Token* rhs){
 char* get_token_string(Token* tok){
     char* str = calloc(1, sizeof(char) * tok->len + 1);
     memcpy(str, tok->pos, tok->len);
+    return str;
+}
+
+char* get_token_string_literal(Token* tok){
+    char* str = calloc(1, sizeof(char) * tok->len + 1);
+    memcpy(str, tok->str, tok->len);
     return str;
 }
 

@@ -169,6 +169,7 @@ typedef enum TokenKind {
 struct Token {
     TokenKind       kind;   // トークンの種類
     char*           pos;    // 位置
+    char*           str;    // const stringの中身
     SrcFile*        file;   // ファイル
     unsigned long   val;
     int             len;
@@ -177,7 +178,7 @@ struct Token {
 
 // ビルドイントークン定義マクロ
 //  sizeof(const string liteal) は終端0を含めるため-1している。
-#define MAKE_TOKEN(kind, name)    { kind, name, NULL, 0, sizeof(name) - 1, NULL,}
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, sizeof(name) - 1, NULL,}
 
 struct Macro {
     Token*     name;
@@ -605,6 +606,7 @@ void semantics();
 Token* tokenize(char* path);
 bool is_equal_token(Token* lhs, Token* rhs);
 char* get_token_string(Token* tok);
+char* get_token_string_literal(Token* tok);
 Token* next_newline(Token* tok);
 Token* next_token(Token* tok);
 Token* skip_to_next(Token* tok, TokenKind kind);

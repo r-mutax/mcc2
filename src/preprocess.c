@@ -193,8 +193,8 @@ Token* preprocess(Token* token){
             Token* next = next_token(cur2);
             if(next && next->kind == TK_STRING_LITERAL){
                 cur2->len += next->len;
-                cur2->pos = malloc(cur2->len);
-                memcpy(cur2->pos + cur2->len - next->len, next->pos, next->len);
+                cur2->str = realloc(cur2->str, cur2->len);
+                memcpy(cur2->str + cur2->len - next->len, next->str, next->len);
                 cur2->next = next->next;
                 continue;
             }

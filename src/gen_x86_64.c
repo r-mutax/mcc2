@@ -499,7 +499,7 @@ static void convert_ir2x86asm(IR* ir){
                 if(ident->is_string_literal){
                     print("  .data\n");
                     print("%s:\n", ident->name);
-                    print("  .string \"%s\"\n", get_token_string(ident->tok));
+                    print("  .string \"%s\"\n", get_token_string_literal(ident->tok));
                 } else if(ident->is_static) {
                     print("  .bss\n");
                     print(".L%s:\n", ir->s1->ident->name);
