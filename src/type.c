@@ -1,15 +1,15 @@
 #include "mcc2.h"
 
-Type* ty_void;
-Type* ty_bool;
-Type* ty_char;
-Type* ty_int;
-Type* ty_short;
-Type* ty_long;
-Type* ty_uchar;
-Type* ty_ushort;
-Type* ty_uint;
-Type* ty_ulong;
+SimpleType* ty_void;
+SimpleType* ty_bool;
+SimpleType* ty_char;
+SimpleType* ty_int;
+SimpleType* ty_short;
+SimpleType* ty_long;
+SimpleType* ty_uchar;
+SimpleType* ty_ushort;
+SimpleType* ty_uint;
+SimpleType* ty_ulong;
 
 
 void ty_init(){
@@ -20,7 +20,7 @@ void ty_init(){
     ty_short = new_type(TY_INT, 2);
     ty_int = new_type(TY_INT, 4);
     ty_long = new_type(TY_INT, 8);
-    
+
     ty_uchar = new_type(TY_INT, 1);
     ty_uchar->is_unsigned = 1;
     ty_ushort = new_type(TY_INT, 2);
@@ -31,40 +31,33 @@ void ty_init(){
     ty_ulong->is_unsigned = 1;
 }
 
-Type* copy_type(Type* type){
-    Type* new_type = calloc(1, sizeof(Type));
-    memcpy(new_type, type, sizeof(Type));
-    return new_type;
-
-}
-
-Type* pointer_to(Type* base){
-    Type* type = new_type(TY_POINTER, 8);
+QualType* pointer_to(QualType* base){
+    SimpleType* type = new_type(TY_POINTER, 8);
     type->ptr_to = base;
     type->is_unsigned = 1;
-    return type;
+    return make_qual_type(type);
 }
 
-Type* array_of(Type* base, int len){
-    Type* type = new_type(TY_ARRAY, 8);
+QualType* array_of(QualType* base, int len){
+    SimpleType* type = new_type(TY_ARRAY, 8);
     type->ptr_to = base;
-    type->size = base->size;
+    type->size = get_qtype_size(base);
     type->array_len = len;
-    return type;
+    return make_qual_type(type);
 }
 
-Type* new_type(TypeKind kind, int size){
-    Type* type = calloc(1, sizeof(Type));
+SimpleType* new_type(TypeKind kind, int size){
+    SimpleType* type = calloc(1, sizeof(SimpleType));
     type->kind = kind;
     type->size = size;
     return type;
 }
 
-Type* register_typedef(Ident* ident, Type* ty){
-    ident->type = ty;
+void register_typedef(Ident* ident, QualType* qty){
+    ident->qtype = qty;
     ident->kind = ID_TYPE;
     register_ident(ident);
-    return ty;
+    return;
 }
 
 void add_type(Node* node){
@@ -74,7 +67,7 @@ void add_type(Node* node){
 
     add_type(node->params);
 
-    if(node->type){
+    if(node->qtype){
         return;
     }
     add_type(node->lhs);
@@ -91,15 +84,15 @@ void add_type(Node* node){
 
     switch(node->kind){
         case ND_NOT:
-            if(node->lhs->type->kind == TY_VOID){
+            if(get_qtype_kind(node->lhs->qtype) == TY_VOID){
                 error_tok(node->pos, "invalid operands of types 'void' to unary 'operator'");
             }
-            node->type = ty_int;
+            node->qtype = make_qual_type(ty_int);
             break;
         case ND_LOGIC_OR:           // 論理和（1 or 0）
         case ND_LOGIC_AND:          // 論理積（1 or 0）
-            if((node->lhs->type->kind == TY_VOID)
-                || (node->rhs->type->kind == TY_VOID)){
+            if((get_qtype_kind(node->lhs->qtype) == TY_VOID)
+                || (get_qtype_kind(node->rhs->qtype) == TY_VOID)){
                 error_tok(node->pos, "invalid operands of types 'void' to binary 'operator'");
             }
         case ND_LT:
@@ -107,13 +100,13 @@ void add_type(Node* node){
         case ND_NUM:
         case ND_EQUAL:              // 等価　（1 or 0）
         case ND_NOT_EQUAL:          // 非等価（1 or 0）
-            if(node->type && node->type->kind == TY_VOID){
+            if(node->qtype && get_qtype_kind(node->qtype) == TY_VOID){
                 error_tok(node->pos, "void is not allowed.");
             }
-            node->type = ty_int;
+            node->qtype = make_qual_type(ty_int);
             break;
         case ND_ASSIGN:             // 代入
-            if(node->lhs->type->kind == TY_VOID){
+            if(get_qtype_kind(node->lhs->qtype) == TY_VOID){
                 error_tok(node->lhs->pos, "variable or field declared void");
             }
         case ND_ADD:                // 足し算
@@ -126,40 +119,42 @@ void add_type(Node* node){
         case ND_BIT_OR:             // bit論理和
         case ND_L_BITSHIFT:         // 左bitシフト
         case ND_R_BITSHIFT:         // 右bitシフト
-            if((node->lhs->type->kind == TY_VOID)
-                || (node->rhs->type->kind == TY_VOID)){
+            if((get_qtype_kind(node->lhs->qtype) == TY_VOID)
+                || (get_qtype_kind(node->rhs->qtype) == TY_VOID)){
                 error_tok(node->pos, "invalid operands of types 'void' to binary 'operator'");
             }
-            node->type = node->lhs->type;
+            node->qtype = node->lhs->qtype;
             break;
         case ND_COND_EXPR:          // 三項演算子
-            if((node->cond->type->kind == TY_VOID)){
+            if((get_qtype_kind(node->cond->qtype) == TY_VOID)){
                 error_tok(node->pos, "invalid operands of types 'void' in cond");
             }
-            node->type = node->lhs->type;
+            node->qtype = node->lhs->qtype;
             break;
         case ND_ADDR:               // & 演算子
-            if(node->lhs->type->kind == TY_VOID){
-                error_tok(node->pos, "void is not allowed.");
+            {
+                if(get_qtype_kind(node->lhs->qtype) == TY_VOID){
+                    error_tok(node->pos, "void is not allowed.");
+                }
+                node->qtype = pointer_to(node->lhs->qtype);
+                break;
             }
-            node->type = pointer_to(node->lhs->type);
-            break;
         case ND_DREF:
-            if(node->lhs->type->kind == TY_VOID){
+            if(get_qtype_kind(node->lhs->qtype) == TY_VOID){
                 error_tok(node->pos, "illegal dereferencing void.");
             }
-            if(node->lhs->type->ptr_to){
-                node->type = node->lhs->type->ptr_to;
+            if(get_qtype_ptr_to(node->lhs->qtype)){
+                node->qtype = get_qtype_ptr_to(node->lhs->qtype);
             } else {
-                node->type = ty_int;
+                node->qtype = make_qual_type(ty_int);
             }
             break;
         case ND_FUNCCALL:           // 関数呼び出し（parseで設定済)
         case ND_VAR:               // 変数
-            node->type = node->ident->type;
+            node->qtype = node->ident->qtype;
             break;
         case ND_COMMA:
-            node->type = node->lhs->type;
+            node->qtype = node->lhs->qtype;
             break;
 
         // 文 -> 文は評価しても値を返さない＝型がない
@@ -173,7 +168,9 @@ void add_type(Node* node){
     }
 }
 
-bool equal_type(Type* ty1, Type* ty2){
+bool equal_type(QualType* qty1, QualType* qty2){
+    SimpleType* ty1 = qty1->type;
+    SimpleType* ty2 = qty2->type;
     if(ty1->size != ty2->size){
         return false;
     }
@@ -192,7 +189,7 @@ bool equal_type(Type* ty1, Type* ty2){
     return true;
 }
 
-Ident* get_member(Type* type, Token* tok){
+Ident* get_member(SimpleType* type, Token* tok){
     for(Member* member = type->member; member; member =member->next){
         if(is_equal_token(member->ident->tok, tok)){
             return member->ident;
@@ -201,10 +198,39 @@ Ident* get_member(Type* type, Token* tok){
     return NULL;
 }
 
-bool is_integer_type(Type* type){
-    TypeKind kind = type->kind;
+bool is_integer_type(QualType* qty){
+    TypeKind kind = get_qtype_kind(qty);
 
     if(kind == TY_INT || kind == TY_ENUM || kind == TY_BOOL || kind == TY_POINTER){
         return true;
     }
+}
+
+// ---------------------------------------
+// QualType Helper Function
+// ---------------------------------------
+QualType* make_qual_type(SimpleType* type){
+    QualType* qty = calloc(1, sizeof(QualType));
+    qty->type = type;
+    return qty;
+}
+
+int get_qtype_size(QualType* qty){
+    return qty->type->size;
+}
+
+TypeKind get_qtype_kind(QualType* qty){
+    return qty->type->kind;
+}
+
+QualType* get_qtype_ptr_to(QualType* qty){
+    return qty->type->ptr_to;
+}
+
+int get_qtype_is_unsigned(QualType* qty){
+    return qty->type->is_unsigned;
+}
+
+int get_qtype_array_len(QualType* qty){
+    return qty->type->array_len;
 }

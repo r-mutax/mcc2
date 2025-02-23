@@ -45,21 +45,21 @@
 */
 
 static Node* switch_node = NULL;
-static Type* cur_func_type = NULL;
+static QualType* cur_func_type = NULL;
 static Token* token = NULL;
 
 static void Program();
-static void function(Type* ty, StorageClassKind sck);
+static void function(QualType* ty, StorageClassKind sck);
 static Node* stmt();
 static Node* compound_stmt();
-static Node* declaration(Type* ty, StorageClassKind sck);
-static Ident* declare(Type* ty, StorageClassKind sck);
-static Type* declspec(StorageClassKind* sck);
+static Node* declaration(QualType* ty, StorageClassKind sck);
+static Ident* declare(QualType* ty, StorageClassKind sck);
+static QualType* declspec(StorageClassKind* sck);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
 static Member* struct_or_union_member();
-static Type* struct_or_union_spec(bool is_union);
-static Type* enum_spec();
+static SimpleType* struct_or_union_spec(bool is_union);
+static SimpleType* enum_spec();
 static Member* enum_member();
 static Node* exchange_constant_expr(Node* expr);
 static Node* expr();
@@ -130,23 +130,23 @@ void parse(Token* tok){
 void Program(){
     while(!is_eof()){
         StorageClassKind sck = SCK_NONE;
-        Type* ty = declspec(&sck);
+        QualType* qty = declspec(&sck);
 
         if(consume_token(TK_SEMICORON)){
             continue;
         }
 
         if(is_function()){
-            function(ty, sck);
+            function(qty, sck);
         } else {
-            declaration(ty, sck);
+            declaration(qty, sck);
         }
     }
 
     return;
 }
 
-static void function(Type* func_type, StorageClassKind sck){
+static void function(QualType* func_type, StorageClassKind sck){
 
     while(consume_token(TK_MUL)){
         func_type = pointer_to(func_type);
@@ -165,7 +165,7 @@ static void function(Type* func_type, StorageClassKind sck){
         func = declare_ident(tok, ID_FUNC, func_type);
     } else {
         // ある場合は戻り値型がconflictしてないかチェック
-        if(!equal_type(func_type, func->type)){
+        if(!equal_type(func_type, func->qtype)){
             error_tok(tok, "conflict definition type.");
         }
         has_forward_def = true;
@@ -184,8 +184,8 @@ static void function(Type* func_type, StorageClassKind sck){
                 break;
             } else {
                 StorageClassKind sck = 0;
-                Type* ty = declspec(&sck);
-                Ident* ident = declare(ty, sck);
+                QualType* qty = declspec(&sck);
+                Ident* ident = declare(qty, sck);
                 register_ident(ident);
                 Parameter* param = calloc(1, sizeof(Parameter));
                 param->ident = ident;
@@ -210,15 +210,15 @@ static void function(Type* func_type, StorageClassKind sck){
     }
 
     // 実レジスタ退避用の領域を確保(とりあえず30個確保する)
-    Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, ty_char);
-    spill_area->type = array_of(ty_char, 8 * 30);
+    Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, make_qual_type(ty_char));
+    spill_area->qtype = array_of(make_qual_type(ty_char), 8 * 30);
     register_ident(spill_area);
 
     // ここまで来たら関数の定義
     // 可変長引数ありの関数の場合は、__va_area__を宣言
     if(func->is_var_params){
-        Ident* va_area = make_ident(&va_arena_token, ID_LVAR, ty_char);
-        va_area->type = array_of(ty_char, VA_AREA_SIZE);
+        Ident* va_area = make_ident(&va_arena_token, ID_LVAR, make_qual_type(ty_char));
+        va_area->qtype = array_of(make_qual_type(ty_char), VA_AREA_SIZE);
         register_ident(va_area);
 
         func->va_area = va_area;
@@ -242,7 +242,7 @@ static Node* stmt(){
     if(consume_token(TK_RETURN)){
         Node* node = NULL;
 
-        if(cur_func_type->kind == TY_VOID){
+        if(get_qtype_kind(cur_func_type) == TY_VOID){
             if(consume_token(TK_SEMICORON)){
                 node = new_node(ND_RETURN, NULL, NULL);
                 node->pos = tok;
@@ -307,8 +307,8 @@ static Node* stmt(){
         } else {
             if(is_type()){
                 StorageClassKind sck = 0;
-                Type* ty = declspec(&sck);
-                Ident* ident = declare(ty, sck);
+                QualType* qty = declspec(&sck);
+                Ident* ident = declare(qty, sck);
                 register_ident(ident);
                 if(consume_token(TK_ASSIGN)){
                     Node* var_node = new_node_var(ident);
@@ -427,13 +427,13 @@ static Node* compound_stmt(){
     while(!consume_token(TK_R_BRACKET)){
         if(is_type()){
             StorageClassKind sck = SCK_NONE;
-            Type* ty = declspec(&sck);
+            QualType* qty = declspec(&sck);
 
             if(consume_token(TK_SEMICORON)){
                 continue;
             }
 
-            Node* node = declaration(ty, sck);
+            Node* node = declaration(qty, sck);
             if(node){
                 cur = cur->next = node;
             }
@@ -447,7 +447,8 @@ static Node* compound_stmt(){
     return node;
 }
 
-static Node* declaration(Type* ty, StorageClassKind sck){
+static Node* declaration(QualType* qty, StorageClassKind sck){
+    SimpleType* ty = qty->type;
 
     if(ty->kind == TY_STRUCT && consume_token(TK_SEMICORON)){
         // 構造体の登録を行う
@@ -464,10 +465,10 @@ static Node* declaration(Type* ty, StorageClassKind sck){
         return new_node(ND_VOID_STMT, NULL, NULL);
     }
 
-    Ident* ident = declare(ty, sck);
+    Ident* ident = declare(qty, sck);
     Node* node = NULL;
     if(sck == SCK_TYPEDEF){
-        register_typedef(ident, ident->type);
+        register_typedef(ident, ident->qtype);
         node = new_node(ND_VOID_STMT, NULL, NULL);
     } else {
         // グローバルスコープならID_GVAR、それ以外はID_LVAR
@@ -485,19 +486,19 @@ static Node* declaration(Type* ty, StorageClassKind sck){
     return node;
 }
 
-static Ident* declare(Type* ty, StorageClassKind sck){
+static Ident* declare(QualType* qty, StorageClassKind sck){
     while(consume_token(TK_MUL)){
-        ty = pointer_to(ty);
+        qty = pointer_to(qty);
     }
 
     Token* ident_tok = expect_ident();
     if(consume_token(TK_L_SQUARE_BRACKET)){
         int len = expect_num();
-        ty = array_of(ty, len);
+        qty = array_of(qty, len);
         expect_token(TK_R_SQUARE_BRACKET);
     }
 
-    Ident* ident = make_ident(ident_tok, ID_LVAR, ty);
+    Ident* ident = make_ident(ident_tok, ID_LVAR, qty);
     if(sck == SCK_EXTERN){
         ident->is_extern = true;
         ident->kind = ID_GVAR;
@@ -562,13 +563,13 @@ static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok){
     return false;
 }
 
-static Type* declspec(StorageClassKind* sck){
+static QualType* declspec(StorageClassKind* sck){
 
     int type_flg = 0;
     bool is_const = false;
     bool is_restrict = false;
     bool is_volatile = false;
-    Type* ty = 0;
+    SimpleType* ty = 0;
     while(is_type()){
         Token* tok = get_token();
 
@@ -619,7 +620,7 @@ static Type* declspec(StorageClassKind* sck){
             if(ty || type_flg){
                 error_tok(tok, "duplicate type keyword.\n");
             }
-            ty = find_typedef(typedef_name)->type;
+            ty = find_typedef(typedef_name)->qtype->type;
             type_flg += K_USER;
             continue;
         }
@@ -692,15 +693,12 @@ static Type* declspec(StorageClassKind* sck){
         }
     }
 
-    if(sck && *sck != SCK_TYPEDEF){
-        ty = copy_type(ty);
-    }
-
+    QualType* qty = make_qual_type(ty);
     if(is_const){
-        ty->is_const = true;
+        qty->is_const = true;
     }
 
-    return ty;
+    return qty;
 }
 
 static Member* struct_or_union_member(){
@@ -709,14 +707,14 @@ static Member* struct_or_union_member(){
     do {
         cur = cur->next = calloc(1, sizeof(Member));
         StorageClassKind sck = 0;
-        Type* ty = declspec(&sck);
-        cur->ident = declare(ty, sck);
+        QualType* qty = declspec(&sck);
+        cur->ident = declare(qty, sck);
         expect_token(TK_SEMICORON);
     } while(!consume_token(TK_R_BRACKET));
     return head.next;
 }
 
-static Type* struct_or_union_spec(bool is_union){
+static SimpleType* struct_or_union_spec(bool is_union){
     /*
         1. 名前付き構造体
         struct ident {
@@ -736,7 +734,7 @@ static Type* struct_or_union_spec(bool is_union){
 
     Token* tok = consume_ident();
     if(tok){
-        Type* ty = find_tag(tok);
+        SimpleType* ty = find_tag(tok);
 
         if(consume_token(TK_L_BRACKET)){
             // 名前付き構造体
@@ -751,8 +749,8 @@ static Type* struct_or_union_spec(bool is_union){
                     int max_size = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
                         cur->ident->offset = 0;
-                        if(max_size < cur->ident->type->size){
-                            max_size = cur->ident->type->size;
+                        if(max_size < get_qtype_size(cur->ident->qtype)){
+                            max_size = get_qtype_size(cur->ident->qtype);
                         }
                     }
                     ty->size = max_size;
@@ -760,7 +758,7 @@ static Type* struct_or_union_spec(bool is_union){
                     int offset = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
                         cur->ident->offset = offset;
-                        offset += cur->ident->type->size;
+                        offset += get_qtype_size(cur->ident->qtype);
                     }
                     ty->size = offset;
                 }
@@ -776,8 +774,8 @@ static Type* struct_or_union_spec(bool is_union){
                     int max_size = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
                         cur->ident->offset = 0;
-                        if(max_size < cur->ident->type->size){
-                            max_size = cur->ident->type->size;
+                        if(max_size < get_qtype_size(cur->ident->qtype)){
+                            max_size = get_qtype_size(cur->ident->qtype);
                         }
                     }
                     ty->size = max_size;
@@ -785,7 +783,7 @@ static Type* struct_or_union_spec(bool is_union){
                     int offset = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
                         cur->ident->offset = offset;
-                        offset += cur->ident->type->size;
+                        offset += get_qtype_size(cur->ident->qtype);
                     }
                     ty->size = offset;
                 }
@@ -803,7 +801,7 @@ static Type* struct_or_union_spec(bool is_union){
         return ty;
     } else {
         // 無名構造体
-        Type* ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
+        SimpleType* ty = new_type(is_union ? TY_UNION : TY_STRUCT, 0);
         expect_token(TK_L_BRACKET);
         ty->member = struct_or_union_member();
 
@@ -811,8 +809,8 @@ static Type* struct_or_union_spec(bool is_union){
                 int max_size = 0;
                 for(Member* cur = ty->member; cur; cur = cur->next){
                     cur->ident->offset = 0;
-                    if(max_size < cur->ident->type->size){
-                        max_size = cur->ident->type->size;
+                    if(max_size < get_qtype_size(cur->ident->qtype)){
+                        max_size = get_qtype_size(cur->ident->qtype);
                     }
                 }
                 ty->size = max_size;
@@ -820,7 +818,7 @@ static Type* struct_or_union_spec(bool is_union){
                 int offset = 0;
                 for(Member* cur = ty->member; cur; cur = cur->next){
                     cur->ident->offset = offset;
-                    offset += cur->ident->type->size;
+                    offset += get_qtype_size(cur->ident->qtype);
                 }
                 ty->size = offset;
             }
@@ -834,8 +832,8 @@ static Member* enum_member(){
     Member head;
     Member* cur = &head;
     int val = 0;
-    Type* ty = copy_type(ty_int);
-    ty->is_const = true;
+    QualType* qty = make_qual_type(ty_int);
+    qty->is_const = true;
 
     cur = cur->next = calloc(1, sizeof(Member));
     Token* tok = expect_ident();
@@ -844,7 +842,7 @@ static Member* enum_member(){
         node = exchange_constant_expr(node);
         val = node->val;
     }
-    cur->ident = make_ident(tok, ID_ENUM, ty);
+    cur->ident = make_ident(tok, ID_ENUM, qty);
     cur->ident->val = val++;
     register_ident(cur->ident);
 
@@ -862,7 +860,7 @@ static Member* enum_member(){
                 node = exchange_constant_expr(node);
                 val = node->val;
             }
-            cur->ident = make_ident(tok, ID_ENUM, ty);
+            cur->ident = make_ident(tok, ID_ENUM, qty);
             cur->ident->val = val++;
             register_ident(cur->ident);
         } while(!consume_token(TK_R_BRACKET));
@@ -870,9 +868,9 @@ static Member* enum_member(){
     return head.next;
 }
 
-static Type* enum_spec(){
+static SimpleType* enum_spec(){
     Token* tok = consume_ident();
-    Type* ty = NULL;
+    SimpleType* ty = NULL;
 
     if(tok){
         ty = find_tag(tok);
@@ -1014,7 +1012,7 @@ static Node* assign(){
     }
 
     if(node->kind == ND_ASSIGN){
-        if(node->lhs->type->is_const){
+        if(node->lhs->qtype->is_const){
             error_tok(tok, "cannot assign to const.");
         }
     }
@@ -1219,16 +1217,16 @@ static Node* cast(){
     if(is_cast()){
         Token* tok = get_token();
         expect_token(TK_L_PAREN);
-        Type* ty = declspec(NULL);
+        QualType* qty = declspec(NULL);
         while(consume_token(TK_MUL)){
-            ty = pointer_to(ty);
+            qty = pointer_to(qty);
         }
         expect_token(TK_R_PAREN);
 
         Node* node = cast();
         add_type(node);
         node = new_node(ND_CAST, node, NULL);
-        node->type = ty;
+        node->qtype = qty;
         node->pos = tok;
 
         return node;
@@ -1273,20 +1271,20 @@ static Node* unary(){
         Node* node = NULL;
         if(is_type()){
             StorageClassKind sck = 0;
-            Type* ty = declspec(&sck);
+            QualType* qty = declspec(&sck);
             while(consume_token(TK_MUL)){
-                ty = pointer_to(ty);
+                qty = pointer_to(qty);
             }
-            node = new_node_num(ty->size);
+            node = new_node_num(get_qtype_size(qty));
         } else {
             node = unary();
             add_type(node);
-            if(node->type->kind == TY_ARRAY){
-                node = new_node_num(node->type->array_len * node->type->size);
-            } else if(node->type->kind == TY_STRUCT || node->type->kind == TY_UNION){
-                node = new_node_num(node->type->size);
+            if(get_qtype_kind(node->qtype) == TY_ARRAY){
+                node = new_node_num(get_qtype_array_len(node->qtype) * get_qtype_size(node->qtype));
+            } else if(get_qtype_kind(node->qtype) == TY_STRUCT || get_qtype_kind(node->qtype) == TY_UNION){
+                node = new_node_num(get_qtype_size(node->qtype));
             } else {
-                node = new_node_num(node->type->size);
+                node = new_node_num(get_qtype_size(node->qtype));
             }
         }
         if(is_l_paren){
@@ -1324,12 +1322,12 @@ static Node* postfix(){
 
             // find a member
             Token* tok = expect_ident();
-            Ident* ident = get_member(node->lhs->type, tok);
+            Ident* ident = get_member(node->lhs->qtype->type, tok);
             if(!ident){
                 error_tok(tok, "Not a member.\n");
             }
 
-            node->type = ident->type;
+            node->qtype = ident->qtype;
             node->val = ident->offset;
             continue;
         }
@@ -1342,12 +1340,12 @@ static Node* postfix(){
 
             // find a member
             Token* tok = expect_ident();
-            Ident* ident = get_member(node->lhs->type, tok);
+            Ident* ident = get_member(node->lhs->qtype->type, tok);
             if(!ident){
                 error_tok(tok, "Not a member.\n");
             }
 
-            node->type = ident->type;
+            node->qtype = ident->qtype;
             node->val = ident->offset;
             continue;
         }
@@ -1371,7 +1369,7 @@ static Node* primary(){
         Ident* str_ident = register_string_literal(tok_str);
         Node* node = new_node(ND_VAR, 0, 0);
         node->ident = str_ident;
-        node->type = str_ident->type;
+        node->qtype = str_ident->qtype;
         return node;
     }
 
@@ -1392,12 +1390,12 @@ static Node* primary(){
 
         // __builtin_va_elem*型を取得
         Ident* builtin_va_elem_ident = find_typedef(&builtin_va_elem_token);
-        Type* ty = builtin_va_elem_ident->type;
-        ty = pointer_to(ty);
+        QualType* qty = builtin_va_elem_ident->qtype;
+        qty = pointer_to(qty);
 
         // __va_area__を__builtin_va_elem*型にキャストする
         Node* rhs_node = new_node(ND_CAST, var_area_node, NULL);
-        rhs_node->type = ty;
+        rhs_node->qtype = qty;
 
         // (__builtin_va_elem*)__va_area__の参照を外す
         rhs_node = new_node(ND_DREF, rhs_node, NULL);
@@ -1415,30 +1413,30 @@ static Node* primary(){
             error_tok(pos_tok, "expected type keyword or specific type.");
         }
         StorageClassKind sck = 0;
-        Type* type = declspec(NULL);
+        QualType* qtype = declspec(NULL);
         expect_token(TK_R_PAREN);
 
-        if(is_integer_type(type)){
+        if(is_integer_type(qtype)){
             // TODO : 引数渡ししか対応していないので、そのようにする
 
             // gp_offsetを見つける
             arg1_node = new_node(ND_DREF, arg1_node, NULL);
             add_type(arg1_node);
             Node* gp_offset_node = new_node(ND_MEMBER, arg1_node, NULL);
-            Ident* gp_offset_ident = get_member(arg1_node->type, &va_elem_gp_offset_token);
+            Ident* gp_offset_ident = get_member(arg1_node->qtype->type, &va_elem_gp_offset_token);
             if(!gp_offset_ident){
                 error_tok(pos_tok, "[Internal Error] Not found gp_offset.\n");
             }
-            gp_offset_node->type = gp_offset_ident->type;
+            gp_offset_node->qtype = gp_offset_ident->qtype;
             gp_offset_node->val = gp_offset_ident->offset;
 
             // reg_save_areaを見つける
             Node* reg_save_area_node = new_node(ND_MEMBER, arg1_node, NULL);
-            Ident* reg_save_area_ident = get_member(arg1_node->type, &va_elem_reg_save_area_token);
+            Ident* reg_save_area_ident = get_member(arg1_node->qtype->type, &va_elem_reg_save_area_token);
             if(!reg_save_area_ident){
                 error_tok(pos_tok, "[Internal Error] Not found reg_save_area.\n");
             }
-            reg_save_area_node->type = reg_save_area_ident->type;
+            reg_save_area_node->qtype = reg_save_area_ident->qtype;
             reg_save_area_node->val = reg_save_area_ident->offset;
 
             // gp_offset+=8, *(long*)(reg_save_area + (gp_offset - 8))
@@ -1446,7 +1444,7 @@ static Node* primary(){
 
             Node* calc_add = new_node_add(reg_save_area_node, new_node_sub(gp_offset_node, new_node_num(8)));
             Node* cast_adr = new_node(ND_CAST, calc_add, NULL);
-            cast_adr->type = pointer_to(ty_long);
+            cast_adr->qtype = pointer_to(make_qual_type(ty_long));
             Node* va_arg_node = new_node(ND_DREF, cast_adr, NULL);
 
             Node* canma_node = new_node(ND_COMMA, gp_offset_inc, va_arg_node);
@@ -1458,7 +1456,7 @@ static Node* primary(){
 
     if(consume_token(TK_VA_END)){
         Node* node = new_node(ND_NOP, 0, 0);
-        node->type = ty_void;
+        node->qtype = make_qual_type(ty_void);
         node->pos = pos_tok;
         expect_token(TK_L_PAREN);
         Node* arg1_node = assign();
@@ -1476,7 +1474,7 @@ static Node* primary(){
             if((ident->kind == ID_LVAR) || (ident->kind == ID_GVAR)){
                 Node* node = new_node(ND_VAR, 0, 0);
                 node->ident = ident;
-                node->type = ident->type;
+                node->qtype = ident->qtype;
                 node->pos = ident_token;
                 return node;
             } else if(ident->kind == ID_ENUM){
@@ -1486,7 +1484,7 @@ static Node* primary(){
                 if(consume_token(TK_L_PAREN)){
                     Node* node = new_node(ND_FUNCCALL, 0, 0);
                     node->ident = ident;
-                    node->type = ident->type;
+                    node->qtype = ident->qtype;
                     node->pos = ident_token;
                     if(!consume_token(TK_R_PAREN)){
                         Node head = {};
@@ -1535,7 +1533,7 @@ static Node* new_node_var(Ident* ident){
     Node* result = calloc(1, sizeof(Node));
     result->kind = ND_VAR;
     result->ident = ident;
-    result->type = ident->type;
+    result->qtype = ident->qtype;
 
     return result;
 }
@@ -1548,25 +1546,26 @@ static Node* new_node_add(Node* lhs, Node* rhs){
     Node* result = new_node(ND_ADD, lhs, rhs);
 
     // num + num
-    if(!lhs->type->ptr_to && !rhs->type->ptr_to)
+    if(!get_qtype_ptr_to(lhs->qtype) && !get_qtype_ptr_to(rhs->qtype))
     {
         return result;
     }
     
     // pointer + pointer
-    if(lhs->type->ptr_to && rhs->type->ptr_to){
+    if(get_qtype_ptr_to(lhs->qtype) && get_qtype_ptr_to(rhs->qtype)){
         error("Try add pointer and pointer.");
     }
     
     // num + pointer
-    if(!lhs->type->ptr_to && rhs->type->ptr_to){
+    if(!get_qtype_ptr_to(lhs->qtype) && get_qtype_ptr_to(rhs->qtype)){
         // ポインタ + 数値、になるように入れ替える
         Node* buf = lhs;
         rhs = lhs;
         lhs = buf;
     }
 
-    Node* node_mul = new_node_mul(rhs, new_node_num(lhs->type->ptr_to->size));
+    QualType* ptr_to = get_qtype_ptr_to(lhs->qtype);
+    Node* node_mul = new_node_mul(rhs, new_node_num( get_qtype_size(ptr_to)));
     result->lhs = lhs;
     result->rhs = node_mul;
 
@@ -1580,19 +1579,20 @@ static Node* new_node_sub(Node* lhs, Node* rhs){
     Node* result = new_node(ND_SUB, lhs, rhs);
 
     // num + num
-    if(!lhs->type->ptr_to && !rhs->type->ptr_to)
+    if(!get_qtype_ptr_to(lhs->qtype) && !get_qtype_ptr_to(rhs->qtype))
     {
         return result;
     }
-    
+
     // - pointer
-    if(rhs->type->ptr_to){
+    if(get_qtype_ptr_to(rhs->qtype)){
         error("invalid operand.");
     }
-    
+
     // pointer - num
-    if(lhs->type->ptr_to && !rhs->type->ptr_to){
-        Node* node_mul = new_node_mul(rhs, new_node_num(lhs->type->ptr_to->size));
+    if(get_qtype_ptr_to(lhs->qtype) && !get_qtype_ptr_to(rhs->qtype)){
+        QualType* ptr_to = get_qtype_ptr_to(lhs->qtype);
+        Node* node_mul = new_node_mul(rhs, new_node_num(get_qtype_size(ptr_to)));
         result->lhs = lhs;
         result->rhs = node_mul;
         return result;
@@ -1617,10 +1617,10 @@ static Node* new_inc(Node* var){
     tok.len = 3;
     tok.kind = TK_IDENT;
     scope_in();
-    Type* ty = calloc(1, sizeof(Type));
-    memcpy(ty, var->type, sizeof(Type));
+    QualType* qty = calloc(1, sizeof(QualType));
+    memcpy(qty, var->qtype, sizeof(QualType));
 
-    Ident* tmp = declare_ident(&tok, ID_LVAR, ty);
+    Ident* tmp = declare_ident(&tok, ID_LVAR, qty);
 
     Node* node_tmp = new_node_var(tmp);
     Node* node_assign = new_node(ND_ASSIGN, node_tmp, var);
@@ -1637,10 +1637,10 @@ static Node* new_dec(Node* var){
     tok.len = 3;
     tok.kind = TK_IDENT;
     scope_in();
-    Type* ty = calloc(1, sizeof(Type));
-    memcpy(ty, var->type, sizeof(Type));
+    QualType* qty = calloc(1, sizeof(QualType));
+    memcpy(qty, var->qtype, sizeof(QualType));
 
-    Ident* tmp = declare_ident(&tok, ID_LVAR, ty);
+    Ident* tmp = declare_ident(&tok, ID_LVAR, qty);
 
     Node* node_tmp = new_node_var(tmp);
     Node* node_assign = new_node(ND_ASSIGN, node_tmp, var);

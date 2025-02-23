@@ -4,7 +4,7 @@ static long g_label = 0;
 static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
-static Type* func_type = NULL;
+static QualType* func_type = NULL;
 
 static void gen_extern(Scope* global_scope);
 static void gen_datas(Ident* ident);
@@ -69,7 +69,7 @@ static void gen_datas(Ident* ident){
     if(ident->is_extern){
         // extern宣言のときは実体を作らない
     } else {
-        new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(ident->type->size));
+        new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(get_qtype_size(ident->qtype)));
     }
 
     ident->ir_cmd = head.next;
@@ -114,7 +114,7 @@ static void gen_function(Ident* func){
         }
     }
 
-    func_type = func->type;
+    func_type = func->qtype;
     Node* cur = func->funcbody;
     while(cur){
         gen_stmt(cur);
@@ -140,7 +140,7 @@ static void gen_stmt(Node* node){
                 }
 
                 // 数値を返す
-                if(func_type->kind == TY_VOID){
+                if(get_qtype_kind(func_type) == TY_VOID){
                     // void型の関数の場合は値を返さない
                     new_IR(IR_RET, NULL, NULL, func_name_str);
                 } else {
@@ -311,16 +311,16 @@ static Reg* gen_lvar(Node*  node){
         case ND_VAR:
             reg = new_Reg();
             new_IR(IR_REL, reg, new_RegVar(node->ident), NULL);
-            reg->size = node->type->size;
-            reg->is_unsigned = node->type->is_unsigned;
+            reg->size = get_qtype_size(node->qtype);
+            reg->is_unsigned = get_qtype_is_unsigned(node->qtype);
             break;
         case ND_DREF:
             reg = gen_expr(node->lhs);
             break;
         case ND_MEMBER:
             reg = gen_lvar(node->lhs);
-            reg->size = node->type->size;
-            reg->is_unsigned = node->type->is_unsigned;
+            reg->size = get_qtype_size(node->qtype);
+            reg->is_unsigned = get_qtype_is_unsigned(node->qtype);
             new_IR(IR_ADD, NULL, reg, new_RegImm(node->val));
             break;
         default:
@@ -339,9 +339,10 @@ static Reg* gen_expr(Node* node){
         case ND_MEMBER:
         {
             Reg* regvar = gen_lvar(node);
-            if(node->type->kind != TY_ARRAY
-             && node->type->kind != TY_STRUCT
-             && node->type->kind != TY_UNION){
+            TypeKind kind = get_qtype_kind(node->qtype);
+            if(kind != TY_ARRAY
+             && kind != TY_STRUCT
+             && kind != TY_UNION){
                 Reg* reg = new_Reg();
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;
@@ -369,12 +370,12 @@ static Reg* gen_expr(Node* node){
         }
         case ND_DREF:
         {
-            Type* type = node->lhs->type;
+            QualType* ptr_to = get_qtype_ptr_to(node->lhs->qtype);
             Reg* ret = new_Reg();
             Reg* pointer = gen_expr(node->lhs);
-            pointer->size = node->lhs->type->ptr_to->size;
-            if((type->ptr_to->kind != TY_STRUCT)
-                && (type->ptr_to->kind != TY_UNION)){
+            pointer->size = get_qtype_size(ptr_to);
+            if((get_qtype_kind(ptr_to) != TY_STRUCT)
+                && (get_qtype_kind(ptr_to) != TY_UNION)){
                 new_IR(IR_LOAD, NULL, ret, pointer);
             } else {
                 ret = pointer;
@@ -390,20 +391,21 @@ static Reg* gen_expr(Node* node){
         {
             // 書き込む値を取得
             Reg* reg_expr = gen_expr(node->rhs);
-            if(node->lhs->type->kind == TY_BOOL){
+            TypeKind lhs_kind = get_qtype_kind(node->lhs->qtype);
+            if(lhs_kind == TY_BOOL){
                 Reg* reg2 = new_Reg();
                 new_IR(IR_NOT_EQUAL, reg2, reg_expr, new_RegImm(0));
                 reg_expr = reg2;
             }
 
             // 左辺値のアドレスを取得
-            if(node->lhs->type->kind == TY_ARRAY){
+            if(lhs_kind == TY_ARRAY){
                 error("incompatible types in assignment to array.");
             }
 
             // 構造体の代入の場合
-            if((node->lhs->type->kind == TY_STRUCT)
-                ||(node->lhs->type->kind == TY_UNION)){
+            if((lhs_kind == TY_STRUCT)
+                ||(lhs_kind == TY_UNION)){
                 Reg* reg_lvar = gen_lvar(node->lhs);
                 new_IR(IR_COPY, reg_lvar, reg_expr, NULL);
                 return reg_lvar;
@@ -413,7 +415,8 @@ static Reg* gen_expr(Node* node){
             if(node->lhs->kind == ND_DREF){
                 Node* dref = node->lhs;
                 Node* var = dref->lhs;
-                reg_lvar->size = var->type->ptr_to->size;
+                QualType* va_type = get_qtype_ptr_to(var->qtype);
+                reg_lvar->size =  get_qtype_size(va_type);
             }
 
             // 代入
@@ -480,19 +483,19 @@ static Reg* gen_expr(Node* node){
         case ND_CAST:
         {
             Reg* target = gen_expr(node->lhs);
-            if(node->type->ptr_to){
+            if(get_qtype_ptr_to(node->qtype)){
                 return target;
             }
 
             Reg* ret = new_Reg();
 
             // サイズの設定
-            ret->size = node->type->size;
-            target->size = node->lhs->type->size;
+            ret->size = get_qtype_size(node->qtype);
+            target->size = get_qtype_size(node->lhs->qtype);
 
             // 符号付きフラグの設定
-            ret->is_unsigned = node->type->is_unsigned;
-            target->is_unsigned = node->lhs->type->is_unsigned;
+            ret->is_unsigned = get_qtype_is_unsigned(node->qtype);
+            target->is_unsigned = get_qtype_is_unsigned(node->lhs->qtype);
 
             // キャスト種別の判定
             IRCmd cmd = IR_CAST;    // 整数→整数のキャスト
@@ -624,7 +627,7 @@ static Reg* new_RegVar(Ident* ident){
     Reg* reg = new_Reg();
     reg->kind = REG_VAR;
     reg->ident = ident;
-    reg->size = ident->type->size;
+    reg->size = get_qtype_size(ident->qtype);
     return reg;
 }
 

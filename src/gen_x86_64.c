@@ -192,7 +192,7 @@ static void activateReg(Reg* reg, int is_lhs){
             {
                 assignReg(reg);
                 Ident* ident = reg->ident;
-                int size = ident->type->size;
+                int size = get_qtype_size(ident->qtype);
 
                 if(ident->kind == ID_LVAR){
                     if(size == 1){
@@ -465,17 +465,19 @@ static void convert_ir2x86asm(IR* ir){
                 print(".global %s\n", ir->s1->str);
                 break;
             case IR_STORE_ARG_REG:
-
-                if(ir->s1->ident->type->size == 1){
+            {
+                int size = get_qtype_size(ir->s1->ident->qtype);
+                if(size == 1){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg8[ir->s2->val]);
-                } else if(ir->s1->ident->type->size == 2){
+                } else if(size == 2){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg16[ir->s2->val]);
-                } else if(ir->s1->ident->type->size == 4){
+                } else if(size == 4){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg32[ir->s2->val]);
-                } else if(ir->s1->ident->type->size == 8){
+                } else if(size == 8){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg64[ir->s2->val]);
                 }
                 break;
+            }
             case IR_LOAD_ARG_REG:
                 activateRegLhs(ir->s1);
                 print("  mov %s, %s\n", argreg64[ir->t->val], ir->s1->rreg);
@@ -791,6 +793,6 @@ static void convert_ir2x86asm(IR* ir){
 
 static void dprint_Ident(Ident* ident, int level){
     if(ident->kind == ID_LVAR){
-        print("#\t %s( ofs: %d, size: %d) : level%d\n", ident->name, ident->offset, ident->type->size, level);
+        print("#\t %s( ofs: %d, size: %d) : level%d\n", ident->name, ident->offset, get_qtype_size(ident->qtype), level);
     }
 }

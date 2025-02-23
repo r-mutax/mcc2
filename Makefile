@@ -42,6 +42,9 @@ tmp: mcc2
 	./mcc2 -c ./src/file.c -d PREDEFINED_MACRO -o ./selfhost/file.s -i ./src -x plvar
 	cc -c -o ./selfhost/file.o -no-pie ./selfhost/file.s -lc -MD
 
+	./mcc2 -c ./src/gen_ir.c -d PREDEFINED_MACRO -o ./selfhost/get_ir.s -i ./src -x plvar
+	cc -c -o ./selfhost/get_ir.o -no-pie ./selfhost/get_ir.s -lc -MD
+
 	./mcc2 -c ./src/semantics.c -d PREDEFINED_MACRO -o ./selfhost/semantics.s -i ./src -x plvar
 	cc -c -o ./selfhost/semantics.o -no-pie ./selfhost/semantics.s -lc -MD
 
