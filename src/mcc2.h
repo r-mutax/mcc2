@@ -192,7 +192,7 @@ struct Macro {
 struct Relocation{
     int size;
     int data;
-    Token* tok;
+    char* label;
 };
 
 typedef enum IdentKind {

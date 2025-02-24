@@ -509,23 +509,27 @@ static void convert_ir2x86asm(IR* ir){
                         // 初期化あり
                         print("  .data\n");
                         print("%s:\n", ir->s1->ident->name);
-                        switch(ident->reloc->size){
-                            case 1:
-                                print("  .byte %d\n", ident->reloc->data);
-                                break;
-                            case 2:
-                                print("  .value %d\n", ident->reloc->data);
-                                break;
-                            case 4:
-                                print("  .long %d\n", ident->reloc->data);
-                                break;
-                            case 8:
-                                print("  .quad %d\n", ident->reloc->data);
-                                break;
+                        if(!(ident->reloc->label)){
+                            switch(ident->reloc->size){
+                                case 1:
+                                    print("  .byte %d\n", ident->reloc->data);
+                                    break;
+                                case 2:
+                                    print("  .value %d\n", ident->reloc->data);
+                                    break;
+                                case 4:
+                                    print("  .long %d\n", ident->reloc->data);
+                                    break;
+                                case 8:
+                                    print("  .quad %d\n", ident->reloc->data);
+                                    break;
+                            }
+                        } else {
+                            print("  .quad %s\n", ident->reloc->label);
                         }
                     } else {
                         print("  .bss\n");
-                        print("%s:\n", ir->s1->ident->name);    
+                        print("%s:\n", ir->s1->ident->name);
                         print("  .zero %d\n", ir->s2->val);
                     }
                 }

@@ -61,13 +61,15 @@ static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
 static Initializer* initialize(QualType* ty);
+static Relocation* make_relocation(Initializer* init, QualType* qty);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
 static Member* struct_or_union_member();
 static SimpleType* struct_or_union_spec(bool is_union);
 static SimpleType* enum_spec();
 static Member* enum_member();
-static Node* exchange_constant_expr(Node* expr);
+static int emit(Node* expr);
+static int emit2(Node* expr, char** label);
 static Node* expr();
 static Node* assign();
 static Node* cond_expr();
@@ -489,10 +491,7 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
             Initializer* init = initialize(ident->qtype);
 
             if(is_global){
-                Relocation* reloc = calloc(1, sizeof(Relocation));
-                reloc->data = exchange_constant_expr(init->expr)->val;
-                reloc->size = get_qtype_size(ident->qtype);
-                ident->reloc = reloc;
+                ident->reloc = make_relocation(init, ident->qtype);
             } else {
                 node = new_node(ND_ASSIGN, var_node, init->expr);
             }
@@ -501,6 +500,13 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
 
     expect_token(TK_SEMICORON);
     return node;
+}
+
+static Relocation* make_relocation(Initializer* init, QualType* qty){
+    Relocation* reloc = calloc(1, sizeof(Relocation));
+    reloc->data = emit2(init->expr, &(reloc->label));
+    reloc->size = get_qtype_size(qty);
+    return reloc;
 }
 
 static Initializer* initialize(QualType* ty){
@@ -871,8 +877,7 @@ static Member* enum_member(){
     Token* tok = expect_ident();
     if(consume_token(TK_ASSIGN)){
         Node* node = cond_expr();
-        node = exchange_constant_expr(node);
-        val = node->val;
+        val = emit(node);
     }
     cur->ident = make_ident(tok, ID_ENUM, qty);
     cur->ident->val = val++;
@@ -889,8 +894,7 @@ static Member* enum_member(){
             cur = cur->next = calloc(1, sizeof(Member));
             if(consume_token(TK_ASSIGN)){
                 Node* node = cond_expr();
-                node = exchange_constant_expr(node);
-                val = node->val;
+                val = emit(node);
             }
             cur->ident = make_ident(tok, ID_ENUM, qty);
             cur->ident->val = val++;
@@ -944,79 +948,94 @@ static Node* expr(){
     }
     return node;
 }
+static int emit(Node* expr){
+    char* label = NULL;
+    return emit2(expr, &label);
+}
 
-static Node* exchange_constant_expr(Node* expr){
+static int emit2(Node* expr, char** label){
+    int val = 0;
 
-    if(expr->kind == ND_NUM){
-        return expr;
-    }
-
-    expr->lhs = exchange_constant_expr(expr->lhs);
-    expr->rhs = exchange_constant_expr(expr->rhs);
-
-    int retval = 0;
-    int lhs = expr->lhs->val;
-    int rhs = expr->rhs->val;
     switch(expr->kind){
         case ND_ADD:
-            retval = lhs + rhs;
+            val = emit(expr->lhs) + emit(expr->rhs);
             break;
         case ND_SUB:
-            retval = lhs - rhs;
+            val = emit(expr->lhs) - emit(expr->rhs);
             break;
         case ND_MUL:
-            retval = lhs * rhs;
+            val = emit(expr->lhs) * emit(expr->rhs);
             break;
         case ND_DIV:
-            retval = lhs / rhs;
+            val = emit(expr->lhs) / emit(expr->rhs);
             break;
         case ND_MOD:
-            retval = lhs % rhs;
+            val = emit(expr->lhs) % emit(expr->rhs);
             break;
         case ND_EQUAL:
-            retval = lhs == rhs;
+            val = emit(expr->lhs) == emit(expr->rhs);
             break;
         case ND_NOT_EQUAL:
-            retval = lhs != rhs;
+            val = emit(expr->lhs) != emit(expr->rhs);
             break;
         case ND_LT:
-            retval = lhs < rhs;
+            val = emit(expr->lhs) < emit(expr->rhs);
             break;
         case ND_LE:
-            retval = lhs <= rhs;
+            val = emit(expr->lhs) <= emit(expr->rhs);
             break;
         case ND_BIT_AND:
-            retval = lhs & rhs;
+            val = emit(expr->lhs) & emit(expr->rhs);
             break;
         case ND_BIT_OR:
-            retval = lhs | rhs;
+            val = emit(expr->lhs) | emit(expr->rhs);
             break;
         case ND_BIT_XOR:
-            retval = lhs ^ rhs;
+            val = emit(expr->lhs) ^ emit(expr->rhs);
             break;
         case ND_LOGIC_AND:
-            retval = lhs && rhs;
+            val = emit(expr->lhs) && emit(expr->rhs);
             break;
         case ND_LOGIC_OR:
-            retval = lhs || rhs;
+            val = emit(expr->lhs) || emit(expr->rhs);
             break;
         case ND_L_BITSHIFT:
-            retval = lhs << rhs;
+            val = emit(expr->lhs) << emit(expr->rhs);
             break;
         case ND_R_BITSHIFT:
-            retval = lhs >> rhs;
+            val = emit(expr->lhs) >> emit(expr->rhs);
             break;
         case ND_COND_EXPR:
+            val = emit(expr->cond) ? emit(expr->lhs) : emit(expr->rhs);
+            break;
+        case ND_NUM:
+            val = expr->val;
+            break;
+        case ND_ADDR:
         {
-            expr->cond = exchange_constant_expr(expr->cond);
-            int cond = expr->cond->val;
-            retval = cond ? lhs : rhs;
+            // アドレス取得先がグローバル変数ならOK
+            Node* var = expr->lhs;
+            if(var->kind == ND_VAR && var->ident->kind == ID_GVAR){
+                val = var->ident->offset;
+            } else {
+                error_tok(expr->pos, "invalid const expression.\n");
+            }
+            break;
+        }
+        case ND_VAR:
+        {
+            if(expr->ident->is_string_literal){
+                if(label){
+                    *label = expr->ident->name;
+                }
+            }
             break;
         }
         default:
-            error("It is not constant expression.\n");
+            error_tok(expr->pos, "invalid const expression.\n");
+            break;
     }
-    return new_node_num(retval);
+    return val;
 }
 
 static Node* assign(){
@@ -1049,6 +1068,7 @@ static Node* assign(){
         }
     }
 
+    add_type(node);
     return node;
 }
 

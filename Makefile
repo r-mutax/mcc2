@@ -59,6 +59,8 @@ tmp: mcc2
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
 
+	#cp ./src/file.o ./selfhost/file.o
+
 
 	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)
 
@@ -73,6 +75,10 @@ selft: self $(TEST_SELF_OBJS)
 	./test.exe
 
 clean:
-	rm -f mcc2 src/*.o *~ tmp* src/*.d test/c/*.o test.exe test/c/*.s ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2
+	rm -f mcc2 *~ tmp*
+	rm -f src/*.o src/*.d 
+	rm -f test/c/*.o test.exe test/c/*.s
+	rm -f ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2t
+	rm -f ./selfhost/test/c/*.o ./selfhost/test/c/*.s
 
 .PHONY: test clean tmp test2 test3 test4 self selft
