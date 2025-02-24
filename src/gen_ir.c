@@ -352,11 +352,19 @@ static Reg* gen_expr(Node* node){
             return new_RegVar(node->ident);
         case ND_FUNCCALL:
         {
-            int nargs = 0;
+            int nargs = 0;  // 引数の数
             for(Node* cur = node->params; cur; cur = cur->next){
                 Reg* reg = gen_expr(cur);
-                new_IR(IR_LOAD_ARG_REG, new_RegImm(nargs++), reg, NULL);
+                new_IR(IR_PUSH, NULL, reg, NULL);
+                nargs++;
             }
+
+            for(int i = nargs; i != 0; i--){
+                Reg* reg = new_Reg();
+                new_IR(IR_POP, NULL, reg, NULL);
+                new_IR(IR_LOAD_ARG_REG, new_RegImm(--nargs), reg, NULL);
+            }
+
             if(node->ident->is_var_params){
                 new_IR(IR_SET_FLOAT_NUM, NULL, new_RegImm(0), NULL);
             }

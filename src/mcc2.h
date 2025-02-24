@@ -413,6 +413,14 @@ typedef enum IRCmd{
         // label (null) (imm)
         //   .L(imm):
 
+    // MEMORY
+    IR_PUSH,
+        // push (null) s1
+        //  push s1
+    IR_POP,
+        // pop (null) s1
+        //  pop s1
+
     // DEFINITION
     IR_FN_LABEL,
         // fnlabel (null) (ident) (imm)

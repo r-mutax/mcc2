@@ -803,6 +803,16 @@ static void convert_ir2x86asm(IR* ir){
                 }
 
                 break;
+            case IR_PUSH:
+                activateRegLhs(ir->s1);
+                print("  push %s\n", ir->s1->rreg);
+                freeReg(ir->s1);
+                break;
+            case IR_POP:
+                activateRegLhs(ir->s1);
+                print("  pop %s\n", ir->s1->rreg);
+                freeReg(ir->s1);
+                break;
             default:
                 unreachable();
         }
