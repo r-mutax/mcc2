@@ -22,6 +22,7 @@
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct Parameter Parameter;
+typedef struct Relocation Relocation;
 typedef struct Ident Ident;
 typedef struct Stmt Stmt;
 typedef struct IR IR;
@@ -188,6 +189,12 @@ struct Macro {
     Macro*     next;
 };
 
+struct Relocation{
+    int size;
+    int data;
+    Token* tok;
+};
+
 typedef enum IdentKind {
     ID_LVAR,
     ID_GVAR,
@@ -205,6 +212,8 @@ struct Ident {
     int is_string_literal;  // 文字列リテラルか？のフラグ
     Scope* scope;           // 関数スコープ
     unsigned long val;      // 数値(enum用)
+
+    Relocation* reloc;      // リロケーション情報
 
     Node* funcbody;         // 関数のbody
     Parameter* params;

@@ -44,6 +44,11 @@
     primary = '(' expr ')' | num | ident | ident '()'
 */
 
+typedef struct Intializer {
+    QualType* qtype;
+    Node* expr;
+} Initializer;
+
 static Node* switch_node = NULL;
 static QualType* cur_func_type = NULL;
 static Token* token = NULL;
@@ -55,6 +60,7 @@ static Node* compound_stmt();
 static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
+static Initializer* initialize(QualType* ty);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
 static Member* struct_or_union_member();
@@ -472,13 +478,24 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
         node = new_node(ND_VOID_STMT, NULL, NULL);
     } else {
         // グローバルスコープならID_GVAR、それ以外はID_LVAR
-        ident->kind = (get_current_scope() == get_global_scope()) ? ID_GVAR : ID_LVAR;
+        bool is_global = get_current_scope() == get_global_scope();
+        ident->kind = is_global ? ID_GVAR : ID_LVAR;
         register_ident(ident);
 
         if(consume_token(TK_ASSIGN)){
             Node* var_node = new_node_var(ident);
             var_node->pos = ident->tok;
-            node = new_node(ND_ASSIGN, var_node, assign());
+
+            Initializer* init = initialize(ident->qtype);
+
+            if(is_global){
+                Relocation* reloc = calloc(1, sizeof(Relocation));
+                reloc->data = exchange_constant_expr(init->expr)->val;
+                reloc->size = get_qtype_size(ident->qtype);
+                ident->reloc = reloc;
+            } else {
+                node = new_node(ND_ASSIGN, var_node, init->expr);
+            }
         }
     }
 
@@ -486,6 +503,21 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
     return node;
 }
 
+static Initializer* initialize(QualType* ty){
+    Initializer* init = calloc(1, sizeof(Initializer));
+
+    switch(get_qtype_kind(ty)){
+        case TY_ARRAY:
+        case TY_STRUCT:
+        case TY_UNION:
+            error("not implemented initializer array, struct, union.\n");
+            break;
+        default:
+            init->expr = assign();
+            break;
+    }
+    return init;
+}
 static Ident* declare(QualType* qty, StorageClassKind sck){
     while(consume_token(TK_MUL)){
         qty = pointer_to(qty);
