@@ -81,7 +81,7 @@ static void freeReg(Reg* reg);
 
 static void pop(char* reg){
     print("  pop %s\n", reg);
-    --depth;
+    ++depth;
 }
 
 static void push(char* reg){
