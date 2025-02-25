@@ -4,6 +4,11 @@ int g_a;
 int g_b;
 int test_global_variable();
 
+char g_init_c = 1;
+short g_init_s = 2;
+int g_init_i = 3;
+long g_init_l = 4;
+
 extern int test_extern_int;
 
 int test_variable(){
@@ -48,6 +53,13 @@ int test_variable(){
     test_static = 30;
 
     printf("test of assignment..\n");
+
+    printf("test of global variable initialize..\n");
+    ASSERT(g_init_c, 1);
+    ASSERT(g_init_s, 2);
+    ASSERT(g_init_i, 3);
+    ASSERT(g_init_l, 4);
+
     return 0;
 }
 

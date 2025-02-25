@@ -9,14 +9,14 @@ static int string_literal_num = 0;
 
 
 
-Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
+Ident* declare_ident(Token* tok, IdentKind kind, QualType* qty){
     Ident* ident = calloc(1, sizeof(Ident));
 
     if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
-        if(ty->kind == TY_ARRAY){
-            stack_size += ty->size * ty->array_len;    
+        if(get_qtype_kind(qty) == TY_ARRAY){
+            stack_size += get_qtype_size(qty) * get_qtype_array_len(qty);
         } else {
-            stack_size += ty->size;
+            stack_size += get_qtype_size(qty);
         }
     }
 
@@ -24,7 +24,7 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
     ident->name = strnewcpyn(tok->pos, tok->len);
     ident->tok = tok;
     ident->offset = stack_size;
-    ident->type = ty;
+    ident->qtype = qty;
 
 
     ident->next = cur_scope->ident;
@@ -33,25 +33,25 @@ Ident* declare_ident(Token* tok, IdentKind kind, Type* ty){
 }
 
 // Identの作成
-Ident* make_ident(Token* tok, IdentKind kind, Type* ty){
+Ident* make_ident(Token* tok, IdentKind kind, QualType* qty){
     Ident* ident = calloc(1, sizeof(Ident));
     
     ident->kind = kind;
     ident->name = strnewcpyn(tok->pos, tok->len);
     ident->tok = tok;
     ident->offset = 0;
-    ident->type = ty;
+    ident->qtype = qty;
     return ident;
 }
 
 void register_ident(Ident* ident){
-    Type* ty = ident->type;
+    QualType* qty = ident->qtype;
     if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
         if(!ident->is_extern){
-            if(ty->kind == TY_ARRAY){
-                stack_size += ty->size * ty->array_len;
+            if(get_qtype_kind(qty) == TY_ARRAY){
+                stack_size += get_qtype_size(qty) * get_qtype_array_len(qty);
             } else {
-                stack_size += ty->size;
+                stack_size += get_qtype_size(qty);
             }
         }
     }
@@ -62,7 +62,7 @@ void register_ident(Ident* ident){
     cur_scope->ident = ident;
 }
 
-void register_tag(Type* type){
+void register_tag(SimpleType* type){
     type->next = cur_scope->type_tag;
     cur_scope->type_tag = type;
 }
@@ -81,7 +81,7 @@ Ident* register_string_literal(Token* tok){
     ident->name = sl->name;
     ident->tok = sl->val;
     ident->is_string_literal = 1;
-    ident->type = array_of(ty_char, sl->val->len + 1);
+    ident->qtype = array_of(make_qual_type(ty_char), sl->val->len + 1);
 
     ident->next = global_scope.ident;
     global_scope.ident = ident;
@@ -134,9 +134,9 @@ Ident* find_typedef(Token* tok){
     return NULL;
 }
 
-Type* find_tag(Token* tok){
+SimpleType* find_tag(Token* tok){
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
-        for(Type* ty = sc->type_tag; ty; ty = ty->next){
+        for(SimpleType* ty = sc->type_tag; ty; ty = ty->next){
             if(is_equal_token(ty->name, tok)){
                 return ty;
             }
