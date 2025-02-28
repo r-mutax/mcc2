@@ -177,6 +177,7 @@ static void function(QualType* func_type, StorageClassKind sck){
             error_tok(tok, "conflict definition type.");
         }
         has_forward_def = true;
+        func->tok = tok;
     }
 
     // ここでスコープインして、仮引数は関数スコープ内で宣言するため、ローカル変数と同等に扱える。

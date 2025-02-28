@@ -6,7 +6,6 @@ static long g_continue = -1;
 static Reg* func_name_str = NULL;
 static QualType* func_type = NULL;
 
-static void gen_extern(Scope* global_scope);
 static void gen_datas(Ident* ident);
 static void gen_function(Ident* func);
 static void gen_stmt(Node* stmt);
@@ -28,11 +27,18 @@ static Reg* new_RegToken(Token* tok);
 static Reg* gen_expr(Node* node);
 
 void gen_ir(){
+    IR head;
+    ir = &head;
+
+    // .fileを出力する
+    new_IR(IR_FILE_SECTION, NULL, new_RegStr(main_file->name), NULL);
+
     // グローバル変数の出力
     Scope* scope = get_global_scope();
     Ident* ident = scope->ident;
 
-    gen_extern(scope);
+    printf("%p\n", ident);
+    printf("%p\n", ident->next);
 
     for(Ident* cur = ident; cur; cur = cur->next){
         if(cur->kind == ID_FUNC && cur->funcbody){
@@ -41,25 +47,8 @@ void gen_ir(){
             gen_datas(cur);
         }
     }
-}
 
-static void gen_extern(Scope* global_scope){
-    IR head;
-    ir = &head;
-
-    Ident* ident = global_scope->ident;
-    while(ident){
-        if(ident->kind == ID_FUNC && ident->funcbody){
-            new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
-        } else if(ident->kind == ID_GVAR && !ident->is_extern){
-            if(!ident->is_string_literal){
-                new_IR(IR_EXTERN_LABEL, NULL, new_RegStr(ident->name), NULL);
-            }
-        }
-        ident = ident->next;
-    }
-
-    global_scope->ir_cmd = head.next;
+    scope->ir_cmd = head.next;
 }
 
 static void gen_datas(Ident* ident){
@@ -79,7 +68,7 @@ static void gen_function(Ident* func){
     IR head;
     ir = &head;
 
-    func_name_str = new_RegStr(func->name);
+    func_name_str = new_RegFname(func);
     new_IR(IR_FN_LABEL, NULL, func_name_str, new_RegImm(func->stack_size));
 
     // 可変長引数の場合は、__va_area__に引数をコピーする

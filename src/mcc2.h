@@ -43,6 +43,7 @@ typedef enum TypeKind TypeKind;
 
 extern FILE* fp;
 extern char* builtin_def;
+extern SrcFile* main_file;
 
 struct IncludePath {
     char* path;
@@ -50,8 +51,11 @@ struct IncludePath {
 };
 
 struct SrcFile{
+    char*   path;
     char*   name;
     char*   body;
+    int     label;
+    bool    labeled;
 };
 
 struct IF_GROUP {
@@ -174,12 +178,14 @@ struct Token {
     SrcFile*        file;   // ファイル
     unsigned long   val;
     int             len;
+    long            row;
+    long            col;
     Token*          next;   // 次のトークン
 };
 
 // ビルドイントークン定義マクロ
 //  sizeof(const string liteal) は終端0を含めるため-1している。
-#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, sizeof(name) - 1, NULL,}
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, sizeof(name) - 1, 0, 0, NULL,}
 
 struct Macro {
     Token*     name;
@@ -222,6 +228,7 @@ struct Ident {
     int is_extern;          // externか？
     int is_static;          // staticか？
     Ident* va_area;         // 可変長引数のエリア
+    int func_id;            // 識別子のID
 
     IR* ir_cmd;          // 中間命令の先頭
 
@@ -452,6 +459,9 @@ typedef enum IRCmd{
     IR_COMMENT,
         // comment (string)
         // stringをコメントとして出力する
+        IR_FILE_SECTION,
+        // file (null) (string)
+        // ファイル名を設定する
 
 } IRCmd;
 
@@ -587,6 +597,7 @@ void gen_ir();
 // gen_x86_64.c
 extern int debug_regis;
 extern int debug_plvar;
+extern int debug_exec;
 void gen_x86_64_init();
 void gen_x86();
 

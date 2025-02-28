@@ -3,7 +3,10 @@
 
 Token* token;
 SrcFile* cur_file;
+SrcFile* main_file;
 extern bool is_preprocess;
+static long row = 0;
+static char* row_start = NULL;
 
 Token* scan(char* src);
 static Token* new_token(TokenKind kind, Token* cur, char* p, int len);
@@ -14,9 +17,13 @@ static TokenKind check_preprocess_keyword(char* p, int len);
 static char read_escaped_char(char** p);
 Token* delete_newline_token(Token* tok);
 
+
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
     cur_file = file;
+    if(!main_file){
+        main_file = file;
+    }
 
     Token* tok = scan(file->body);
     tok = preprocess(tok);
@@ -38,6 +45,9 @@ Token* scan(char* src){
     char* p = src;
     Token head = {};
     Token* cur = &head;
+
+    row = 1;
+    row_start = p;
 
     /*
         次のトークンの1文字目で処理を分岐し、
@@ -252,6 +262,8 @@ Token* scan(char* src){
                 break;
             case '\n':
                 cur = new_token(TK_NEWLINE, cur, p++ , 1);
+                row++;
+                row_start = p;
                 break;
             case '#':
                 {
@@ -348,6 +360,8 @@ static Token* new_token(TokenKind kind, Token* cur, char* p, int len){
     tok->pos = p;
     tok->file = cur_file;
     tok->len = len;
+    tok->row = row;
+    tok->col = p - row_start + 1;
     cur->next = tok;
     return tok;
 }
