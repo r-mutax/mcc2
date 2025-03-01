@@ -18,6 +18,7 @@ int fclose(FILE *stream);
 int fprintf(FILE *stream, const char *fmt, ...);
 size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
 long int ftell(FILE *stream);
+int printf(const char *fmt, ...);
 
 extern FILE *stdout;
 extern FILE *stderr;

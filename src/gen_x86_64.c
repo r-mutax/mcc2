@@ -17,9 +17,12 @@ static const char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
 static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 0;
+static int file_label = 1;
+static int func_id = 1;
 
 int debug_regis = 0;    // レジスタのデバッグモード
 int debug_plvar = 0;    // ローカル変数のデバッグモード
+int debug_exec = 0;     // 実行時のデバッグモード
 
 /*
     CAST CMD のルール
@@ -79,14 +82,44 @@ static void activateReg(Reg* reg, int is_lhs);
 
 static void freeReg(Reg* reg);
 
+// DRAWF規格に従ったレジスタのidxを取得する
+static int get_regno(char* reg){
+    if(!strcmp(reg, "rax")) return 0;
+    if(!strcmp(reg, "rdx")) return 1;
+    if(!strcmp(reg, "rcx")) return 2;
+    if(!strcmp(reg, "rbx")) return 3;
+    if(!strcmp(reg, "rsi")) return 4;
+    if(!strcmp(reg, "rdi")) return 5;
+    if(!strcmp(reg, "rbp")) return 6;
+    if(!strcmp(reg, "rsp")) return 7;
+    if(!strcmp(reg, "r8")) return 8;
+    if(!strcmp(reg, "r9")) return 9;
+    if(!strcmp(reg, "r10")) return 10;
+    if(!strcmp(reg, "r11")) return 11;
+    if(!strcmp(reg, "r12")) return 12;
+    if(!strcmp(reg, "r13")) return 13;
+    if(!strcmp(reg, "r14")) return 14;
+    if(!strcmp(reg, "r15")) return 15;
+    return -1;
+}
+
 static void pop(char* reg){
     print("  pop %s\n", reg);
     --depth;
+
+    int idx = get_regno(reg);
+    if(idx != -1){
+        print("\t.cfi_restore %d\n", idx);
+    }
 }
 
 static void push(char* reg){
     print("  push %s\n", reg);
-    --depth;
+    ++depth;
+    int idx = get_regno(reg);
+    if(idx != -1){
+        print("\t.cfi_offset %d, %d\n", idx, -8 * depth);
+    }
 }
 
 static int findSpillReg(){
@@ -192,7 +225,7 @@ static void activateReg(Reg* reg, int is_lhs){
             {
                 assignReg(reg);
                 Ident* ident = reg->ident;
-                int size = ident->type->size;
+                int size = get_qtype_size(ident->qtype);
 
                 if(ident->kind == ID_LVAR){
                     if(size == 1){
@@ -355,7 +388,7 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
 void gen_x86(){
     Scope* global_scope = get_global_scope();
 
-    print(".intel_syntax noprefix\n");
+    print("\t.intel_syntax noprefix\n");
 
     // extern宣言
     IR* ir = global_scope->ir_cmd;
@@ -397,18 +430,44 @@ static void convert_ir2x86asm(IR* ir){
     while(ir){
         switch(ir->cmd){
             case IR_FN_LABEL:
+            {
+                Ident* func = ir->s1->ident;
                 print("  .text\n");
-                print("%s:\n", ir->s1->str);
+                print("\t.global %s\n", func->name);
+                print("\t.type	%s, @function\n", func->name);
+                print("%s:\n", func->name);
+
+                // file情報を出力
+                if(debug_exec){
+                    if(func->func_id == 0){
+                        func->func_id = func_id++;
+                    }
+                    print(".LFB%d:\n", func->func_id);
+
+                    if(!func->tok->file->labeled){
+                        func->tok->file->labeled = 1;
+                        func->tok->file->label = file_label++;
+                        print("\t.file %d \"%s\"\n", func->tok->file->label, func->tok->file->name);
+                    }
+                    print("\t.loc %d %d %d\n", func->tok->file->label,
+                                                func->tok->row, func->tok->col);
+                }
+                print("\t.cfi_startproc\n");
                 push("rbp");
+                print("\t.cfi_def_cfa_offset 8\n");
                 print("  mov rbp, rsp\n");
+                print("\t.cfi_def_cfa_register 6\n");
                 print("  sub rsp, %d\n", ((ir->s2->val + 15) / 16) * 16);
                 push("r12");
                 push("r13");
                 push("r14");
                 push("r15");
                 break;
+            }
             case IR_FN_END_LABEL:
-                print("ret_%s:\n", ir->s1->str);
+            {
+                Ident* func = ir->s1->ident;
+                print("ret_%s:\n", func->name);
                 pop("r15");
                 pop("r14");
                 pop("r13");
@@ -416,7 +475,10 @@ static void convert_ir2x86asm(IR* ir){
                 print("  mov rsp, rbp\n");
                 pop("rbp");
                 print("  ret\n");
+                print("\t.cfi_endproc\n");
+                print(".LFE%d:\n", func->func_id);
                 break;
+            }
             case IR_VA_START:
             {
                 int offset = ir->t->val;
@@ -465,17 +527,19 @@ static void convert_ir2x86asm(IR* ir){
                 print(".global %s\n", ir->s1->str);
                 break;
             case IR_STORE_ARG_REG:
-
-                if(ir->s1->ident->type->size == 1){
+            {
+                int size = get_qtype_size(ir->s1->ident->qtype);
+                if(size == 1){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg8[ir->s2->val]);
-                } else if(ir->s1->ident->type->size == 2){
+                } else if(size == 2){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg16[ir->s2->val]);
-                } else if(ir->s1->ident->type->size == 4){
+                } else if(size == 4){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg32[ir->s2->val]);
-                } else if(ir->s1->ident->type->size == 8){
+                } else if(size == 8){
                     print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg64[ir->s2->val]);
                 }
                 break;
+            }
             case IR_LOAD_ARG_REG:
                 activateRegLhs(ir->s1);
                 print("  mov %s, %s\n", argreg64[ir->t->val], ir->s1->rreg);
@@ -489,7 +553,7 @@ static void convert_ir2x86asm(IR* ir){
                     activateRegLhs(ir->s1);
                     print("  mov rax, %s\n", ir->s1->rreg);
                 }
-                print("  jmp ret_%s\n", ir->s2->str);
+                print("  jmp ret_%s\n", ir->s2->ident->name);
                 break;
             case IR_GVAR_LABEL:
             {
@@ -497,15 +561,43 @@ static void convert_ir2x86asm(IR* ir){
                 if(ident->is_string_literal){
                     print("  .data\n");
                     print("%s:\n", ident->name);
-                    print("  .string \"%s\"\n", get_token_string(ident->tok));
+                    print("  .string \"%s\"\n", get_token_string_literal(ident->tok));
                 } else if(ident->is_static) {
                     print("  .bss\n");
                     print(".L%s:\n", ir->s1->ident->name);
                     print("  .zero %d\n", ir->s2->val);
                 } else {
-                    print("  .bss\n");
-                    print("%s:\n", ir->s1->ident->name);
-                    print("  .zero %d\n", ir->s2->val);
+                    if(ident->reloc){
+                        // 初期化あり
+                        print("\t.global\t%s\n", ident->name);
+                        print("  .data\n");
+                        print("%s:\n", ir->s1->ident->name);
+                        if(!(ident->reloc->label)){
+                            switch(ident->reloc->size){
+                                case 1:
+                                    print("  .byte %d\n", ident->reloc->data);
+                                    break;
+                                case 2:
+                                    print("  .value %d\n", ident->reloc->data);
+                                    break;
+                                case 4:
+                                    print("  .long %d\n", ident->reloc->data);
+                                    break;
+                                case 8:
+                                    print("  .quad %d\n", ident->reloc->data);
+                                    break;
+                            }
+                        } else {
+                            print("  .quad %s\n", ident->reloc->label);
+                        }
+                    } else {
+                        print("\t.global\t%s\n", ident->name);
+                        print("\t.bss\n");
+                        print("\t.type\t%s, @object\n", ident->name);
+                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
+                        print("%s:\n", ir->s1->ident->name);
+                        print("  .zero %d\n", ir->s2->val);
+                    }
                 }
                 break;
             }
@@ -630,7 +722,6 @@ static void convert_ir2x86asm(IR* ir){
                 } else if(ir->s1->size == 8){
                     print("  mov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
                 }
-                
 
                 if(ir->t){
                     activateRegLhs(ir->t);
@@ -775,7 +866,28 @@ static void convert_ir2x86asm(IR* ir){
                     }
                     print(" remain register num : %d\n", remreg);
                 }
-
+                if(debug_exec){
+                    if(!ir->s1->tok->file->labeled){
+                        ir->s1->tok->file->labeled = 1;
+                        ir->s1->tok->file->label = file_label++;
+                        print("\t.file %d \"%s\"\n", ir->s1->tok->file->label, ir->s1->tok->file->name);
+                    }
+                    print("\t.loc %d %d %d\n", ir->s1->tok->file->label,
+                                                ir->s1->tok->row, ir->s1->tok->col);
+                }
+                break;
+            case IR_FILE_SECTION:
+                print("\t.file\t\"%s\"\n", ir->s1->str);
+                break;
+            case IR_PUSH:
+                activateRegLhs(ir->s1);
+                push(ir->s1->rreg);
+                freeReg(ir->s1);
+                break;
+            case IR_POP:
+                activateRegLhs(ir->s1);
+                pop(ir->s1->rreg);
+                freeReg(ir->s1);
                 break;
             default:
                 unreachable();
@@ -791,6 +903,6 @@ static void convert_ir2x86asm(IR* ir){
 
 static void dprint_Ident(Ident* ident, int level){
     if(ident->kind == ID_LVAR){
-        print("#\t %s( ofs: %d, size: %d) : level%d\n", ident->name, ident->offset, ident->type->size, level);
+        print("#\t %s( ofs: %d, size: %d) : level%d\n", ident->name, ident->offset, get_qtype_size(ident->qtype), level);
     }
 }

@@ -1,5 +1,4 @@
 #include "testinc.h"
-#include "testinc.h"
 
 #define TEST_MACRO_2 1 + 2
 

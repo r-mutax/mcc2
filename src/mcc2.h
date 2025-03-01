@@ -22,13 +22,15 @@
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct Parameter Parameter;
+typedef struct Relocation Relocation;
 typedef struct Ident Ident;
 typedef struct Stmt Stmt;
 typedef struct IR IR;
 typedef struct Reg Reg;
 typedef struct RealReg RealReg;
 typedef struct Scope Scope;
-typedef struct Type Type;
+typedef struct SimpleType SimpleType;
+typedef struct QualType QualType;
 typedef struct Member Member;
 typedef struct Label Label;
 typedef struct StringLiteral StringLiteral;
@@ -41,6 +43,7 @@ typedef enum TypeKind TypeKind;
 
 extern FILE* fp;
 extern char* builtin_def;
+extern SrcFile* main_file;
 
 struct IncludePath {
     char* path;
@@ -48,8 +51,11 @@ struct IncludePath {
 };
 
 struct SrcFile{
+    char*   path;
     char*   name;
     char*   body;
+    int     label;
+    bool    labeled;
 };
 
 struct IF_GROUP {
@@ -168,15 +174,18 @@ typedef enum TokenKind {
 struct Token {
     TokenKind       kind;   // トークンの種類
     char*           pos;    // 位置
+    char*           str;    // const stringの中身
     SrcFile*        file;   // ファイル
     unsigned long   val;
     int             len;
+    long            row;
+    long            col;
     Token*          next;   // 次のトークン
 };
 
 // ビルドイントークン定義マクロ
 //  sizeof(const string liteal) は終端0を含めるため-1している。
-#define MAKE_TOKEN(kind, name)    { kind, name, NULL, 0, sizeof(name) - 1, NULL,}
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, sizeof(name) - 1, 0, 0, NULL,}
 
 struct Macro {
     Token*     name;
@@ -184,6 +193,12 @@ struct Macro {
     Token*     params;
     bool       is_func;
     Macro*     next;
+};
+
+struct Relocation{
+    int size;
+    int data;
+    char* label;
 };
 
 typedef enum IdentKind {
@@ -204,6 +219,8 @@ struct Ident {
     Scope* scope;           // 関数スコープ
     unsigned long val;      // 数値(enum用)
 
+    Relocation* reloc;      // リロケーション情報
+
     Node* funcbody;         // 関数のbody
     Parameter* params;
     int stack_size;         // 関数で使用するスタックサイズ
@@ -211,12 +228,13 @@ struct Ident {
     int is_extern;          // externか？
     int is_static;          // staticか？
     Ident* va_area;         // 可変長引数のエリア
+    int func_id;            // 識別子のID
 
     IR* ir_cmd;          // 中間命令の先頭
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
-    Type*  type;
+    QualType*  qtype;
     Ident* next;
 };
 
@@ -277,7 +295,7 @@ struct Node {
     Node*           rhs;
     unsigned long   val;
     Ident*          ident;
-    Type*           type;
+    QualType*       qtype;
     Token*          pos;
     Label*          label;
 
@@ -402,6 +420,14 @@ typedef enum IRCmd{
         // label (null) (imm)
         //   .L(imm):
 
+    // MEMORY
+    IR_PUSH,
+        // push (null) s1
+        //  push s1
+    IR_POP,
+        // pop (null) s1
+        //  pop s1
+
     // DEFINITION
     IR_FN_LABEL,
         // fnlabel (null) (ident) (imm)
@@ -433,6 +459,9 @@ typedef enum IRCmd{
     IR_COMMENT,
         // comment (string)
         // stringをコメントとして出力する
+        IR_FILE_SECTION,
+        // file (null) (string)
+        // ファイル名を設定する
 
 } IRCmd;
 
@@ -469,12 +498,13 @@ struct Label {
 // 識別子の検索は、現在のスコープから親のスコープ側に上がっていく
 struct Scope {
     int             level;
+    int             dmy;
     Ident*          ident;
     StringLiteral*  string_literal;
     Scope*          parent;
     Label*          label;
     IR*             ir_cmd;
-    Type*           type_tag;
+    SimpleType*     type_tag;
 };
 
 enum TypeKind{
@@ -515,19 +545,23 @@ enum {
     K_UNSIGNED  = 1 << 18
 };
 
-struct Type {
+struct SimpleType {
     TypeKind    kind;
     Token*      name;
     int         size;
     int         is_unsigned;
     int         array_len;
-    bool        is_const;
     bool        is_user_def;
     bool        is_imcomplete;
-    Type*       base_type;
-    Type*       ptr_to;
+    QualType*   base_type;
+    QualType*   ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー
-    Type*       next;
+    SimpleType* next;
+};
+
+struct QualType{
+    SimpleType* type;
+    bool        is_const;
 };
 
 struct StringLiteral{
@@ -564,19 +598,20 @@ void gen_ir();
 // gen_x86_64.c
 extern int debug_regis;
 extern int debug_plvar;
+extern int debug_exec;
 void gen_x86_64_init();
 void gen_x86();
 
 // ident.c
-Ident* declare_ident(Token* ident, IdentKind kind, Type* ty);
-Ident* make_ident(Token* ident, IdentKind kind, Type* ty);
+Ident* declare_ident(Token* ident, IdentKind kind, QualType* qty);
+Ident* make_ident(Token* ident, IdentKind kind, QualType* qty);
 void register_ident(Ident* ident);
 Ident* register_string_literal(Token* tok);
-void register_tag(Type* type);
+void register_tag(SimpleType* type);
 Ident* find_ident(Token* tok);
 Ident* find_typedef(Token* tok);
 Label* find_label(Token* tok);
-Type* find_tag(Token* tok);
+SimpleType* find_tag(Token* tok);
 Label* register_label(Token* tok);
 void scope_in();
 void scope_out();
@@ -600,6 +635,7 @@ void semantics();
 Token* tokenize(char* path);
 bool is_equal_token(Token* lhs, Token* rhs);
 char* get_token_string(Token* tok);
+char* get_token_string_literal(Token* tok);
 Token* next_newline(Token* tok);
 Token* next_token(Token* tok);
 Token* skip_to_next(Token* tok, TokenKind kind);
@@ -613,27 +649,33 @@ Token* tokenize_string(char* src);
 Token* scan(char* src);
 
 // type.c
-extern Type* ty_void;
-extern Type* ty_bool;
-extern Type* ty_int;
-extern Type* ty_char;
-extern Type* ty_short;
-extern Type* ty_long;
-extern Type* ty_uchar;
-extern Type* ty_ushort;
-extern Type* ty_uint;
-extern Type* ty_ulong;
+extern SimpleType* ty_void;
+extern SimpleType* ty_bool;
+extern SimpleType* ty_int;
+extern SimpleType* ty_char;
+extern SimpleType* ty_short;
+extern SimpleType* ty_long;
+extern SimpleType* ty_uchar;
+extern SimpleType* ty_ushort;
+extern SimpleType* ty_uint;
+extern SimpleType* ty_ulong;
 
 void ty_init();
-Type* copy_type(Type* type);
-Type* pointer_to(Type* base);
-Type* array_of(Type* base, int len);
+QualType* pointer_to(QualType* base);
+QualType* array_of(QualType* base, int len);
 void add_type(Node* node);
-bool equal_type(Type* ty1, Type* ty2);
-Type* new_type(TypeKind kind, int size);
-Ident* get_member(Type* type, Token* tok);
-Type* register_typedef(Ident* ident, Type* ty);
-bool is_integer_type(Type* type);
+bool equal_type(QualType* qty1, QualType* qty2);
+SimpleType* new_type(TypeKind kind, int size);
+Ident* get_member(SimpleType* type, Token* tok);
+void register_typedef(Ident* ident, QualType* qty);
+bool is_integer_type(QualType* qty);
+
+QualType* make_qual_type(SimpleType* type);
+int get_qtype_size(QualType* qty);
+TypeKind get_qtype_kind(QualType* qty);
+QualType* get_qtype_ptr_to(QualType* qty);
+int get_qtype_is_unsigned(QualType* qty);
+int get_qtype_array_len(QualType* qty);
 
 // utility.c
 char* strnewcpyn(char* src, int n);

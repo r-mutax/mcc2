@@ -1,6 +1,7 @@
 #include "mcc2.h"
 
 FILE* fp = NULL;
+static char* get_filename(char* path);
 
 SrcFile* read_file(const char* path){
 
@@ -10,10 +11,10 @@ SrcFile* read_file(const char* path){
     }
 
     if (fseek(fp, 0, SEEK_END) == -1)
-        error("%s: fseek: %s", path, strerror(errno));
+        error("%s: fseek: %s", path, 0 /* strerror(errno)*/);
     size_t size = ftell(fp);
     if (fseek(fp, 0, SEEK_SET) == -1)
-        error("%s: fseek: %s", path, strerror(errno));
+        error("%s: fseek: %s", path, 0 /* strerror(errno)*/);
 
     char *buf = calloc(1, size + 2);
     fread(buf, size, 1, fp);
@@ -46,7 +47,8 @@ SrcFile* read_file(const char* path){
     }
 
     SrcFile* file = calloc(1, sizeof(SrcFile));
-    file->name = (char*)path;
+    file->path = (char*)path;
+    file->name = get_filename((char*)path);
     file->body = buf2;
 
     return file;
@@ -57,6 +59,13 @@ char* get_dirname(char* path){
     char* yen_pos = strrchr(path, '/');
     char* buf = calloc(1, strlen(path) + (yen_pos - path) - 1);
     strncpy(buf, path, yen_pos - path);
+    return buf;
+}
+
+char* get_filename(char* path){
+    char* yen_pos = strrchr(path, '/');
+    char* buf = calloc(1, strlen(path) + (yen_pos - path) - 1);
+    strcpy(buf, yen_pos + 1);
     return buf;
 }
 

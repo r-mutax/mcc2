@@ -15,16 +15,9 @@ void enable_debug_mode(const char *mode) {
     }
 }
 
-char* get_filename(char* path){
-    char* yen_pos = strrchr(path, '/');
-    char* buf = calloc(1, strlen(path) + (yen_pos - path) - 1);
-    strcpy(buf, yen_pos + 1);
-    return buf;
-}
-
 void analy_opt(int argc, char** argv){
     int opt;
-    while((opt = getopt(argc, argv, "c:o:i:d:x:E")) != -1){
+    while((opt = getopt(argc, argv, "c:o:i:d:x:Eg")) != -1){
         switch(opt){
             case 'c':
                 filename = optarg;
@@ -59,6 +52,9 @@ void analy_opt(int argc, char** argv){
                 break;
             case 'E':
                 is_preprocess = true;
+                break;
+            case 'g':
+                debug_exec = 1;
                 break;
             default:
                 error("invalid option.");

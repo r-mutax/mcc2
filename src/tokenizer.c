@@ -3,7 +3,10 @@
 
 Token* token;
 SrcFile* cur_file;
+SrcFile* main_file;
 extern bool is_preprocess;
+static long row = 0;
+static char* row_start = NULL;
 
 Token* scan(char* src);
 static Token* new_token(TokenKind kind, Token* cur, char* p, int len);
@@ -11,11 +14,16 @@ static bool is_ident1(char c);
 static bool is_ident2(char c);
 static TokenKind    check_keyword(char* p, int len);
 static TokenKind check_preprocess_keyword(char* p, int len);
+static char read_escaped_char(char** p);
 Token* delete_newline_token(Token* tok);
+
 
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
     cur_file = file;
+    if(!main_file){
+        main_file = file;
+    }
 
     Token* tok = scan(file->body);
     tok = preprocess(tok);
@@ -37,6 +45,9 @@ Token* scan(char* src){
     char* p = src;
     Token head = {};
     Token* cur = &head;
+
+    row = 1;
+    row_start = p;
 
     /*
         次のトークンの1文字目で処理を分岐し、
@@ -215,17 +226,27 @@ Token* scan(char* src){
                     }
                     cur = new_token(TK_STRING_LITERAL, cur, start, 0);
                     cur->len = p - start;
+                    cur->str = strnewcpyn(start, cur->len);
                     p++;
                 }
                 break;
             case '\'':
                 {
-                    char* pos = p;
-                    char a = *(++p);
+                    char* pos = ++p;
+                    char a = *p;
+                    if(a == '\\'){
+                        // escape sequance
+                        a = read_escaped_char(&p);
+                    }
                     cur = new_token(TK_NUM, cur, pos, 0);
                     cur->val = a;
+
+                    // 文字リテラルの終わり
                     while(*p != '\''){
                         p++;
+                        if(*p == 0){
+                            error_at_src(p, cur_file, "error: unclosed char literal.\n");
+                        }
                     }
                     p++;
                     cur->len = p - cur->pos;
@@ -241,6 +262,8 @@ Token* scan(char* src){
                 break;
             case '\n':
                 cur = new_token(TK_NEWLINE, cur, p++ , 1);
+                row++;
+                row_start = p;
                 break;
             case '#':
                 {
@@ -337,6 +360,8 @@ static Token* new_token(TokenKind kind, Token* cur, char* p, int len){
     tok->pos = p;
     tok->file = cur_file;
     tok->len = len;
+    tok->row = row;
+    tok->col = p - row_start + 1;
     cur->next = tok;
     return tok;
 }
@@ -373,6 +398,27 @@ static TokenKind check_preprocess_keyword(char* p, int len){
     return TK_IDENT;
 }
 
+static char read_escaped_char(char** p){
+    char c = *++*p;
+    switch(c){
+        case 'a': return '\a';
+        case 'b': return '\b';
+        case 'f': return '\f';
+        case 'n': return '\n';
+        case 'r': return '\r';
+        case 't': return '\t';
+        case 'v': return '\v';
+        case '\\': return '\\';
+        case '\'': return '\'';
+        case '\"': return '\"';
+        case '?': return '\?';
+        case '0': return '\0';
+        default:
+            error_at_src(*p, cur_file, "invalid escape character.\n");
+            return 0;
+    }
+}
+
 bool is_equal_token(Token* lhs, Token* rhs){
     if((lhs->len == rhs->len)
         && (!memcmp(lhs->pos, rhs->pos, lhs->len))){
@@ -384,6 +430,12 @@ bool is_equal_token(Token* lhs, Token* rhs){
 char* get_token_string(Token* tok){
     char* str = calloc(1, sizeof(char) * tok->len + 1);
     memcpy(str, tok->pos, tok->len);
+    return str;
+}
+
+char* get_token_string_literal(Token* tok){
+    char* str = calloc(1, sizeof(char) * tok->len + 1);
+    memcpy(str, tok->str, tok->len);
     return str;
 }
 
