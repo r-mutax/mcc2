@@ -27,19 +27,19 @@ static Reg* new_RegToken(Token* tok);
 static Reg* gen_expr(Node* node);
 
 void gen_ir(){
-    IR head;
-    ir = &head;
-
-    // .fileを出力する
-    new_IR(IR_FILE_SECTION, NULL, new_RegStr(main_file->name), NULL);
 
     // グローバル変数の出力
-    Scope* scope = get_global_scope();
-    Ident* ident = scope->ident;
+    Scope* scope;
+    scope = get_global_scope();
 
-    printf("%p\n", ident);
-    printf("%p\n", ident->next);
+    // .fileを出力する
+    IR head;
+    ir = &head;
+    new_IR(IR_FILE_SECTION, NULL, new_RegStr(main_file->name), NULL);
+    scope->ir_cmd = head.next;
 
+    Ident* ident;
+    ident = scope->ident;
     for(Ident* cur = ident; cur; cur = cur->next){
         if(cur->kind == ID_FUNC && cur->funcbody){
             gen_function(cur);
@@ -48,7 +48,6 @@ void gen_ir(){
         }
     }
 
-    scope->ir_cmd = head.next;
 }
 
 static void gen_datas(Ident* ident){

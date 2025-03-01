@@ -108,7 +108,7 @@ int test_expression(){
         short a;
         int b;
     } TestStruct;
-    ASSERT(sizeof(TestStruct), 6);
+    ASSERT(sizeof(TestStruct), 8);
     ASSERT(sizeof(TestStruct*), 8);
 
     typedef union {

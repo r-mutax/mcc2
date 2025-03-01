@@ -753,6 +753,18 @@ static Member* struct_or_union_member(){
     return head.next;
 }
 
+static int get_padding(int offset, Ident* ident){
+    int padding = 0;
+    int size = get_qtype_size(ident->qtype);
+
+    // 1byteならどこにおいてもOK
+    if (size <= 1) return 0;
+
+    int mod = offset % size;
+    padding = mod ? size - mod : 0;
+    return padding;
+}
+
 static SimpleType* struct_or_union_spec(bool is_union){
     /*
         1. 名前付き構造体
@@ -783,7 +795,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
                 // すでに宣言されているが、不完全な構造体
                 ty->member = struct_or_union_member();
                 ty->is_imcomplete = false;
-                
+
                 if(is_union){
                     int max_size = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
@@ -796,6 +808,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
                 } else {
                     int offset = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
+                        offset += get_padding(offset, cur->ident);
                         cur->ident->offset = offset;
                         offset += get_qtype_size(cur->ident->qtype);
                     }
@@ -821,6 +834,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
                 } else {
                     int offset = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
+                        offset += get_padding(offset, cur->ident);
                         cur->ident->offset = offset;
                         offset += get_qtype_size(cur->ident->qtype);
                     }
@@ -856,6 +870,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
             } else {
                 int offset = 0;
                 for(Member* cur = ty->member; cur; cur = cur->next){
+                    offset += get_padding(offset, cur->ident);
                     cur->ident->offset = offset;
                     offset += get_qtype_size(cur->ident->qtype);
                 }

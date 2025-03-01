@@ -498,6 +498,7 @@ struct Label {
 // 識別子の検索は、現在のスコープから親のスコープ側に上がっていく
 struct Scope {
     int             level;
+    int             dmy;
     Ident*          ident;
     StringLiteral*  string_literal;
     Scope*          parent;
