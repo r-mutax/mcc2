@@ -430,8 +430,8 @@ static Reg* gen_expr(Node* node){
             long l_true = get_label();
             long l_end = get_label();
             Reg* lreg = gen_expr(node->lhs);
-            Reg* rreg = gen_expr(node->rhs);
             new_IR(IR_JNZ, NULL, lreg, new_RegImm(l_true));
+            Reg* rreg = gen_expr(node->rhs);
             new_IR(IR_JNZ, NULL, rreg, new_RegImm(l_true));
             new_IR(IR_RELEASE_REG, lreg, NULL, NULL);
             new_IR(IR_RELEASE_REG, rreg, NULL, NULL);
@@ -451,8 +451,8 @@ static Reg* gen_expr(Node* node){
             long l_end = get_label();
 
             Reg* lreg = gen_expr(node->lhs);
-            Reg* rreg = gen_expr(node->rhs);
             new_IR(IR_JZ, NULL, lreg, new_RegImm(l_false));
+            Reg* rreg = gen_expr(node->rhs);
             new_IR(IR_JZ, NULL, rreg, new_RegImm(l_false));
             new_IR(IR_RELEASE_REG, lreg, NULL, NULL);
             new_IR(IR_RELEASE_REG, rreg, NULL, NULL);
