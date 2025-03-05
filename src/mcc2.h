@@ -292,9 +292,9 @@ typedef enum NodeKind {
 
 struct Node {
     NodeKind        kind;
+    unsigned long   val;
     Node*           lhs;
     Node*           rhs;
-    unsigned long   val;
     Ident*          ident;
     QualType*       qtype;
     Token*          pos;

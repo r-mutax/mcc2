@@ -243,6 +243,9 @@ static void gen_stmt(Node* node){
                 new_IR(IR_JMP, NULL, new_RegImm(node->default_label->val), NULL);
             }
 
+            // どれでもないときは外に抜ける
+            new_IRJmp(l_end);
+
             // body
             g_break = l_end;
             gen_stmt(node->body);
@@ -331,8 +334,8 @@ static Reg* gen_expr(Node* node){
             Reg* regvar = gen_lvar(node);
             TypeKind kind = get_qtype_kind(node->qtype);
             if(kind != TY_ARRAY
-             && kind != TY_STRUCT
-             && kind != TY_UNION){
+                && kind != TY_STRUCT
+                && kind != TY_UNION){
                 Reg* reg = new_Reg();
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;
