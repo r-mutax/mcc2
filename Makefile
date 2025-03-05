@@ -49,13 +49,15 @@ tmp: mcc2
 	./mcc2 -c ./src/semantics.c -d PREDEFINED_MACRO -o ./selfhost/semantics.s -i ./src -x plvar -g
 	cc -c -o ./selfhost/semantics.o -no-pie ./selfhost/semantics.s -lc -MD
 
+	./mcc2 -c ./src/utility.c -d PREDEFINED_MACRO -o ./selfhost/utility.s -i ./src -x plvar -g
+	cc -c -o ./selfhost/utility.o -no-pie ./selfhost/utility.s -lc -MD
+
 	cp ./src/gen_x86_64.o ./selfhost/gen_x86_64.o
 	cp ./src/main.o ./selfhost/main.o
 	cp ./src/parse.o ./selfhost/parse.o
 	cp ./src/tokenizer.o ./selfhost/tokenizer.o
 	cp ./src/type.o ./selfhost/type.o
 	cp ./src/ident.o ./selfhost/ident.o
-	cp ./src/utility.o ./selfhost/utility.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
 

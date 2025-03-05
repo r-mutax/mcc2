@@ -287,6 +287,7 @@ typedef enum NodeKind {
     ND_MEMBER,
     ND_CAST,
     ND_NOP,
+    ND_VA_START,
 } NodeKind;
 
 struct Node {
@@ -448,14 +449,17 @@ typedef enum IRCmd{
     IR_EXTERN_LABEL,
         // externlabel (null) (ident) (imm)
         // -> identというラベルを外部に公開する
-    IR_VA_START,
-        // va_start (target) (imm1) (imm2)
+    IR_VA_AREA,
+        // va_area (target) (imm1) (imm2)
         // 可変長引数を受け取る関数のプロローグ
-        // targetはva_elemの場所（rbpからのオフセット）
+        // targetはラベルの番号
         // imm1は固定引数の数
         // imm2は浮動小数点引数の数
+    IR_VA_START,
+        // va_start (null) (var)
+        // varはva_list型の変数
 
-    // DEBUG
+        // DEBUG
     IR_COMMENT,
         // comment (string)
         // stringをコメントとして出力する
@@ -616,6 +620,7 @@ Label* register_label(Token* tok);
 void scope_in();
 void scope_out();
 int get_stack_size();
+int set_stack_size(int size);
 Scope* get_current_scope();
 Scope* get_global_scope();
 
@@ -676,6 +681,8 @@ TypeKind get_qtype_kind(QualType* qty);
 QualType* get_qtype_ptr_to(QualType* qty);
 int get_qtype_is_unsigned(QualType* qty);
 int get_qtype_array_len(QualType* qty);
+int get_qtype_align(QualType* qty);
+int get_qtype_padding(int offset, QualType* qty);
 
 // utility.c
 char* strnewcpyn(char* src, int n);
