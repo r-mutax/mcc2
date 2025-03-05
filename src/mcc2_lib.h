@@ -38,6 +38,7 @@ char *strncpy(char *string1, const char *string2, size_t count);
 int strcmp(const char *string1, const char *string2);
 char *strcpy(char *string1, const char *string2);
 void *memcpy(void *dest, const void *src, size_t count);
+void *malloc(size_t size);
 
 // errno.h
 extern int errno;
@@ -57,6 +58,7 @@ typedef __builtin_va_list va_list;
 #define va_arg(ap, type)    __builtin_va_arg(ap, type)
 
 int vfprintf(FILE *  __restrict__stream, const char *  __restrict__format, va_list arg_ptr);
+int vsnprintf(char *fmt, size_t n, const char *format, va_list arg_ptr);
 
 // getopt_core.
 // extern int getopt (int ___argc, char *const *___argv, const char *__shortopts);

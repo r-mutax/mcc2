@@ -5,6 +5,8 @@ static long g_break = -1;
 static long g_continue = -1;
 static Reg* func_name_str = NULL;
 static QualType* func_type = NULL;
+static int gcnt = 0;    // 可変長引数関数の、引数の数
+static int fcnt = 0;    // 可変長引数関数の、浮動小数点引数の数
 
 static void gen_datas(Ident* ident);
 static void gen_function(Ident* func);
@@ -43,6 +45,8 @@ void gen_ir(){
     for(Ident* cur = ident; cur; cur = cur->next){
         if(cur->kind == ID_FUNC && cur->funcbody){
             gen_function(cur);
+            gcnt = 0;
+            fcnt = 0;
         } else if (cur->kind == ID_GVAR){
             gen_datas(cur);
         }
@@ -71,16 +75,14 @@ static void gen_function(Ident* func){
     new_IR(IR_FN_LABEL, NULL, func_name_str, new_RegImm(func->stack_size));
 
     // 可変長引数の場合は、__va_area__に引数をコピーする
-    if(func->va_area){
+    if(func->is_var_params){
         // 固定引数の数を数える
-        int gp = 0;
-        int fp = 0;
         for(Parameter* param = func->params; param; param = param->next){
-            gp++;
+            gcnt++;
         }
 
         // va_elem
-        new_IR(IR_VA_START, new_RegImm(func->va_area->offset), new_RegImm(gp), new_RegImm(fp));
+        new_IR(IR_VA_AREA, new_RegImm(get_label()), new_RegImm(gcnt), new_RegImm(fcnt));
     }
 
 
@@ -511,6 +513,13 @@ static Reg* gen_expr(Node* node){
             // gen_ir()まで来ている場合、演算子の対象にva_end()となっていることはない
             // -> なので、ND_NOPを返しても問題ない。（無視されるはず）
             return new_RegImm(0);
+        }
+        case ND_VA_START:
+        {
+            Reg* ret = new_Reg();
+            Reg* r1 = gen_lvar(node->lhs);
+            new_IR(IR_VA_START, ret, r1, new_RegImm(gcnt));
+            return ret;
         }
         default:
             break;

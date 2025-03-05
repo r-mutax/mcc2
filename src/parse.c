@@ -99,6 +99,7 @@ static Node* new_node_var(Ident* ident);
 static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
 static bool is_function();
+static bool is_var_func();
 
 // ----------------------------------------
 // トークン操作
@@ -127,7 +128,7 @@ Token va_elem_overflow_arg_area_token = MAKE_TOKEN(TK_IDENT, "overflow_arg_area"
 Token va_elem_reg_save_area_token = MAKE_TOKEN(TK_IDENT, "reg_save_area");
 Token tmp_token = MAKE_TOKEN(TK_IDENT, "__tmp__");
 
-#define VA_AREA_SIZE 24 + 8 * 6 + 8 * 8
+#define VA_AREA_SIZE 8 * 6 + 16 * 8
 
 void parse(Token* tok){
     token = tok;
@@ -182,6 +183,13 @@ static void function(QualType* func_type, StorageClassKind sck){
 
     // ここでスコープインして、仮引数は関数スコープ内で宣言するため、ローカル変数と同等に扱える。
     scope_in();
+    func->is_var_params = is_var_func();
+    if(func->is_var_params){
+        // 可変長引数関数の場合は、レジスタの退避領域を確保するため、
+        // stack_sizeをずらす
+        set_stack_size(get_stack_size() + VA_AREA_SIZE);
+    }
+
     expect_token(TK_L_PAREN);
 
     if(!consume_token(TK_R_PAREN)){
@@ -222,16 +230,6 @@ static void function(QualType* func_type, StorageClassKind sck){
     Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, make_qual_type(ty_char));
     spill_area->qtype = array_of(make_qual_type(ty_char), 8 * 30);
     register_ident(spill_area);
-
-    // ここまで来たら関数の定義
-    // 可変長引数ありの関数の場合は、__va_area__を宣言
-    if(func->is_var_params){
-        Ident* va_area = make_ident(&va_arena_token, ID_LVAR, make_qual_type(ty_char));
-        va_area->qtype = array_of(make_qual_type(ty_char), VA_AREA_SIZE);
-        register_ident(va_area);
-
-        func->va_area = va_area;
-    }
 
     // 関数の戻り値の型を保持しておく
     cur_func_type = func_type;
@@ -753,18 +751,6 @@ static Member* struct_or_union_member(){
     return head.next;
 }
 
-static int get_padding(int offset, Ident* ident){
-    int padding = 0;
-    int size = get_qtype_size(ident->qtype);
-
-    // 1byteならどこにおいてもOK
-    if (size <= 1) return 0;
-
-    int mod = offset % size;
-    padding = mod ? size - mod : 0;
-    return padding;
-}
-
 static SimpleType* struct_or_union_spec(bool is_union){
     /*
         1. 名前付き構造体
@@ -808,7 +794,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
                 } else {
                     int offset = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
-                        offset += get_padding(offset, cur->ident);
+                        offset += get_qtype_padding(offset, cur->ident->qtype);
                         cur->ident->offset = offset;
                         offset += get_qtype_size(cur->ident->qtype);
                     }
@@ -834,7 +820,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
                 } else {
                     int offset = 0;
                     for(Member* cur = ty->member; cur; cur = cur->next){
-                        offset += get_padding(offset, cur->ident);
+                        offset += get_qtype_padding(offset, cur->ident->qtype);
                         cur->ident->offset = offset;
                         offset += get_qtype_size(cur->ident->qtype);
                     }
@@ -870,7 +856,7 @@ static SimpleType* struct_or_union_spec(bool is_union){
             } else {
                 int offset = 0;
                 for(Member* cur = ty->member; cur; cur = cur->next){
-                    offset += get_padding(offset, cur->ident);
+                    offset += get_qtype_padding(offset, cur->ident->qtype);
                     cur->ident->offset = offset;
                     offset += get_qtype_size(cur->ident->qtype);
                 }
@@ -1348,7 +1334,7 @@ static Node* unary(){
             node = unary();
             add_type(node);
             if(get_qtype_kind(node->qtype) == TY_ARRAY){
-                node = new_node_num(get_qtype_array_len(node->qtype) * get_qtype_size(node->qtype));
+                node = new_node_num(get_qtype_size(node->qtype));
             } else if(get_qtype_kind(node->qtype) == TY_STRUCT || get_qtype_kind(node->qtype) == TY_UNION){
                 node = new_node_num(get_qtype_size(node->qtype));
             } else {
@@ -1443,32 +1429,15 @@ static Node* primary(){
 
     // ビルトイン関数
     if(consume_token(TK_VA_START)){
-        // 暗黙宣言している__va_arena__を取得
-        Ident* var_area_ident = find_ident(&va_arena_token);
-        Node* var_area_node = new_node_var(var_area_ident);
-
+        // 第１第２引数を取得
         expect_token(TK_L_PAREN);
-        Node* arg1_node = assign();
+        Node* lhs_node = assign();
         expect_token(TK_COMMA);
-        Node* arg2_node = assign();
+        Node* rhs_node = assign();
         expect_token(TK_R_PAREN);
 
-        // 第１引数のポインタの参照を外す
-        Node* lhs_node = new_node(ND_DREF, arg1_node, NULL);
-
-        // __builtin_va_elem*型を取得
-        Ident* builtin_va_elem_ident = find_typedef(&builtin_va_elem_token);
-        QualType* qty = builtin_va_elem_ident->qtype;
-        qty = pointer_to(qty);
-
-        // __va_area__を__builtin_va_elem*型にキャストする
-        Node* rhs_node = new_node(ND_CAST, var_area_node, NULL);
-        rhs_node->qtype = qty;
-
-        // (__builtin_va_elem*)__va_area__の参照を外す
-        rhs_node = new_node(ND_DREF, rhs_node, NULL);
-
-        Node* node = new_node(ND_ASSIGN, lhs_node, rhs_node);
+        Node* node = new_node(ND_VA_START, lhs_node, NULL);
+        node->pos = pos_tok;
         return node;
     }
 
@@ -1733,6 +1702,24 @@ static bool is_function(){
         retval = true;
     }
 
+    set_token(bkup);
+    return retval;
+}
+
+// 可変長引数関数か探る
+//  fund(int a, int b, ...)
+//      ^ ここで呼ばれる前提
+static bool is_var_func(){
+    Token* bkup = get_token();
+    bool retval = false;
+
+    while(!consume_token(TK_R_PAREN)){
+        if(consume_token(TK_DOT_DOT_DOT)){
+            retval = true;
+            break;
+        }
+        token = token->next;
+    }
     set_token(bkup);
     return retval;
 }

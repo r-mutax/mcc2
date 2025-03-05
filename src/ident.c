@@ -12,13 +12,17 @@ static int string_literal_num = 0;
 Ident* declare_ident(Token* tok, IdentKind kind, QualType* qty){
     Ident* ident = calloc(1, sizeof(Ident));
 
+    // サイズを計算
+    int size = 0;
     if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
-        if(get_qtype_kind(qty) == TY_ARRAY){
-            stack_size += get_qtype_size(qty) * get_qtype_array_len(qty);
-        } else {
-            stack_size += get_qtype_size(qty);
-        }
+        size = get_qtype_size(qty);
     }
+
+    // パディングを計算
+    int padding = get_qtype_padding(stack_size, qty);
+
+    // スタックサイズを更新
+    stack_size += size + padding;
 
     ident->kind = kind;
     ident->name = strnewcpyn(tok->pos, tok->len);
@@ -46,15 +50,19 @@ Ident* make_ident(Token* tok, IdentKind kind, QualType* qty){
 
 void register_ident(Ident* ident){
     QualType* qty = ident->qtype;
+
+    int size = 0;
     if((ident->kind == ID_LVAR) && (cur_scope->level != 0)){
         if(!ident->is_extern){
-            if(get_qtype_kind(qty) == TY_ARRAY){
-                stack_size += get_qtype_size(qty) * get_qtype_array_len(qty);
-            } else {
-                stack_size += get_qtype_size(qty);
-            }
+            size = get_qtype_size(qty);
         }
     }
+
+    // パディングを計算
+    int padding = get_qtype_padding(stack_size, qty);
+
+    // スタックサイズを更新
+    stack_size += size + padding;
 
     ident->offset = stack_size;
 
@@ -148,6 +156,10 @@ SimpleType* find_tag(Token* tok){
 
 int get_stack_size(){
     return stack_size;
+}
+
+int set_stack_size(int size){
+    stack_size = size;
 }
 
 void scope_in(){

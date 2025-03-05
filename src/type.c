@@ -157,6 +157,11 @@ void add_type(Node* node){
             node->qtype = node->lhs->qtype;
             break;
 
+        case ND_VA_START:
+            // va_start()は型を持たないが、便宜上void型としておく
+            node->qtype = make_qual_type(ty_void);
+            break;
+
         // 文 -> 文は評価しても値を返さない＝型がない
         case ND_RETURN:             // リターン文
         case ND_IF:                 // if文
@@ -216,6 +221,9 @@ QualType* make_qual_type(SimpleType* type){
 }
 
 int get_qtype_size(QualType* qty){
+    if(qty->type->kind == TY_ARRAY){
+        return get_qtype_size(qty->type->ptr_to) * qty->type->array_len;
+    }
     return qty->type->size;
 }
 
@@ -233,4 +241,37 @@ int get_qtype_is_unsigned(QualType* qty){
 
 int get_qtype_array_len(QualType* qty){
     return qty->type->array_len;
+}
+
+int get_qtype_align(QualType* qty){
+    int align = 0;
+
+    if(qty->type->kind == TY_STRUCT || qty->type->kind == TY_UNION){
+        // メンバの中で最大のアライメント幅を種痘
+        for(Member* member = qty->type->member; member; member = member->next){
+            int size = get_qtype_size(member->ident->qtype);
+            align = align < size ? size : align;
+        }
+        return align;
+    }
+
+    if(qty->type->kind == TY_ARRAY){
+        return get_qtype_align(qty->type->ptr_to);
+    }
+
+    if(qty->type->kind == TY_INT || qty->type->kind == TY_ENUM || qty->type->kind == TY_POINTER || qty->type->kind == TY_BOOL){
+        return get_qtype_size(qty);
+    }
+}
+
+int get_qtype_padding(int offset, QualType* qty){
+    int padding = 0;
+    int align = get_qtype_align(qty);
+
+    // 1byteならどこにおいてもOK
+    if (align <= 1) return 0;
+
+    int mod = offset % align;
+    padding = mod ? align - mod : 0;
+    return padding;
 }
