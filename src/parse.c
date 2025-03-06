@@ -1540,10 +1540,10 @@ static Node* primary(){
     }
 
     // 数値リテラル
-    int val = expect_num();
-    Node* node = new_node_num(val);
-    node->pos = pos_tok;
-    return node;
+    unsigned long val = expect_num();
+    Node* node_num = new_node_num(val);
+    node_num->pos = pos_tok;
+    return node_num;
 }
 
 static Node* const_expr(){
