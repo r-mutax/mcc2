@@ -275,3 +275,14 @@ int get_qtype_padding(int offset, QualType* qty){
     padding = mod ? align - mod : 0;
     return padding;
 }
+
+bool is_enum_member(QualType* qty, int data){
+    SimpleType* ty = qty->type;
+
+    for(Member* cur = ty->member; cur; cur = cur->next){
+        if(cur->ident->val == data){
+            return true;
+        }
+    }
+    return false;
+}

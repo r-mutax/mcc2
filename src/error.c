@@ -27,7 +27,7 @@ void warn_tok(Token* tok, char* fmt, ...){
     }
 
     // エラー箇所を表示する
-    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
+    int indent = fprintf(stderr, "%s:%d:\e[33mwarn\e[0m: ", filename, line_num) - strlen("\e[31m\e[0m");
     fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
     // 空白を表示する
@@ -64,7 +64,7 @@ void error_tok(Token* tok, char* fmt, ...){
     }
 
     // エラー箇所を表示する
-    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
+    int indent = fprintf(stderr, "%s:%d:\e[31merror\e[0m: ", filename, line_num) - strlen("\e[33m\e[0m");
     fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
     // 空白を表示する
@@ -104,7 +104,7 @@ void error_at_src(char* pos, SrcFile* src, char* fmt, ...){
     }
 
     // エラー箇所を表示する
-    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
+    int indent = fprintf(stderr, "%s:%d:\e[31merror\e[0m: ", filename, line_num) - strlen("\e[33m\e[0m");
     fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
     // 空白を表示する
@@ -144,7 +144,7 @@ void warn_at_src(char* pos, SrcFile* src, char* fmt, ...){
     }
 
     // エラー箇所を表示する
-    int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
+    int indent = fprintf(stderr, "%s:%d:\e[33mwarn\e[0m: ", filename, line_num) - strlen("\e[31m\e[0m");
     fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
     // 空白を表示する

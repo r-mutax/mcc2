@@ -1540,7 +1540,10 @@ static Node* primary(){
     }
 
     // 数値リテラル
-    return new_node_num(expect_num());
+    int val = expect_num();
+    Node* node = new_node_num(val);
+    node->pos = pos_tok;
+    return node;
 }
 
 static Node* const_expr(){
@@ -1562,6 +1565,7 @@ static Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
 
 static Node* new_node_num(unsigned long num){
     Node* result = calloc(1, sizeof(Node));
+    result->kind = ND_NUM;
     result->val = num;
     return result;
 }
