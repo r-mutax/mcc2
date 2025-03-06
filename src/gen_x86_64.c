@@ -108,18 +108,12 @@ static void pop(char* reg){
     --depth;
 
     int idx = get_regno(reg);
-    if(idx != -1){
-        print("\t.cfi_restore %d\n", idx);
-    }
 }
 
 static void push(char* reg){
     print("  push %s\n", reg);
     ++depth;
     int idx = get_regno(reg);
-    if(idx != -1){
-        print("\t.cfi_offset %d, %d\n", idx, -8 * depth);
-    }
 }
 
 static int findSpillReg(){
@@ -447,16 +441,13 @@ static void convert_ir2x86asm(IR* ir){
                     if(!func->tok->file->labeled){
                         func->tok->file->labeled = 1;
                         func->tok->file->label = file_label++;
-                        print("\t.file %d \"%s\"\n", func->tok->file->label, func->tok->file->name);
+                        print("\t.file %d \"%s\"\n", func->tok->file->label, func->tok->file->path);
                     }
                     print("\t.loc %d %d %d\n", func->tok->file->label,
                                                 func->tok->row, func->tok->col);
                 }
-                print("\t.cfi_startproc\n");
                 push("rbp");
-                print("\t.cfi_def_cfa_offset 8\n");
                 print("  mov rbp, rsp\n");
-                print("\t.cfi_def_cfa_register 6\n");
                 print("  sub rsp, %d\n", ((ir->s2->val + 15) / 16) * 16);
                 push("r12");
                 push("r13");
@@ -475,7 +466,6 @@ static void convert_ir2x86asm(IR* ir){
                 print("  mov rsp, rbp\n");
                 pop("rbp");
                 print("  ret\n");
-                print("\t.cfi_endproc\n");
                 print(".LFE%d:\n", func->func_id);
                 break;
             }
@@ -863,7 +853,7 @@ static void convert_ir2x86asm(IR* ir){
                     if(!ir->s1->tok->file->labeled){
                         ir->s1->tok->file->labeled = 1;
                         ir->s1->tok->file->label = file_label++;
-                        print("\t.file %d \"%s\"\n", ir->s1->tok->file->label, ir->s1->tok->file->name);
+                        print("\t.file %d \"%s\"\n", ir->s1->tok->file->label, ir->s1->tok->file->path);
                     }
                     print("\t.loc %d %d %d\n", ir->s1->tok->file->label,
                                                 ir->s1->tok->row, ir->s1->tok->col);

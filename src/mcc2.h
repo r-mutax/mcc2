@@ -683,6 +683,7 @@ int get_qtype_is_unsigned(QualType* qty);
 int get_qtype_array_len(QualType* qty);
 int get_qtype_align(QualType* qty);
 int get_qtype_padding(int offset, QualType* qty);
+bool is_enum_member(QualType* qty, int data);
 
 // utility.c
 char* strnewcpyn(char* src, int n);

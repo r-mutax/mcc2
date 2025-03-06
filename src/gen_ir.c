@@ -399,6 +399,14 @@ static Reg* gen_expr(Node* node){
                 reg_expr = reg2;
             }
 
+            if(lhs_kind == TY_ENUM){
+                if(node->rhs->kind == ND_NUM){
+                    if(!is_enum_member(node->lhs->qtype, node->rhs->val)){
+                        warn_tok(node->rhs->pos , "enum member is not defined.");
+                    }
+                }
+            }
+
             // 左辺値のアドレスを取得
             if(lhs_kind == TY_ARRAY){
                 error("incompatible types in assignment to array.");
