@@ -2,6 +2,7 @@
 
 IncludePath* include_paths = NULL;
 IncludePath* std_include_paths = NULL;
+int include_dir_idx = 1;
 extern bool is_preprocess;
 extern char* PRE_MACRO[];
 
@@ -206,10 +207,23 @@ Token* preprocess(Token* token){
 }
 
 void add_include_path(char* path){
+
+    for(IncludePath* cur = include_paths; cur; cur = cur->next){
+        if(!memcmp(cur->path, path, strlen(path))){
+            // 登録済の場合
+            return;
+        }
+    }
+
     IncludePath* p = calloc(1, sizeof(IncludePath));
     p->path = path;
+    p->idx = include_dir_idx++;
     p->next = include_paths;
     include_paths = p;
+}
+
+IncludePath* get_include_paths(){
+    return include_paths;
 }
 
 void add_predefine_macro(char* name){

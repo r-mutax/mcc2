@@ -47,6 +47,7 @@ extern SrcFile* main_file;
 
 struct IncludePath {
     char* path;
+    int idx;
     IncludePath* next;
 };
 
@@ -636,6 +637,7 @@ Token* preprocess(Token* token);
 void add_include_path(char* path);
 void add_predefine_macro(char* path);
 void init_preprocess();
+IncludePath* get_include_paths();
 
 // semantics.c
 void semantics();

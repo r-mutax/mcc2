@@ -433,8 +433,6 @@ static void convert_ir2x86asm(IR* ir){
                 // file情報を出力
                 if(debug_exec){
                     print(".LFB%d:\n", func->func_id);
-                    print("\t.loc %d %d %d\n", func->tok->file->label,
-                                                func->tok->row, func->tok->col);
                 }
                 push("rbp");
                 print("  mov rbp, rsp\n");
