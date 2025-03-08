@@ -62,6 +62,7 @@ tmp: mcc2
 	cp ./src/ident.o ./selfhost/ident.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
+	cp ./src/dwarf.o ./selfhost/dwarf.o
 
 	#cp ./src/file.o ./selfhost/file.o
 

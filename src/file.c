@@ -1,6 +1,9 @@
 #include "mcc2.h"
 
 FILE* fp = NULL;
+SrcFile* files[100];
+int file_count = 0;
+
 static char* get_filename(char* path);
 
 SrcFile* read_file(const char* path){
@@ -50,8 +53,16 @@ SrcFile* read_file(const char* path){
     file->path = (char*)path;
     file->name = get_filename((char*)path);
     file->body = buf2;
+    file->label = file_count + 1;
+
+    files[file_count++] = file;
 
     return file;
+}
+
+SrcFile** get_files(int *count){
+    *count = file_count;
+    return &files[0];
 }
 
 // ファイルパスからディレクトリの文字列を取得する

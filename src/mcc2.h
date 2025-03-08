@@ -288,6 +288,7 @@ typedef enum NodeKind {
     ND_CAST,
     ND_NOP,
     ND_VA_START,
+    ND_STMT,
 } NodeKind;
 
 struct Node {
@@ -463,9 +464,11 @@ typedef enum IRCmd{
     IR_COMMENT,
         // comment (string)
         // stringをコメントとして出力する
-        IR_FILE_SECTION,
+    IR_FILE_SECTION,
         // file (null) (string)
         // ファイル名を設定する
+    IR_DEBUG_LOC_LABEL,
+        // デバッグ情報用のラベル
 
 } IRCmd;
 
@@ -595,6 +598,7 @@ void file_init();
 void print(char* fmt, ...);
 void open_output_file(char* filename);
 void close_output_file();
+SrcFile** get_files(int *count);
 
 // gen_ir.c
 void gen_ir();
@@ -689,3 +693,6 @@ bool is_enum_member(QualType* qty, int data);
 char* strnewcpyn(char* src, int n);
 char* format_string(const char* format, ...);
 void printline(Token* loc);
+
+// dwarf.c
+int dwarf(Scope* get_global_scope);

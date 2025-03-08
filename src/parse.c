@@ -52,6 +52,7 @@ typedef struct Intializer {
 static Node* switch_node = NULL;
 static QualType* cur_func_type = NULL;
 static Token* token = NULL;
+static int stmt_no = 1;
 
 static void Program();
 static void function(QualType* ty, StorageClassKind sck);
@@ -246,20 +247,19 @@ static void function(QualType* func_type, StorageClassKind sck){
 
 static Node* stmt(){
     Token* tok = get_token();
+    Node* node = NULL;
+
     if(consume_token(TK_RETURN)){
-        Node* node = NULL;
 
         if(get_qtype_kind(cur_func_type) == TY_VOID){
             if(consume_token(TK_SEMICORON)){
                 node = new_node(ND_RETURN, NULL, NULL);
                 node->pos = tok;
-                return node;
             } else {
                 node = expr();
                 node = new_node(ND_RETURN, node, NULL);
                 node->pos = tok;
                 expect_token(TK_SEMICORON);
-                return node;
             }
         } else {
             if(consume_token(TK_SEMICORON)){
@@ -269,10 +269,9 @@ static Node* stmt(){
             node = new_node(ND_RETURN, node, NULL);
             node->pos = tok;
             expect_token(TK_SEMICORON);
-            return node;
         }
     } else if(consume_token(TK_IF)){
-        Node* node = new_node(ND_IF, NULL, NULL);
+        node = new_node(ND_IF, NULL, NULL);
         node->pos = tok;
         expect_token(TK_L_PAREN);
         node->cond = expr();
@@ -284,17 +283,15 @@ static Node* stmt(){
             node->elif = stmt();
             node->kind = ND_IF_ELSE;
         }
-        return node;
     } else if(consume_token(TK_WHILE)){
-        Node* node = new_node(ND_WHILE, NULL, NULL);
+        node = new_node(ND_WHILE, NULL, NULL);
         node->pos = tok;
         expect_token(TK_L_PAREN);
         node->cond = expr();
         expect_token(TK_R_PAREN);
         node->body = stmt();
-        return node;
     } else if(consume_token(TK_DO)){
-        Node* node = new_node(ND_DO_WHILE, NULL, NULL);
+        node = new_node(ND_DO_WHILE, NULL, NULL);
         node->pos = tok;
         node->body = stmt();
         expect_token(TK_WHILE);
@@ -302,9 +299,8 @@ static Node* stmt(){
         node->cond = expr();
         expect_token(TK_R_PAREN);
         expect_token(TK_SEMICORON);
-        return node;
     } else if(consume_token(TK_FOR)){
-        Node* node = new_node(ND_FOR, NULL, NULL);
+        node = new_node(ND_FOR, NULL, NULL);
         node->pos = tok;
         expect_token(TK_L_PAREN);
 
@@ -344,23 +340,19 @@ static Node* stmt(){
             expect_token(TK_R_PAREN);
         }
         node->body = stmt();
-        return node;
     } else if(consume_token(TK_L_BRACKET)){
         return compound_stmt();
     } else if(consume_token(TK_SEMICORON)){
-        Node* node = new_node(ND_VOID_STMT, NULL, NULL);
+        node = new_node(ND_VOID_STMT, NULL, NULL);
         node->pos = tok;
-        return node;
     } else if(consume_token(TK_BREAK)){
-        Node* node = new_node(ND_BREAK, NULL, NULL);
+        node = new_node(ND_BREAK, NULL, NULL);
         node->pos = tok;
-        return node;
     } else if(consume_token(TK_CONTINUE)){
-        Node* node = new_node(ND_CONTINUE, NULL, NULL);
+        node = new_node(ND_CONTINUE, NULL, NULL);
         node->pos = tok;
-        return node;
     } else if(consume_token(TK_SWITCH)){
-        Node* node = new_node(ND_SWITCH, NULL, NULL);
+        node = new_node(ND_SWITCH, NULL, NULL);
         Node* switch_back = switch_node;
         switch_node = node;
 
@@ -371,22 +363,20 @@ static Node* stmt(){
         node->body = stmt();
 
         switch_node = switch_back;
-        return node;
     } else if(consume_token(TK_CASE)){
         if(switch_node == NULL){
             error_tok(tok, "case is not within a switch statement.");
         }
 
-        Node* node = new_node(ND_CASE, NULL, NULL);
+        node = new_node(ND_CASE, NULL, NULL);
         node->lhs = const_expr(); 
         consume_token(TK_COLON);
         node->pos = tok;
 
         node->next_case = switch_node->next_case;
         switch_node->next_case = node;
-        return node;
     } else if(consume_token(TK_DEFAULT)){
-        Node* node = new_node(ND_DEFAULT, NULL, NULL);
+        node = new_node(ND_DEFAULT, NULL, NULL);
         node->pos = tok;
         consume_token(TK_COLON);
 
@@ -394,9 +384,8 @@ static Node* stmt(){
             error_tok(tok, "multiple default label.");
         }
         switch_node->default_label = node;
-        return node;
     } else if(is_label()){
-        Node* node = new_node(ND_LABEL, NULL, NULL);
+        node = new_node(ND_LABEL, NULL, NULL);
         node->pos = tok;
         Token* label_ident = expect_ident();
         expect_token(TK_COLON);
@@ -407,9 +396,8 @@ static Node* stmt(){
         }
         label->labeld = true;
         node->label = label;
-        return  node;
     } else if(consume_token(TK_GOTO)){
-        Node* node = new_node(ND_GOTO, NULL, NULL);
+        node = new_node(ND_GOTO, NULL, NULL);
         node->pos = tok;
         Token* label_ident = expect_ident();
         Label* label = find_label(label_ident);
@@ -417,13 +405,15 @@ static Node* stmt(){
             label = register_label(label_ident);
         }
         node->label = label;
-        return  node;
     } else {
-        Node* node = expr();
+        node = expr();
         expect_token(TK_SEMICORON);
         node->pos = tok;
-        return node;
     }
+
+    node = new_node(ND_STMT, node, NULL);
+    node->val = stmt_no++;
+    return node;
 }
 
 static Node* compound_stmt(){

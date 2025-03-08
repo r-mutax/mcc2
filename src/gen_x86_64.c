@@ -18,7 +18,6 @@ static const char *argreg32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static const char *argreg64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 int depth = 1;
 static int file_label = 1;
-static int func_id = 1;
 
 int debug_regis = 0;    // レジスタのデバッグモード
 int debug_plvar = 0;    // ローカル変数のデバッグモード
@@ -433,16 +432,7 @@ static void convert_ir2x86asm(IR* ir){
 
                 // file情報を出力
                 if(debug_exec){
-                    if(func->func_id == 0){
-                        func->func_id = func_id++;
-                    }
                     print(".LFB%d:\n", func->func_id);
-
-                    if(!func->tok->file->labeled){
-                        func->tok->file->labeled = 1;
-                        func->tok->file->label = file_label++;
-                        print("\t.file %d \"%s\"\n", func->tok->file->label, func->tok->file->path);
-                    }
                     print("\t.loc %d %d %d\n", func->tok->file->label,
                                                 func->tok->row, func->tok->col);
                 }
@@ -849,15 +839,9 @@ static void convert_ir2x86asm(IR* ir){
                     }
                     print(" remain register num : %d\n", remreg);
                 }
-                if(debug_exec){
-                    if(!ir->s1->tok->file->labeled){
-                        ir->s1->tok->file->labeled = 1;
-                        ir->s1->tok->file->label = file_label++;
-                        print("\t.file %d \"%s\"\n", ir->s1->tok->file->label, ir->s1->tok->file->path);
-                    }
-                    print("\t.loc %d %d %d\n", ir->s1->tok->file->label,
-                                                ir->s1->tok->row, ir->s1->tok->col);
-                }
+                break;
+            case IR_DEBUG_LOC_LABEL:
+                print(".LLINE%d:\n", ir->s1->val);
                 break;
             case IR_FILE_SECTION:
                 print("\t.file\t\"%s\"\n", ir->s1->str);

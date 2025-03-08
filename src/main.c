@@ -98,8 +98,15 @@ int main(int argc, char **argv){
     // semantics
     semantics();
 
-    // generate
+    // generate ir
     gen_ir();
+
+    // dwarf
+    if(debug_exec){
+        dwarf(get_global_scope());
+    }
+
+    // generate x86
     gen_x86();
 
     close_output_file();

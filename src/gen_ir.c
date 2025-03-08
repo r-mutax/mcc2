@@ -117,6 +117,11 @@ static void gen_function(Ident* func){
 }
 
 static void gen_stmt(Node* node){
+    if(node->kind == ND_STMT){
+        new_IR(IR_DEBUG_LOC_LABEL, NULL, new_RegImm(node->val), NULL);
+        node = node->lhs;
+    }
+
     if(node->pos){
         new_IR(IR_COMMENT, NULL, new_RegToken(node->pos), NULL);
     }
