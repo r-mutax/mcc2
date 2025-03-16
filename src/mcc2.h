@@ -596,6 +596,9 @@ void print(char* fmt, ...);
 void open_output_file(char* filename);
 void close_output_file();
 
+// dwarf.c
+void dwarf();
+
 // gen_ir.c
 void gen_ir();
 

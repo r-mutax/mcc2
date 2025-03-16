@@ -102,6 +102,10 @@ int main(int argc, char **argv){
     gen_ir();
     gen_x86();
 
+    if(debug_exec){
+        dwarf();
+    }
+
     close_output_file();
 
     return 0;
