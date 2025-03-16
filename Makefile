@@ -24,6 +24,15 @@ test : mcc2 $(TEST_OBJS)
 	cc -o test.exe $(TEST_OBJS)
 	./test.exe
 
+tdwarf : mcc2
+	cc ./dev/dwarf_test.c -o ./dev/cc.s -S -g
+	cc -c -o ./dev/cc.o ./dev/cc.s -lc -MD
+	readelf -w ./dev/cc.o > ./dev/cc.dwarf
+
+	./mcc2 -c ./dev/dwarf_test.c -o ./dev/mcc2.s -i ./test/testinc -i ./src -x plvar -g
+	cc -c -o ./dev/mcc2.o ./dev/mcc2.s -lc -MD
+	readelf -w ./dev/mcc2.o > ./dev/mcc2.dwarf
+
 test2: mcc2
 	./mcc2 -c ./dev/test2.c -o ./tmp.s -i ./test/testinc -i ./src -x plvar -g
 	cc -o ./dev/tmp -no-pie tmp.s -lc

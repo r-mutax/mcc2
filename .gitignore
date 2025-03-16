@@ -3,6 +3,12 @@ tmp
 tmp.s
 src/*.o
 src/*.d
+dev/cc.dwarf
+dev/cc.o
+dev/cc.s
+dev/mcc2.o
+dev/mcc2.s
+dev/mcc2.dwarf
 test.exe
 test/c/*.o
 test/c/*.d
