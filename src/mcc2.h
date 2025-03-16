@@ -19,6 +19,7 @@
 #include <bits/getopt_core.h>
 #endif
 
+typedef struct CompilationInfo CompilationInfo;
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct Parameter Parameter;
@@ -44,6 +45,13 @@ typedef enum TypeKind TypeKind;
 extern FILE* fp;
 extern char* builtin_def;
 extern SrcFile* main_file;
+extern CompilationInfo cinfo;
+
+struct CompilationInfo{
+    char* compile_file;
+    char* working_dir;
+    char* compiler;
+};
 
 struct IncludePath {
     char* path;
