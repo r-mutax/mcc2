@@ -24,7 +24,7 @@ test : mcc2 $(TEST_OBJS)
 	cc -o test.exe $(TEST_OBJS)
 	./test.exe
 
-tdwarf : mcc2
+dwarf : mcc2
 	cc ./dev/dwarf_test.c -o ./dev/cc.s -S -g
 	cc -c -o ./dev/cc.o ./dev/cc.s -lc -MD
 	readelf -w ./dev/cc.o > ./dev/cc.dwarf
@@ -71,6 +71,7 @@ tmp: mcc2
 	cp ./src/ident.o ./selfhost/ident.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
+	cp ./src/dwarf.o ./selfhost/dwarf.o
 
 	#cp ./src/file.o ./selfhost/file.o
 
@@ -94,4 +95,4 @@ clean:
 	rm -f ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2t
 	rm -f ./selfhost/test/c/*.o ./selfhost/test/c/*.s
 
-.PHONY: test clean tmp test2 test3 test4 self selft
+.PHONY: test clean tmp test2 test3 test4 self selft dwarf
