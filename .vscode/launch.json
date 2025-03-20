@@ -8,7 +8,8 @@
             "name": "(gdb) 起動",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/selfhost/mcc2t",
+//            "program": "${workspaceFolder}/dev/mcc2.o",
+            "program": "${workspaceFolder}/dwarf_test",
             "args": [
                 "-c", "${workspaceFolder}/test/c/statement.c",
                 "-o", "${workspaceFolder}/tmp.s",

@@ -28,7 +28,7 @@ void dwarf(){
 
 static void dwarf_init(){
     // debug_strをつくる
-    DWARF_Str(cinfo.working_dir);       // 作業ディレクトリ
+    DWARF_Str("/workspaces/mcc2");       // 作業ディレクトリ
     DWARF_Str(cinfo.compile_file);      // コンパイルファイル
     DWARF_Str(cinfo.compiler);          // コンパイラ
 }
@@ -87,7 +87,8 @@ static void dwarf_info_compile_unit(){
     print("\t.long .LASF0\n");  // DW_AT_comp_dir
     print("\t.quad .Ltext0\n"); // DW_AT_low_pc
     print("\t.quad .Letext0-.Ltext0\n"); // DW_AT_high_pc
-    print("\t.long .Ldebug_line0\n"); // DW_AT_stmt_list
+    print("\t.long 0\n"); // DW_AT_stmt_list
+    print("\t.byte 0x00\n"); // 0x00
 }
 
 // .debug_lineの出力

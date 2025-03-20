@@ -1,6 +1,7 @@
 mcc2
 tmp
 tmp.s
+dwarf_test
 src/*.o
 src/*.d
 dev/cc.dwarf

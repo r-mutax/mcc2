@@ -12,7 +12,7 @@ struct Dwarf_dstr {
     Dwarf_dstr* next;
 };
 
-#define DW_ATTR(X, Y)   do {print("\t.uleb128 0x%x\n", X); print("  .uleb128 0x%x\n", Y);} while(0)
+#define DW_ATTR(X, Y)   do {print("\t.uleb128 0x%x\n", X); print("\t.uleb128 0x%x\n", Y);} while(0)
 
 // attribute form encoding
 // attribute form encoding

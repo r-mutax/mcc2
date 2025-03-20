@@ -108,7 +108,7 @@ int main(int argc, char **argv){
     gen_x86();
 
     if(debug_exec){
-        dwarf();
+       dwarf();
     }
 
     close_output_file();
