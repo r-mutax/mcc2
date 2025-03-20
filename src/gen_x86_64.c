@@ -24,6 +24,33 @@ int debug_regis = 0;    // レジスタのデバッグモード
 int debug_plvar = 0;    // ローカル変数のデバッグモード
 int debug_exec = 0;     // 実行時のデバッグモード
 
+typedef enum {
+    NONE = 0,
+    TEXT,
+    DATA,
+    BSS,
+} SECTION;
+static SECTION g_section = NONE;
+static void set_section(SECTION set){
+    if(g_section == set){
+        return;
+    }
+    switch(set){
+        case TEXT:
+            print("  .text\n");
+            break;
+        case DATA:
+            print("  .data\n");
+            break;
+        case BSS:
+            print("  .bss\n");
+            break;
+        default:
+            break;
+    }
+    g_section = set;
+}
+
 /*
     CAST CMD のルール
     1. 拡張長方向のキャスト
@@ -383,10 +410,13 @@ void gen_x86(){
     Scope* global_scope = get_global_scope();
 
     print("\t.intel_syntax noprefix\n");
+    print("\t.file \"%s\"\n", cinfo.compile_file);
+    set_section(TEXT);
+    print(".Ltext0:\n");
 
     // extern宣言
     IR* ir = global_scope->ir_cmd;
-    convert_ir2x86asm(ir);
+    // convert_ir2x86asm(ir);
 
     // グローバル変数の出力
     Ident* ident = global_scope->ident;
@@ -417,6 +447,8 @@ void gen_x86(){
         }
         ident = ident->next;
     }
+
+    print(".Letext0:\n");
 }
 
 
@@ -426,7 +458,7 @@ static void convert_ir2x86asm(IR* ir){
             case IR_FN_LABEL:
             {
                 Ident* func = ir->s1->ident;
-                print("  .text\n");
+                set_section(TEXT);
                 print("\t.global %s\n", func->name);
                 print("\t.type	%s, @function\n", func->name);
                 print("%s:\n", func->name);
@@ -467,6 +499,7 @@ static void convert_ir2x86asm(IR* ir){
                 pop("rbp");
                 print("  ret\n");
                 print(".LFE%d:\n", func->func_id);
+                print("\t.size %s, .-%s\n", func->name, func->name);
                 break;
             }
             case IR_VA_AREA:
@@ -542,18 +575,18 @@ static void convert_ir2x86asm(IR* ir){
             {
                 Ident* ident = ir->s1->ident;
                 if(ident->is_string_literal){
-                    print("  .data\n");
+                    set_section(DATA);
                     print("%s:\n", ident->name);
                     print("  .string \"%s\"\n", get_token_string_literal(ident->tok));
                 } else if(ident->is_static) {
-                    print("  .bss\n");
+                    set_section(BSS);
                     print(".L%s:\n", ir->s1->ident->name);
                     print("  .zero %d\n", ir->s2->val);
                 } else {
                     if(ident->reloc){
                         // 初期化あり
                         print("\t.global\t%s\n", ident->name);
-                        print("  .data\n");
+                        set_section(DATA);
                         print("%s:\n", ir->s1->ident->name);
                         if(!(ident->reloc->label)){
                             switch(ident->reloc->size){
@@ -575,7 +608,7 @@ static void convert_ir2x86asm(IR* ir){
                         }
                     } else {
                         print("\t.global\t%s\n", ident->name);
-                        print("\t.bss\n");
+                        set_section(BSS);
                         print("\t.type\t%s, @object\n", ident->name);
                         print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
                         print("%s:\n", ir->s1->ident->name);
@@ -858,9 +891,6 @@ static void convert_ir2x86asm(IR* ir){
                     print("\t.loc %d %d %d\n", ir->s1->tok->file->label,
                                                 ir->s1->tok->row, ir->s1->tok->col);
                 }
-                break;
-            case IR_FILE_SECTION:
-                print("\t.file\t\"%s\"\n", ir->s1->str);
                 break;
             case IR_PUSH:
                 activateRegLhs(ir->s1);

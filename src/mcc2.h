@@ -472,10 +472,6 @@ typedef enum IRCmd{
     IR_COMMENT,
         // comment (string)
         // stringをコメントとして出力する
-        IR_FILE_SECTION,
-        // file (null) (string)
-        // ファイル名を設定する
-
 } IRCmd;
 
 /*
