@@ -4,6 +4,9 @@
 static int g_asf = 0;           // .debug_str用のラベル
 static Dwarf_dstr* g_dstr;      // .debug_str用の文字列テーブル
 static Dwarf_dstr* g_dstr_end;  // .debug_str用の文字列テーブルの最後
+static Scope* g_scope;          // グローバルスコープ
+
+static int g_abbrev_idx = 1;    // .debug_abbrev用のインデックス
 
 static void dwarf_init();       // 初期化
 static void dwarf_abbrev();     // .debug_abbrev
@@ -31,12 +34,47 @@ static void dwarf_init(){
 
 // .debug_abbrevの出力
 static void dwarf_abbrev(){
+    // セクション宣言とラベル
+    print("\t.section\t.debug_abbrev, \"\",@progbits\n");
+    print(".Ldebug_abbrev0:\n");
 
+    // 0x01 Compilation Unit
+    // コンパイル情報だけはここで出す
+    DW_ABBREV_IDX();
+    DW_ABBREV_TAG(DW_TAG_compile_unit);
+    DW_CHILDREN_no();
+
+    DW_ATTR(DW_AT_producer, DW_FORM_strp);
+    DW_ATTR(DW_AT_language, DW_FORM_data1);
+    DW_ATTR(DW_AT_name, DW_FORM_strp);
+    DW_ATTR(DW_AT_comp_dir, DW_FORM_strp);
+    DW_ATTR(DW_AT_low_pc, DW_FORM_addr);
+    DW_ATTR(DW_AT_high_pc, DW_FORM_data8);
+    DW_ATTR(DW_AT_stmt_list, DW_FORM_sec_offset);
+    DW_ATTR(0x00, 0x00);
+
+    // TODO : いろいろだす
+
+    DW_ATTR(0x00, 0x00);
 }
 
 // .debug_infoの出力
 static void dwarf_info(){
+    // セクション宣言とラベル
+    print("\t.section\t.debug_info, \"\",@progbits\n");
+    print(".Ldebug_info0:\n");
 
+    // debug_infoのヘッダ
+    print("  .long .Ledebug_info0 - .Ldebug_info0 - 4\n");  // Length
+    print("  .short 0x0005\n");                             // DWARF version
+    print("  .byte 0x01\n");                                // UnitType : DW_UT_compile
+    print("  .byte 0x08\n");                                // AddressSize
+    print("  .long 0x00\n");                                // AbbrevOffset
+
+    // 0x01 Compilation Unit
+    // コンパイル情報だけはここで出す
+
+    print(".Ledebug_info0:\n");
 }
 
 // .debug_lineの出力

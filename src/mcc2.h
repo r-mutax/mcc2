@@ -48,9 +48,10 @@ extern SrcFile* main_file;
 extern CompilationInfo cinfo;
 
 struct CompilationInfo{
-    char* compile_file;
-    char* working_dir;
-    char* compiler;
+    char*       compile_file;
+    char*       working_dir;
+    char*       compiler;
+    Scope*      global_scope;
 };
 
 struct IncludePath {

@@ -71,6 +71,7 @@ int main(int argc, char **argv){
     file_init();
     init_preprocess();
     cinfo.compiler = "mcc2";
+    cinfo.global_scope = get_global_scope();
 
     if(argc > 2){
         analy_opt(argc, argv);
