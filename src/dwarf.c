@@ -14,6 +14,7 @@ static void dwarf_info();       // .debug_info
 static void dwarf_str();        // .debug_str
 static void dwarf_line();       // .debug_line
 
+static void dwarf_info_compile_unit();  // コンパイルユニットの情報
 static Dwarf_dstr* DWARF_Str(char* fmt, ...);
 
 void dwarf(){
@@ -65,16 +66,28 @@ static void dwarf_info(){
     print(".Ldebug_info0:\n");
 
     // debug_infoのヘッダ
-    print("  .long .Ledebug_info0 - .Ldebug_info0 - 4\n");  // Length
-    print("  .short 0x0005\n");                             // DWARF version
-    print("  .byte 0x01\n");                                // UnitType : DW_UT_compile
-    print("  .byte 0x08\n");                                // AddressSize
-    print("  .long 0x00\n");                                // AbbrevOffset
+    print("\t.long .Ledebug_info0 - .Ldebug_info0 - 4\n");  // Length
+    print("\t.short 0x0005\n");                             // DWARF version
+    print("\t.byte 0x01\n");                                // UnitType : DW_UT_compile
+    print("\t.byte 0x08\n");                                // AddressSize
+    print("\t.long 0x00\n");                                // AbbrevOffset
 
     // 0x01 Compilation Unit
     // コンパイル情報だけはここで出す
+    dwarf_info_compile_unit();
 
     print(".Ledebug_info0:\n");
+}
+
+static void dwarf_info_compile_unit(){
+    print("\t.uleb128 0x01\n"); // Abbreviation Code;
+    print("\t.long .LASF2\n");  // DW_AT_producer
+    print("\t.byte 0x01\n");    // DW_AT_language
+    print("\t.long .LASF1\n");  // DW_AT_name
+    print("\t.long .LASF0\n");  // DW_AT_comp_dir
+    print("\t.quad .Ltext0\n"); // DW_AT_low_pc
+    print("\t.quad .Letext0-.Ltext0\n"); // DW_AT_high_pc
+    print("\t.long .Ldebug_line0\n"); // DW_AT_stmt_list
 }
 
 // .debug_lineの出力

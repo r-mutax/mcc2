@@ -12,7 +12,7 @@ struct Dwarf_dstr {
     Dwarf_dstr* next;
 };
 
-#define DW_ATTR(X, Y)   do {print("  .uleb128 0x%x\n", X); print("  .uleb128 0x%x\n", Y);} while(0)
+#define DW_ATTR(X, Y)   do {print("\t.uleb128 0x%x\n", X); print("  .uleb128 0x%x\n", Y);} while(0)
 
 // attribute form encoding
 // attribute form encoding
@@ -204,10 +204,10 @@ enum dwarf_attribute_encoding {
 };
 
 // tag encoding
-#define DW_ABBREV_IDX()     print("  .uleb128 0x%x\n", g_abbrev_idx++)
-#define DW_ABBREV_TAG(X)    print("  .uleb128 0x%x\n", X);
-#define DW_CHILDREN_no()    print("  .byte 0x00\n")
-#define DW_CHILDREN_yes()   print("  .byte 0x01\n")
+#define DW_ABBREV_IDX()     print("\t.uleb128 0x%x\n", g_abbrev_idx++)
+#define DW_ABBREV_TAG(X)    print("\t.uleb128 0x%x\n", X);
+#define DW_CHILDREN_no()    print("\t.byte 0x00\n")
+#define DW_CHILDREN_yes()   print("\t.byte 0x01\n")
 
 enum dwarf_tag_encoding {
     DW_TAG_array_type       = 0x01,  // 0x01
