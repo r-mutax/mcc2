@@ -587,6 +587,9 @@ static void convert_ir2x86asm(IR* ir){
                         // 初期化あり
                         print("\t.globl\t%s\n", ident->name);
                         set_section(DATA);
+                        print("\t.align %d\n", get_qtype_align(ident->qtype));
+                        print("\t.type\t%s, @object\n", ident->name);
+                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
                         print("%s:\n", ir->s1->ident->name);
                         if(!(ident->reloc->label)){
                             switch(ident->reloc->size){
