@@ -459,7 +459,7 @@ static void convert_ir2x86asm(IR* ir){
             {
                 Ident* func = ir->s1->ident;
                 set_section(TEXT);
-                print("\t.global %s\n", func->name);
+                print("\t.globl %s\n", func->name);
                 print("\t.type	%s, @function\n", func->name);
                 print("%s:\n", func->name);
 
@@ -540,7 +540,7 @@ static void convert_ir2x86asm(IR* ir){
                 break;
             }
             case IR_EXTERN_LABEL:
-                print(".global %s\n", ir->s1->str);
+                print(".globl %s\n", ir->s1->str);
                 break;
             case IR_STORE_ARG_REG:
             {
@@ -585,7 +585,7 @@ static void convert_ir2x86asm(IR* ir){
                 } else {
                     if(ident->reloc){
                         // 初期化あり
-                        print("\t.global\t%s\n", ident->name);
+                        print("\t.globl\t%s\n", ident->name);
                         set_section(DATA);
                         print("%s:\n", ir->s1->ident->name);
                         if(!(ident->reloc->label)){
@@ -607,7 +607,7 @@ static void convert_ir2x86asm(IR* ir){
                             print("  .quad %s\n", ident->reloc->label);
                         }
                     } else {
-                        print("\t.global\t%s\n", ident->name);
+                        print("\t.globl\t%s\n", ident->name);
                         set_section(BSS);
                         print("\t.type\t%s, @object\n", ident->name);
                         print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
