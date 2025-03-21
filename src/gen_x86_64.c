@@ -410,7 +410,7 @@ void gen_x86(){
     Scope* global_scope = get_global_scope();
 
     print("\t.intel_syntax noprefix\n");
-    print("\t.file \"%s\"\n", main_file->name);
+    print("\t.file \"%s\"\n", cinfo.compile_file->path);
     set_section(TEXT);
     print(".Ltext0:\n");
 
@@ -473,7 +473,7 @@ static void convert_ir2x86asm(IR* ir){
                     if(!func->tok->file->labeled){
                         func->tok->file->labeled = 1;
                         func->tok->file->label = file_label++;
-                        print("\t.file %d \"%s\"\n", func->tok->file->label, func->tok->file->name);
+                        print("\t.file %d \"%s\"\n", func->tok->file->label, func->tok->file->path);
                     }
                     print("\t.loc %d %d %d\n", func->tok->file->label,
                                                 func->tok->row, func->tok->col);

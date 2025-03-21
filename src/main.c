@@ -22,7 +22,6 @@ void analy_opt(int argc, char** argv){
         switch(opt){
             case 'c':
                 filename = optarg;
-                cinfo.compile_file = optarg;
                 cinfo.working_dir = get_dirname(optarg);
                 break;
             case 'i':

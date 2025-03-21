@@ -44,11 +44,10 @@ typedef enum TypeKind TypeKind;
 
 extern FILE* fp;
 extern char* builtin_def;
-extern SrcFile* main_file;
 extern CompilationInfo cinfo;
 
 struct CompilationInfo{
-    char*       compile_file;
+    SrcFile*    compile_file;
     char*       working_dir;
     char*       compiler;
     Scope*      global_scope;

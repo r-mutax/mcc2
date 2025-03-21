@@ -1,5 +1,6 @@
 #include "mcc2.h"
 #include "dwarf.h"
+#include <unistd.h>
 
 static int g_asf = 0;           // .debug_str用のラベル
 static Dwarf_dstr* g_dstr;      // .debug_str用の文字列テーブル
@@ -28,9 +29,14 @@ void dwarf(){
 
 static void dwarf_init(){
     // debug_strをつくる
-    DWARF_Str("/workspaces/mcc2");       // 作業ディレクトリ
-    DWARF_Str(cinfo.compile_file);      // コンパイルファイル
-    DWARF_Str(cinfo.compiler);          // コンパイラ
+
+    //カレントディレクトリを取得
+    char cwd[1024];
+    getcwd(cwd, 1024);
+
+    DWARF_Str(cwd);                         // 作業ディレクトリ
+    DWARF_Str(cinfo.compile_file->path);    // コンパイルファイル
+    DWARF_Str(cinfo.compiler);              // コンパイラ
 }
 
 // .debug_abbrevの出力
