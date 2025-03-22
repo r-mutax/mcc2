@@ -19,6 +19,7 @@
 #include <bits/getopt_core.h>
 #endif
 
+typedef struct CompilationInfo CompilationInfo;
 typedef struct Token Token;
 typedef struct Node Node;
 typedef struct Parameter Parameter;
@@ -43,7 +44,14 @@ typedef enum TypeKind TypeKind;
 
 extern FILE* fp;
 extern char* builtin_def;
-extern SrcFile* main_file;
+extern CompilationInfo cinfo;
+
+struct CompilationInfo{
+    SrcFile*    compile_file;
+    char*       working_dir;
+    char*       compiler;
+    Scope*      global_scope;
+};
 
 struct IncludePath {
     char* path;
@@ -463,10 +471,6 @@ typedef enum IRCmd{
     IR_COMMENT,
         // comment (string)
         // stringをコメントとして出力する
-        IR_FILE_SECTION,
-        // file (null) (string)
-        // ファイル名を設定する
-
 } IRCmd;
 
 /*
@@ -595,6 +599,9 @@ void file_init();
 void print(char* fmt, ...);
 void open_output_file(char* filename);
 void close_output_file();
+
+// dwarf.c
+void dwarf();
 
 // gen_ir.c
 void gen_ir();

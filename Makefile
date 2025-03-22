@@ -24,6 +24,17 @@ test : mcc2 $(TEST_OBJS)
 	cc -o test.exe $(TEST_OBJS)
 	./test.exe
 
+dwarf : mcc2
+	cc ./dev/dwarf_test.c -o ./dev/cc.s -S -g
+	cc -c -o ./dev/cc.o ./dev/cc.s -lc -MD
+	readelf -w ./dev/cc.o > ./dev/cc.dwarf
+
+	./mcc2 -c ./dev/dwarf_test.c -o ./dev/mcc2.s -i ./test/testinc -i ./src -x plvar -g
+	cc -c -o ./dev/mcc2.o ./dev/mcc2.s -lc -MD
+	readelf -w ./dev/mcc2.o > ./dev/mcc2.dwarf
+
+	cc -o dwarf_test ./dev/mcc2.o -lc
+
 test2: mcc2
 	./mcc2 -c ./dev/test2.c -o ./tmp.s -i ./test/testinc -i ./src -x plvar -g
 	cc -o ./dev/tmp -no-pie tmp.s -lc
@@ -35,25 +46,25 @@ tmp: mcc2
 
 ./selfhost/mcc2t: mcc2
 	./mcc2 -c ./src/builtin_def.c -d PREDEFINED_MACRO -o ./selfhost/builtin_def.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/builtin_def.o -no-pie ./selfhost/builtin_def.s -lc -MD
+	cc -c -o ./selfhost/builtin_def.o -no-pie ./selfhost/builtin_def.s -lc -MD -g
 
 	./mcc2 -c ./src/error.c -d PREDEFINED_MACRO -o ./selfhost/error.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/error.o -no-pie ./selfhost/error.s -lc -MD
+	cc -c -o ./selfhost/error.o -no-pie ./selfhost/error.s -lc -MD -g
 
 	./mcc2 -c ./src/file.c -d PREDEFINED_MACRO -o ./selfhost/file.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/file.o -no-pie ./selfhost/file.s -lc -MD
+	cc -c -o ./selfhost/file.o -no-pie ./selfhost/file.s -lc -MD -g
 
 	./mcc2 -c ./src/gen_ir.c -d PREDEFINED_MACRO -o ./selfhost/get_ir.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/gen_ir.o -no-pie ./selfhost/get_ir.s -lc -MD
+	cc -c -o ./selfhost/gen_ir.o -no-pie ./selfhost/get_ir.s -lc -MD -g
 
 	./mcc2 -c ./src/semantics.c -d PREDEFINED_MACRO -o ./selfhost/semantics.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/semantics.o -no-pie ./selfhost/semantics.s -lc -MD
+	cc -c -o ./selfhost/semantics.o -no-pie ./selfhost/semantics.s -lc -MD -g
 
 	./mcc2 -c ./src/utility.c -d PREDEFINED_MACRO -o ./selfhost/utility.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/utility.o -no-pie ./selfhost/utility.s -lc -MD
+	cc -c -o ./selfhost/utility.o -no-pie ./selfhost/utility.s -lc -MD -g
 
 	./mcc2 -c ./src/type.c -d PREDEFINED_MACRO -o ./selfhost/type.s -i ./src -x plvar -g
-	cc -c -o ./selfhost/type.o -no-pie ./selfhost/type.s -lc -MD
+	cc -c -o ./selfhost/type.o -no-pie ./selfhost/type.s -lc -MD -g
 
 	cp ./src/gen_x86_64.o ./selfhost/gen_x86_64.o
 	cp ./src/main.o ./selfhost/main.o
@@ -62,6 +73,7 @@ tmp: mcc2
 	cp ./src/ident.o ./selfhost/ident.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
+	cp ./src/dwarf.o ./selfhost/dwarf.o
 
 	#cp ./src/file.o ./selfhost/file.o
 
@@ -85,4 +97,4 @@ clean:
 	rm -f ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2t
 	rm -f ./selfhost/test/c/*.o ./selfhost/test/c/*.s
 
-.PHONY: test clean tmp test2 test3 test4 self selft
+.PHONY: test clean tmp test2 test3 test4 self selft dwarf

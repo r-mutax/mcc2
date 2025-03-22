@@ -3,7 +3,6 @@
 
 Token* token;
 SrcFile* cur_file;
-SrcFile* main_file;
 extern bool is_preprocess;
 static long row = 0;
 static char* row_start = NULL;
@@ -21,8 +20,8 @@ Token* delete_newline_token(Token* tok);
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
     cur_file = file;
-    if(!main_file){
-        main_file = file;
+    if(!cinfo.compile_file){
+        cinfo.compile_file = file;
     }
 
     Token* tok = scan(file->body);

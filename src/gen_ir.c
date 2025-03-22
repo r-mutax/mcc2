@@ -37,7 +37,6 @@ void gen_ir(){
     // .fileを出力する
     IR head;
     ir = &head;
-    new_IR(IR_FILE_SECTION, NULL, new_RegStr(main_file->name), NULL);
     scope->ir_cmd = head.next;
 
     Ident* ident;

@@ -24,6 +24,33 @@ int debug_regis = 0;    // レジスタのデバッグモード
 int debug_plvar = 0;    // ローカル変数のデバッグモード
 int debug_exec = 0;     // 実行時のデバッグモード
 
+typedef enum {
+    NONE = 0,
+    TEXT,
+    DATA,
+    BSS,
+} SECTION;
+static SECTION g_section = NONE;
+static void set_section(SECTION set){
+    if(g_section == set){
+        return;
+    }
+    switch(set){
+        case TEXT:
+            print("\t.text\n");
+            break;
+        case DATA:
+            print("\t.data\n");
+            break;
+        case BSS:
+            print("\t.bss\n");
+            break;
+        default:
+            break;
+    }
+    g_section = set;
+}
+
 /*
     CAST CMD のルール
     1. 拡張長方向のキャスト
@@ -104,14 +131,14 @@ static int get_regno(char* reg){
 }
 
 static void pop(char* reg){
-    print("  pop %s\n", reg);
+    print("\tpop %s\n", reg);
     --depth;
 
     int idx = get_regno(reg);
 }
 
 static void push(char* reg){
-    print("  push %s\n", reg);
+    print("\tpush %s\n", reg);
     ++depth;
     int idx = get_regno(reg);
 }
@@ -160,7 +187,7 @@ static int findReg(){
         print("# spill %s to [rbp - %d]\n", rreg64[src_reg_idx], 8 * spill_idx);
     }
 
-    print("  mov QWORD PTR [rbp - 240 + %d], %s\n", 8 * spill_idx, rreg64[src_reg_idx]);
+    print("\tmov QWORD PTR [rbp - 240 + %d], %s\n", 8 * spill_idx, rreg64[src_reg_idx]);
     spillReg[spill_idx] = 1;
     realReg[src_reg_idx]->spill_idx = spill_idx;
 
@@ -195,7 +222,7 @@ static void activateReg(Reg* reg, int is_lhs){
             print("# back from spill [rbp - %d] to %s\n", 8 * reg->spill_idx, rreg64[reg->idx]);
         }
 
-        print("  mov %s, QWORD PTR [rbp - 240 + %d]\n", rreg64[reg->idx], 8 * reg->spill_idx);
+        print("\tmov %s, QWORD PTR [rbp - 240 + %d]\n", rreg64[reg->idx], 8 * reg->spill_idx);
         spillReg[reg->spill_idx] = 0;
         reg->spill_idx = -1;
         return;
@@ -207,7 +234,7 @@ static void activateReg(Reg* reg, int is_lhs){
         case REG_IMM:
             if(is_lhs){
                 assignReg(reg);
-                print("  mov %s, %lu\n", reg->rreg, reg->val);
+                print("\tmov %s, %lu\n", reg->rreg, reg->val);
             } else {
                 reg->rreg = format_string("%lu\0", reg->val);
             }
@@ -223,32 +250,32 @@ static void activateReg(Reg* reg, int is_lhs){
 
                 if(ident->kind == ID_LVAR){
                     if(size == 1){
-                        print("  movsx %s, BYTE PTR[rbp - %d]\n", reg->rreg, ident->offset);
+                        print("\tmovsx %s, BYTE PTR[rbp - %d]\n", reg->rreg, ident->offset);
                     } else if(size == 2){
-                        print("  movsx %s, WORD PTR[rbp - %d]\n", reg->rreg, ident->offset);
+                        print("\tmovsx %s, WORD PTR[rbp - %d]\n", reg->rreg, ident->offset);
                     } else if(size == 8){
-                        print("  mov %s, QWORD PTR[rbp - %d]\n", reg->rreg, ident->offset);
+                        print("\tmov %s, QWORD PTR[rbp - %d]\n", reg->rreg, ident->offset);
                     }
                 } else if(ident->kind == ID_GVAR){
                     if(ident->is_static){
                         if(size == 1){
-                            print("  movsx %s, BYTE PTR[.L%s]\n", reg->rreg, ident->name);
+                            print("\tmovsx %s, BYTE PTR[.L%s]\n", reg->rreg, ident->name);
                         } else if(size == 2){
-                            print("  movsx %s, WORD PTR[.L%s]\n", reg->rreg, ident->name);
+                            print("\tmovsx %s, WORD PTR[.L%s]\n", reg->rreg, ident->name);
                         } else if(size == 8){
-                            print("  mov %s, QWORD PTR[.L%s]\n", reg->rreg, ident->name);
+                            print("\tmov %s, QWORD PTR[.L%s]\n", reg->rreg, ident->name);
                         }
                     } else {
                         if(size == 1){
-                            print("  movsx %s, BYTE PTR[%s]\n", reg->rreg, ident->name);
+                            print("\tmovsx %s, BYTE PTR[%s]\n", reg->rreg, ident->name);
                         } else if(size == 2){
-                            print("  movsx %s, WORD PTR[%s]\n", reg->rreg, ident->name);
+                            print("\tmovsx %s, WORD PTR[%s]\n", reg->rreg, ident->name);
                         } else if(size == 8){
-                            print("  mov %s, QWORD PTR[%s]\n", reg->rreg, ident->name);
+                            print("\tmov %s, QWORD PTR[%s]\n", reg->rreg, ident->name);
                         }
                     }
                 }  else if(ident->kind == ID_GVAR && ident->is_string_literal){
-                    print("  lea %s, [ rip + %s ]\n", reg->rreg, ident->name);
+                    print("\tlea %s, [ rip + %s ]\n", reg->rreg, ident->name);
                 }
             }
             break;
@@ -292,7 +319,7 @@ static void freeRegAllForce(){
 static void emit_binop(char* op, Reg* t, Reg* s1, Reg* s2){
     activateRegLhs(s1);
     activateRegRhs(s2);
-    print("  %s %s, %s\n", op, s1->rreg, s2->rreg);
+    print("\t%s %s, %s\n", op, s1->rreg, s2->rreg);
 
     if(t){
         // あるならそっちにmovが入る
@@ -335,43 +362,43 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
 
     switch(cmd){
         case NO_NEED:
-            print("  mov %s, %s\n", t->rreg, s1->rreg);
+            print("\tmov %s, %s\n", t->rreg, s1->rreg);
             break;
         case i64_i8:
-            print("  movsx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            print("\tmovsx %s, %s\n", t->rreg, rreg8[s1->idx]);
             break;
         case i64_i16:
-            print("  movsx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            print("\tmovsx %s, %s\n", t->rreg, rreg16[s1->idx]);
             break;
         case i64_i32:
-            print("  movsxd %s, %s\n", t->rreg, rreg32[s1->idx]);
+            print("\tmovsxd %s, %s\n", t->rreg, rreg32[s1->idx]);
             break;
         case u64_i8:
-            print("  movzx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            print("\tmovzx %s, %s\n", t->rreg, rreg8[s1->idx]);
             break;
         case u64_i16:
-            print("  movzx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            print("\tmovzx %s, %s\n", t->rreg, rreg16[s1->idx]);
             break;
         case u64_i32:
-            print("  mov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            print("\tmov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
             break;
         case i64_u8:
-            print("  movzx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            print("\tmovzx %s, %s\n", t->rreg, rreg8[s1->idx]);
             break;
         case i64_u16:
-            print("  movzx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            print("\tmovzx %s, %s\n", t->rreg, rreg16[s1->idx]);
             break;
         case i64_u32:
-            print("  mov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            print("\tmov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
             break;
         case u64_u8:
-            print("  movzx %s, %s\n", t->rreg, rreg8[s1->idx]);
+            print("\tmovzx %s, %s\n", t->rreg, rreg8[s1->idx]);
             break;
         case u64_u16:
-            print("  movzx %s, %s\n", t->rreg, rreg16[s1->idx]);
+            print("\tmovzx %s, %s\n", t->rreg, rreg16[s1->idx]);
             break;
         case u64_u32:
-            print("  mov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            print("\tmov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
             break;
         default:
             error("invalid cast %d \n", cmd);
@@ -383,10 +410,13 @@ void gen_x86(){
     Scope* global_scope = get_global_scope();
 
     print("\t.intel_syntax noprefix\n");
+    print("\t.file \"%s\"\n", cinfo.compile_file->path);
+    set_section(TEXT);
+    print(".Ltext0:\n");
 
     // extern宣言
     IR* ir = global_scope->ir_cmd;
-    convert_ir2x86asm(ir);
+    // convert_ir2x86asm(ir);
 
     // グローバル変数の出力
     Ident* ident = global_scope->ident;
@@ -417,6 +447,8 @@ void gen_x86(){
         }
         ident = ident->next;
     }
+    set_section(TEXT);
+    print(".Letext0:\n");
 }
 
 
@@ -426,8 +458,8 @@ static void convert_ir2x86asm(IR* ir){
             case IR_FN_LABEL:
             {
                 Ident* func = ir->s1->ident;
-                print("  .text\n");
-                print("\t.global %s\n", func->name);
+                set_section(TEXT);
+                print("\t.globl %s\n", func->name);
                 print("\t.type	%s, @function\n", func->name);
                 print("%s:\n", func->name);
 
@@ -447,8 +479,8 @@ static void convert_ir2x86asm(IR* ir){
                                                 func->tok->row, func->tok->col);
                 }
                 push("rbp");
-                print("  mov rbp, rsp\n");
-                print("  sub rsp, %d\n", ((ir->s2->val + 15) / 16) * 16);
+                print("\tmov rbp, rsp\n");
+                print("\tsub rsp, %d\n", ((ir->s2->val + 15) / 16) * 16);
                 push("r12");
                 push("r13");
                 push("r14");
@@ -463,10 +495,11 @@ static void convert_ir2x86asm(IR* ir){
                 pop("r14");
                 pop("r13");
                 pop("r12");
-                print("  mov rsp, rbp\n");
+                print("\tmov rsp, rbp\n");
                 pop("rbp");
-                print("  ret\n");
+                print("\tret\n");
                 print(".LFE%d:\n", func->func_id);
+                print("\t.size %s, .-%s\n", func->name, func->name);
                 break;
             }
             case IR_VA_AREA:
@@ -476,110 +509,113 @@ static void convert_ir2x86asm(IR* ir){
                 int fp = ir->s2->val;
 
                 // 引数の退避
-                print("  mov QWORD PTR [rbp - 176], rdi\n");
-                print("  mov QWORD PTR [rbp - 168], rsi\n");
-                print("  mov QWORD PTR [rbp - 160], rdx\n");
-                print("  mov QWORD PTR [rbp - 152], rcx\n");
-                print("  mov QWORD PTR [rbp - 144], r8\n");
-                print("  mov QWORD PTR [rbp - 136], r9\n");
-                print("  test al, al\n");
-                print("  je .L%d\n", label);
-                print("  movaps XMMWORD PTR [rbp - 128], xmm0\n");
-                print("  movaps XMMWORD PTR [rbp - 112], xmm1\n");
-                print("  movaps XMMWORD PTR [rbp - 96], xmm2\n");
-                print("  movaps XMMWORD PTR [rbp - 80], xmm3\n");
-                print("  movaps XMMWORD PTR [rbp - 64], xmm4\n");
-                print("  movaps XMMWORD PTR [rbp - 48], xmm5\n");
-                print("  movaps XMMWORD PTR [rbp - 32], xmm6\n");
-                print("  movaps XMMWORD PTR [rbp - 16], xmm7\n");
+                print("\tmov QWORD PTR [rbp - 176], rdi\n");
+                print("\tmov QWORD PTR [rbp - 168], rsi\n");
+                print("\tmov QWORD PTR [rbp - 160], rdx\n");
+                print("\tmov QWORD PTR [rbp - 152], rcx\n");
+                print("\tmov QWORD PTR [rbp - 144], r8\n");
+                print("\tmov QWORD PTR [rbp - 136], r9\n");
+                print("\ttest al, al\n");
+                print("\tje .L%d\n", label);
+                print("\tmovaps XMMWORD PTR [rbp - 128], xmm0\n");
+                print("\tmovaps XMMWORD PTR [rbp - 112], xmm1\n");
+                print("\tmovaps XMMWORD PTR [rbp - 96], xmm2\n");
+                print("\tmovaps XMMWORD PTR [rbp - 80], xmm3\n");
+                print("\tmovaps XMMWORD PTR [rbp - 64], xmm4\n");
+                print("\tmovaps XMMWORD PTR [rbp - 48], xmm5\n");
+                print("\tmovaps XMMWORD PTR [rbp - 32], xmm6\n");
+                print("\tmovaps XMMWORD PTR [rbp - 16], xmm7\n");
                 print(".L%d:\n", label);
             }
                 break;
             case IR_VA_START:
             {
                 activateRegLhs(ir->s1);
-                print("  mov DWORD PTR [%s + 0], %d\n", ir->s1->rreg, 8 * ir->s2->val);
-                print("  mov DWORD PTR [%s + 4], %d\n", ir->s1->rreg, 48);
-                print("  lea rax, [rbp + 16]\n");
-                print("  mov QWORD PTR [%s + 8], rax\n", ir->s1->rreg);
-                print("  lea rax, [rbp - 176]\n");
-                print("  mov QWORD PTR [%s + 16], rax\n", ir->s1->rreg);
+                print("\tmov DWORD PTR [%s + 0], %d\n", ir->s1->rreg, 8 * ir->s2->val);
+                print("\tmov DWORD PTR [%s + 4], %d\n", ir->s1->rreg, 48);
+                print("\tlea rax, [rbp + 16]\n");
+                print("\tmov QWORD PTR [%s + 8], rax\n", ir->s1->rreg);
+                print("\tlea rax, [rbp - 176]\n");
+                print("\tmov QWORD PTR [%s + 16], rax\n", ir->s1->rreg);
                 break;
             }
             case IR_EXTERN_LABEL:
-                print(".global %s\n", ir->s1->str);
+                print(".globl %s\n", ir->s1->str);
                 break;
             case IR_STORE_ARG_REG:
             {
                 int size = get_qtype_size(ir->s1->ident->qtype);
                 if(size == 1){
-                    print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg8[ir->s2->val]);
+                    print("\tmov [rbp - %d], %s\n", ir->s1->ident->offset, argreg8[ir->s2->val]);
                 } else if(size == 2){
-                    print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg16[ir->s2->val]);
+                    print("\tmov [rbp - %d], %s\n", ir->s1->ident->offset, argreg16[ir->s2->val]);
                 } else if(size == 4){
-                    print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg32[ir->s2->val]);
+                    print("\tmov [rbp - %d], %s\n", ir->s1->ident->offset, argreg32[ir->s2->val]);
                 } else if(size == 8){
-                    print("  mov [rbp - %d], %s\n", ir->s1->ident->offset, argreg64[ir->s2->val]);
+                    print("\tmov [rbp - %d], %s\n", ir->s1->ident->offset, argreg64[ir->s2->val]);
                 }
                 break;
             }
             case IR_LOAD_ARG_REG:
                 activateRegLhs(ir->s1);
-                print("  mov %s, %s\n", argreg64[ir->t->val], ir->s1->rreg);
+                print("\tmov %s, %s\n", argreg64[ir->t->val], ir->s1->rreg);
                 freeReg(ir->s1);
                 break;
             case IR_SET_FLOAT_NUM:
-                print("  mov eax, %d\n", '\0');
+                print("\tmov eax, %d\n", '\0');
                 break;
             case IR_RET:
                 if(ir->s1){
                     activateRegLhs(ir->s1);
-                    print("  mov rax, %s\n", ir->s1->rreg);
+                    print("\tmov rax, %s\n", ir->s1->rreg);
                 }
-                print("  jmp ret_%s\n", ir->s2->ident->name);
+                print("\tjmp ret_%s\n", ir->s2->ident->name);
                 break;
             case IR_GVAR_LABEL:
             {
                 Ident* ident = ir->s1->ident;
                 if(ident->is_string_literal){
-                    print("  .data\n");
+                    set_section(DATA);
                     print("%s:\n", ident->name);
-                    print("  .string \"%s\"\n", get_token_string_literal(ident->tok));
+                    print("\t.string \"%s\"\n", get_token_string_literal(ident->tok));
                 } else if(ident->is_static) {
-                    print("  .bss\n");
+                    set_section(BSS);
                     print(".L%s:\n", ir->s1->ident->name);
-                    print("  .zero %d\n", ir->s2->val);
+                    print("\t.zero %d\n", ir->s2->val);
                 } else {
                     if(ident->reloc){
                         // 初期化あり
-                        print("\t.global\t%s\n", ident->name);
-                        print("  .data\n");
+                        print("\t.globl\t%s\n", ident->name);
+                        set_section(DATA);
+                        print("\t.align %d\n", get_qtype_align(ident->qtype));
+                        print("\t.type\t%s, @object\n", ident->name);
+                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
                         print("%s:\n", ir->s1->ident->name);
                         if(!(ident->reloc->label)){
                             switch(ident->reloc->size){
                                 case 1:
-                                    print("  .byte %d\n", ident->reloc->data);
+                                    print("\t.byte %d\n", ident->reloc->data);
                                     break;
                                 case 2:
-                                    print("  .value %d\n", ident->reloc->data);
+                                    print("\t.value %d\n", ident->reloc->data);
                                     break;
                                 case 4:
-                                    print("  .long %d\n", ident->reloc->data);
+                                    print("\t.long %d\n", ident->reloc->data);
                                     break;
                                 case 8:
-                                    print("  .quad %d\n", ident->reloc->data);
+                                    print("\t.quad %d\n", ident->reloc->data);
                                     break;
                             }
                         } else {
-                            print("  .quad %s\n", ident->reloc->label);
+                            print("\t.quad %s\n", ident->reloc->label);
                         }
                     } else {
-                        print("\t.global\t%s\n", ident->name);
-                        print("\t.bss\n");
+                        print("\t.globl\t%s\n", ident->name);
+                        set_section(BSS);
                         print("\t.type\t%s, @object\n", ident->name);
                         print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
                         print("%s:\n", ir->s1->ident->name);
-                        print("  .zero %d\n", ir->s2->val);
+                        print("\t.zero %d\n", ir->s2->val);
                     }
                 }
                 break;
@@ -599,10 +635,10 @@ static void convert_ir2x86asm(IR* ir){
                 // idivが受け取るoperandはレジスタなので、
                 // 左辺値として割り当てる
                 activateRegLhs(ir->s2);
-                print("  mov rax, %s\n", ir->s1->rreg);
-                print("  cqo\n");
-                print("  idiv %s\n", ir->s2->rreg);
-                print("  mov %s, rax\n", ir->s1->rreg);
+                print("\tmov rax, %s\n", ir->s1->rreg);
+                print("\tcqo\n");
+                print("\tidiv %s\n", ir->s2->rreg);
+                print("\tmov %s, rax\n", ir->s1->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_MOD:
@@ -611,10 +647,10 @@ static void convert_ir2x86asm(IR* ir){
                 // idivが受け取るoperandはレジスタなので、
                 // 左辺値として割り当てる
                 activateRegLhs(ir->s2);
-                print("  mov rax, %s\n", ir->s1->rreg);
-                print("  cqo\n");
-                print("  idiv %s\n", ir->s2->rreg);
-                print("  mov %s, rdx\n", ir->s1->rreg);
+                print("\tmov rax, %s\n", ir->s1->rreg);
+                print("\tcqo\n");
+                print("\tidiv %s\n", ir->s2->rreg);
+                print("\tmov %s, rdx\n", ir->s1->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_EQUAL:
@@ -624,27 +660,27 @@ static void convert_ir2x86asm(IR* ir){
                 // cmp命令は直値は32bit幅までしか受け取れないので、
                 // 左辺値として割り当てる
                 activateRegLhs(ir->s2);
-                print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("  sete al\n");
-                print("  movzb %s, al\n", ir->t->rreg);
+                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tsete al\n");
+                print("\tmovzb %s, al\n", ir->t->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_NOT_EQUAL:
                 activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("  setne al\n");
-                print("  movzb %s, al\n", ir->t->rreg);
+                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tsetne al\n");
+                print("\tmovzb %s, al\n", ir->t->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_LT:
                 activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("  setl al\n");
-                print("  movzb %s, al\n", ir->t->rreg);
+                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tsetl al\n");
+                print("\tmovzb %s, al\n", ir->t->rreg);
                 freeReg(ir->s1);
                 freeReg(ir->s2);
                 break;
@@ -652,9 +688,9 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("  setle al\n");
-                print("  movzb %s, al\n", ir->t->rreg);
+                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tsetle al\n");
+                print("\tmovzb %s, al\n", ir->t->rreg);
                 freeReg(ir->s1);
                 freeReg(ir->s2);
                 break;
@@ -671,10 +707,10 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
                 if(ir->s2->kind == REG_IMM){
-                    print("  sal %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsal %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 } else {
-                    print("  mov rcx, %s\n", ir->s2->rreg);
-                    print("  sal %s, cl\n", ir->s1->rreg);
+                    print("\tmov rcx, %s\n", ir->s2->rreg);
+                    print("\tsal %s, cl\n", ir->s1->rreg);
                 }
                 if(ir->s2->kind == REG_IMM){
                     freeRegAll(ir->t, ir->s1, ir->s2);
@@ -684,10 +720,10 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
                 if(ir->s2->kind == REG_IMM){
-                    print("  sar %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsar %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 } else {
-                    print("  mov rcx, %s\n", ir->s2->rreg);
-                    print("  sar %s, cl\n", ir->s1->rreg);
+                    print("\tmov rcx, %s\n", ir->s2->rreg);
+                    print("\tsar %s, cl\n", ir->s1->rreg);
                 }
                 if(ir->s2->kind == REG_IMM){
                     freeRegAll(ir->t, ir->s1, ir->s2);
@@ -697,18 +733,18 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 activateRegLhs(ir->s2);
                 if(ir->s1->size == 1){
-                    print("  mov [%s], %s\n", ir->s1->rreg, rreg8[ir->s2->idx]);
+                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg8[ir->s2->idx]);
                 } else if(ir->s1->size == 2){
-                    print("  mov [%s], %s\n", ir->s1->rreg, rreg16[ir->s2->idx]);
+                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg16[ir->s2->idx]);
                 } else if(ir->s1->size == 4){
-                    print("  mov [%s], %s\n", ir->s1->rreg, rreg32[ir->s2->idx]);
+                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg32[ir->s2->idx]);
                 } else if(ir->s1->size == 8){
-                    print("  mov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
+                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
                 }
 
                 if(ir->t){
                     activateRegLhs(ir->t);
-                    print("  mov %s, %s\n", ir->t->rreg, ir->s2->rreg);
+                    print("\tmov %s, %s\n", ir->t->rreg, ir->s2->rreg);
                 }
                 freeReg(ir->s2);
                 freeReg(ir->s1);
@@ -716,25 +752,25 @@ static void convert_ir2x86asm(IR* ir){
             case IR_FN_CALL:
                 {
                     if(depth % 2){
-                        print("  sub rsp, 8\n");
+                        print("\tsub rsp, 8\n");
                     }
-                    print("  call %s\n", ir->s1->ident->name);
+                    print("\tcall %s\n", ir->s1->ident->name);
                     if(depth % 2){
-                        print("  add rsp, 8\n");
+                        print("\tadd rsp, 8\n");
                     }
                     activateRegLhs(ir->t);
-                    print("  mov %s, rax\n", ir->t->rreg);
+                    print("\tmov %s, rax\n", ir->t->rreg);
                 }
                 break;
             case IR_REL:
                 activateRegLhs(ir->t);
                 if(ir->s1->ident->kind == ID_LVAR){
-                    print("  lea %s, [rbp - %d]\n", ir->t->rreg, ir->s1->ident->offset);
+                    print("\tlea %s, [rbp - %d]\n", ir->t->rreg, ir->s1->ident->offset);
                 } else if(ir->s1->ident->kind == ID_GVAR){
                     if(ir->s1->ident->is_static){
-                        print("  lea %s, [ rip + .L%s ]\n", ir->t->rreg, ir->s1->ident->name);
+                        print("\tlea %s, [ rip + .L%s ]\n", ir->t->rreg, ir->s1->ident->name);
                     } else {
-                        print("  lea %s, [ rip + %s ]\n", ir->t->rreg, ir->s1->ident->name);
+                        print("\tlea %s, [ rip + %s ]\n", ir->t->rreg, ir->s1->ident->name);
                     }
                 }
                 break;
@@ -754,7 +790,7 @@ static void convert_ir2x86asm(IR* ir){
             case IR_MOV:
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("  mov %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tmov %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_COPY:
@@ -763,10 +799,10 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 for(int i = 0; i < ir->s1->size; i++){
                     // r8bレジスタにbyteデータコピー
-                    print("  mov r8b, BYTE PTR [%s + %d]\n", ir->s1->rreg, i);
+                    print("\tmov r8b, BYTE PTR [%s + %d]\n", ir->s1->rreg, i);
 
                     // r8bレジスタのデータをtのレジスタにコピー
-                    print("  mov BYTE PTR [%s + %d], r8b\n", ir->t->rreg, i);
+                    print("\tmov BYTE PTR [%s + %d], r8b\n", ir->t->rreg, i);
                 }
                 freeReg(ir->s1);
             }
@@ -782,31 +818,31 @@ static void convert_ir2x86asm(IR* ir){
             case IR_JNZ:
                 activateRegLhs(ir->s1);
                 //activateRegRhs(ir->s2);
-                print("  cmp %s, 0\n", ir->s1->rreg);
-                print("  jne .L%d\n", ir->s2->val);
+                print("\tcmp %s, 0\n", ir->s1->rreg);
+                print("\tjne .L%d\n", ir->s2->val);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_JZ:
                 activateRegLhs(ir->s1);
                 //activateRegRhs(ir->s2);
-                print("  cmp %s, 0\n", ir->s1->rreg);
-                print("  je .L%d\n", ir->s2->val);
+                print("\tcmp %s, 0\n", ir->s1->rreg);
+                print("\tje .L%d\n", ir->s2->val);
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_JE:
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("  cmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("  je .L%d\n", ir->t->val);
+                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tje .L%d\n", ir->t->val);
                 freeReg(ir->s2);
                 break;
             case IR_JMP:
-                print("  jmp .L%d\n", ir->s1->val);
+                print("\tjmp .L%d\n", ir->s1->val);
                 break;
             case IR_LEA:
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("  lea %s, [rbp - %s]\n", ir->s1->rreg, ir->s2->rreg);
+                print("\tlea %s, [rbp - %s]\n", ir->s1->rreg, ir->s2->rreg);
                 freeReg(ir->s2);
                 break;
             case IR_LOAD:
@@ -814,23 +850,23 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegRhs(ir->s2);
                 if(ir->s2->is_unsigned){
                     if(ir->s2->size == 1){
-                        print("  movzx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmovzx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 2){
-                        print("  movzx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmovzx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 4){
-                        print("  mov %s, DWORD PTR [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
+                        print("\tmov %s, DWORD PTR [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
                     } else if(ir->s2->size == 8){
-                        print("  mov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     }
                 } else {
                     if(ir->s2->size == 1){
-                        print("  movsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmovsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 2){
-                        print("  movsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmovsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 4){
-                        print("  movsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmovsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 8){
-                        print("  mov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        print("\tmov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     }
                 }
                 freeReg(ir->s2);
@@ -858,9 +894,6 @@ static void convert_ir2x86asm(IR* ir){
                     print("\t.loc %d %d %d\n", ir->s1->tok->file->label,
                                                 ir->s1->tok->row, ir->s1->tok->col);
                 }
-                break;
-            case IR_FILE_SECTION:
-                print("\t.file\t\"%s\"\n", ir->s1->str);
                 break;
             case IR_PUSH:
                 activateRegLhs(ir->s1);

@@ -2,6 +2,7 @@
 
 static char* filename = NULL;
 bool is_preprocess = false;
+CompilationInfo cinfo;
 
 // デバッグモードを有効化する関数
 void enable_debug_mode(const char *mode) {
@@ -21,6 +22,7 @@ void analy_opt(int argc, char** argv){
         switch(opt){
             case 'c':
                 filename = optarg;
+                cinfo.working_dir = get_dirname(optarg);
                 break;
             case 'i':
                 if(optarg != NULL) {
@@ -67,6 +69,8 @@ int main(int argc, char **argv){
     ty_init();
     file_init();
     init_preprocess();
+    cinfo.compiler = "mcc2";
+    cinfo.global_scope = get_global_scope();
 
     if(argc > 2){
         analy_opt(argc, argv);
@@ -101,6 +105,10 @@ int main(int argc, char **argv){
     // generate
     gen_ir();
     gen_x86();
+
+    if(debug_exec){
+       dwarf();
+    }
 
     close_output_file();
 
