@@ -229,6 +229,7 @@ static void function(QualType* func_type, StorageClassKind sck){
     // 実レジスタ退避用の領域を確保(とりあえず30個確保する)
     Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, make_qual_type(ty_char));
     spill_area->qtype = array_of(make_qual_type(ty_char), 8 * 30);
+    spill_area->is_builtin = 1;
     register_ident(spill_area);
 
     // 関数の戻り値の型を保持しておく

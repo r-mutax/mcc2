@@ -18,7 +18,13 @@ static void dwarf_line();       // .debug_line
 static void dwarf_info_compile_unit();  // コンパイルユニットの情報
 static Dwarf_dstr* DWARF_Str(char* fmt, ...);
 
+// abbrev
+static void dwarf_abbrev_func(Ident* ident);
+static void dwarf_abbrev_param(Parameter* param);
+static void dwarf_abbrev_lvar(Ident* lvar);
+
 void dwarf(){
+    g_scope = get_global_scope();
     dwarf_init();
 
     dwarf_abbrev();
@@ -37,6 +43,92 @@ static void dwarf_init(){
     DWARF_Str(cwd);                         // 作業ディレクトリ
     DWARF_Str(cinfo.compile_file->path);    // コンパイルファイル
     DWARF_Str(cinfo.compiler);              // コンパイラ
+}
+
+// .debug_abbrevの出力(function)
+static void dwarf_abbrev_func(Ident* ident){
+    ident->abbrev_idx = g_abbrev_idx;
+
+    DW_ABBREV_IDX();
+    DW_ABBREV_TAG(DW_TAG_subprogram);
+    if(ident->params || ident->scope->ident){
+        DW_CHILDREN_yes();
+    } else {
+        DW_CHILDREN_no();
+    }
+
+    // 外部定義ありか？
+    DW_ATTR(DW_AT_external, DW_FORM_flag_present);
+
+    // 名前
+    DW_ATTR(DW_AT_name, DW_FORM_strp);
+
+    // 定義されている場所
+    DW_ATTR(DW_AT_decl_file, DW_FORM_data1);
+    DW_ATTR(DW_AT_decl_line, DW_FORM_data1);
+    DW_ATTR(DW_AT_decl_column, DW_FORM_data1);
+
+    // プロトタイプ宣言されているか？
+    DW_ATTR(DW_AT_prototyped, DW_FORM_flag_present);
+
+    // 戻り値の型
+    DW_ATTR(DW_AT_type, DW_FORM_ref4);
+
+    // 関数の開始アドレス
+    DW_ATTR(DW_AT_low_pc, DW_FORM_addr);
+
+    // 関数の終了アドレス
+    DW_ATTR(DW_AT_high_pc, DW_FORM_data8);
+
+    // フレームベース
+    DW_ATTR(DW_AT_frame_base, DW_FORM_exprloc);
+
+    // 兄弟エントリ
+    // 次のエントリのオフセット
+    // DW_ATTR(DW_AT_sibling, DW_FORM_ref4);
+
+    DW_ATTR(0x00, 0x00);
+
+    // パラメータ
+    for(Parameter* params = ident->params; params != NULL; params = params->next){
+        dwarf_abbrev_param(params);
+    }
+
+    // 変数
+    for(Ident* lvar = ident->scope->ident; lvar != NULL; lvar = lvar->next){
+        if(lvar->kind == ID_LVAR && lvar->is_builtin == 0){
+            dwarf_abbrev_lvar(lvar);
+        }
+    }
+}
+
+// .debug_abbrevの出力(param)
+static void dwarf_abbrev_param(Parameter* param){
+    DW_ABBREV_IDX();
+    DW_ABBREV_TAG(DW_TAG_formal_parameter);
+    DW_CHILDREN_no();
+
+    DW_ATTR(DW_AT_name, DW_FORM_strp);
+    DW_ATTR(DW_AT_decl_file, DW_FORM_data1);
+    DW_ATTR(DW_AT_decl_line, DW_FORM_data1);
+    DW_ATTR(DW_AT_decl_column, DW_FORM_data1);
+    DW_ATTR(DW_AT_type, DW_FORM_ref4);
+    DW_ATTR(DW_AT_location, DW_FORM_exprloc);
+    DW_ATTR(0x00, 0x00);
+}
+
+// .debug_abbrevの出力(lvar)
+static void dwarf_abbrev_lvar(Ident* lvar){
+    DW_ABBREV_IDX();
+    DW_ABBREV_TAG(DW_TAG_variable);
+    DW_CHILDREN_no();
+
+    DW_ATTR(DW_AT_decl_file, DW_FORM_data1);
+    DW_ATTR(DW_AT_decl_line, DW_FORM_data1);
+    DW_ATTR(DW_AT_decl_column, DW_FORM_data1);
+    DW_ATTR(DW_AT_type, DW_FORM_ref4);
+    DW_ATTR(DW_AT_location, DW_FORM_exprloc);
+    DW_ATTR(0x00, 0x00);
 }
 
 // .debug_abbrevの出力
@@ -61,6 +153,11 @@ static void dwarf_abbrev(){
     DW_ATTR(0x00, 0x00);
 
     // TODO : いろいろだす
+    for(Ident* func = g_scope->ident; func != NULL; func = func->next){
+        if(func->kind == ID_FUNC){
+            dwarf_abbrev_func(func);
+        }
+    }
 
     DW_ATTR(0x00, 0x00);
 }

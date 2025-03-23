@@ -75,9 +75,6 @@ tmp: mcc2
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
 	cp ./src/dwarf.o ./selfhost/dwarf.o
 
-	#cp ./src/file.o ./selfhost/file.o
-
-
 	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)
 
 self: ./selfhost/mcc2t
