@@ -13,5 +13,11 @@ int g(int k){
 
 int main(int a){
     int abc = 10;
+    {
+        int kkk;
+        {
+            int akdskafa;
+        }
+    }
     return 0;
 }

@@ -21,7 +21,7 @@ static Dwarf_dstr* DWARF_Str(char* fmt, ...);
 // abbrev
 static void dwarf_abbrev_func(Ident* ident);
 static void dwarf_abbrev_param(Parameter* param);
-static void dwarf_abbrev_lvar(Ident* lvar);
+static void dwarf_abbrev_lvar(Scope* scope);
 
 void dwarf(){
     g_scope = get_global_scope();
@@ -43,6 +43,34 @@ static void dwarf_init(){
     DWARF_Str(cwd);                         // 作業ディレクトリ
     DWARF_Str(cinfo.compile_file->path);    // コンパイルファイル
     DWARF_Str(cinfo.compiler);              // コンパイラ
+}
+
+// .debug_abbrevの出力(lvar)
+static void dwarf_abbrev_lvar(Scope* scope){
+    // なにもないなら帰る
+    if(scope == NULL) return;
+
+    // 子どものローカル変数を出力する
+    for(Scope* sc = scope->child; sc; sc = sc->sibling){
+        dwarf_abbrev_lvar(sc);
+    }
+
+    // このスコープのローカル変数を出力する
+    for(Ident* lvar = scope->ident; lvar; lvar = lvar->next){
+        if(lvar->kind == ID_LVAR && lvar->is_builtin == 0){
+            printf("lvar : %s\n", lvar->name);
+            DW_ABBREV_IDX();
+            DW_ABBREV_TAG(DW_TAG_variable);
+            DW_CHILDREN_no();
+
+            DW_ATTR(DW_AT_decl_file, DW_FORM_data1);
+            DW_ATTR(DW_AT_decl_line, DW_FORM_data1);
+            DW_ATTR(DW_AT_decl_column, DW_FORM_data1);
+            DW_ATTR(DW_AT_type, DW_FORM_ref4);
+            DW_ATTR(DW_AT_location, DW_FORM_exprloc);
+            DW_ATTR(0x00, 0x00);
+        }
+    }
 }
 
 // .debug_abbrevの出力(function)
@@ -95,11 +123,7 @@ static void dwarf_abbrev_func(Ident* ident){
     }
 
     // 変数
-    for(Ident* lvar = ident->scope->ident; lvar != NULL; lvar = lvar->next){
-        if(lvar->kind == ID_LVAR && lvar->is_builtin == 0){
-            dwarf_abbrev_lvar(lvar);
-        }
-    }
+    dwarf_abbrev_lvar(ident->scope);
 }
 
 // .debug_abbrevの出力(param)
@@ -109,20 +133,6 @@ static void dwarf_abbrev_param(Parameter* param){
     DW_CHILDREN_no();
 
     DW_ATTR(DW_AT_name, DW_FORM_strp);
-    DW_ATTR(DW_AT_decl_file, DW_FORM_data1);
-    DW_ATTR(DW_AT_decl_line, DW_FORM_data1);
-    DW_ATTR(DW_AT_decl_column, DW_FORM_data1);
-    DW_ATTR(DW_AT_type, DW_FORM_ref4);
-    DW_ATTR(DW_AT_location, DW_FORM_exprloc);
-    DW_ATTR(0x00, 0x00);
-}
-
-// .debug_abbrevの出力(lvar)
-static void dwarf_abbrev_lvar(Ident* lvar){
-    DW_ABBREV_IDX();
-    DW_ABBREV_TAG(DW_TAG_variable);
-    DW_CHILDREN_no();
-
     DW_ATTR(DW_AT_decl_file, DW_FORM_data1);
     DW_ATTR(DW_AT_decl_line, DW_FORM_data1);
     DW_ATTR(DW_AT_decl_column, DW_FORM_data1);

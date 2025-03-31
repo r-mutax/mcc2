@@ -165,7 +165,21 @@ int set_stack_size(int size){
 void scope_in(){
     Scope* new_scope = calloc(1, sizeof(Scope));
     new_scope->level = cur_scope->level + 1;
+
+    // 今のスコープを親にする
     new_scope->parent = cur_scope;
+
+    // 今のスコープの子にする
+    // すでに子がいる場合は、新しいスコープを兄弟にする
+    if(cur_scope->child){
+        Scope* s = cur_scope->child;
+        while(s->sibling){
+            s = s->sibling;
+        }
+        s->sibling = new_scope;
+    } else {
+        cur_scope->child = new_scope;
+    }
 
     if(cur_scope->level == 0){
         func_scope = new_scope;

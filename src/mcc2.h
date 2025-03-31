@@ -513,6 +513,8 @@ struct Scope {
     Ident*          ident;
     StringLiteral*  string_literal;
     Scope*          parent;
+    Scope*          child;
+    Scope*          sibling;
     Label*          label;
     IR*             ir_cmd;
     SimpleType*     type_tag;
