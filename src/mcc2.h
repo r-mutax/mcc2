@@ -235,10 +235,13 @@ struct Ident {
     int is_var_params;      // 可変長引数受け取るか？
     int is_extern;          // externか？
     int is_static;          // staticか？
+    int is_builtin;         // 組み込み定義か？
     Ident* va_area;         // 可変長引数のエリア
     int func_id;            // 識別子のID
 
-    IR* ir_cmd;          // 中間命令の先頭
+    IR* ir_cmd;             // 中間命令の先頭
+
+    int abbrev_idx;         // .debug_abbrevのインデックス
 
     // ID_LVAR, ID_GVAR, ID_FUNC -> 識別子の型
     // ID_TYPE -> 型名が表す型情報
@@ -510,6 +513,8 @@ struct Scope {
     Ident*          ident;
     StringLiteral*  string_literal;
     Scope*          parent;
+    Scope*          child;
+    Scope*          sibling;
     Label*          label;
     IR*             ir_cmd;
     SimpleType*     type_tag;
@@ -570,6 +575,7 @@ struct SimpleType {
 struct QualType{
     SimpleType* type;
     bool        is_const;
+    int         id;
 };
 
 struct StringLiteral{
@@ -659,6 +665,7 @@ Token* get_token_before_eof(Token* tok);
 void output_token(Token* tok);
 Token* tokenize_string(char* src);
 Token* scan(char* src);
+Token* create_token(TokenKind kind, char* str, int len);
 
 // type.c
 extern SimpleType* ty_void;

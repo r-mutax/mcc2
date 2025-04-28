@@ -24,6 +24,8 @@ int debug_regis = 0;    // レジスタのデバッグモード
 int debug_plvar = 0;    // ローカル変数のデバッグモード
 int debug_exec = 0;     // 実行時のデバッグモード
 
+int cfa_offset = 0;     // CFAのオフセット
+
 typedef enum {
     NONE = 0,
     TEXT,
@@ -109,7 +111,7 @@ static void activateReg(Reg* reg, int is_lhs);
 
 static void freeReg(Reg* reg);
 
-// DRAWF規格に従ったレジスタのidxを取得する
+// DWARF規格に従ったレジスタのidxを取得する
 static int get_regno(char* reg){
     if(!strcmp(reg, "rax")) return 0;
     if(!strcmp(reg, "rdx")) return 1;
@@ -457,6 +459,7 @@ static void convert_ir2x86asm(IR* ir){
         switch(ir->cmd){
             case IR_FN_LABEL:
             {
+                cfa_offset = 8;
                 Ident* func = ir->s1->ident;
                 set_section(TEXT);
                 print("\t.globl %s\n", func->name);
@@ -477,10 +480,20 @@ static void convert_ir2x86asm(IR* ir){
                     }
                     print("\t.loc %d %d %d\n", func->tok->file->label,
                                                 func->tok->row, func->tok->col);
+                    print("\t.cfi_startproc\n");
                 }
                 push("rbp");
+                if(debug_exec){
+                    cfa_offset += 8;
+                    print("\t.cfi_def_cfa_offset %d\n", cfa_offset);
+                    print("\t.cfi_offset 6, -16\n");
+                }
                 print("\tmov rbp, rsp\n");
+                if(debug_exec){
+                    print("\t.cfi_def_cfa_register 6\n");
+                }
                 print("\tsub rsp, %d\n", ((ir->s2->val + 15) / 16) * 16);
+
                 push("r12");
                 push("r13");
                 push("r14");
@@ -497,7 +510,9 @@ static void convert_ir2x86asm(IR* ir){
                 pop("r12");
                 print("\tmov rsp, rbp\n");
                 pop("rbp");
+                print("\t.cfi_def_cfa 7, 8\n");
                 print("\tret\n");
+                print("\t.cfi_endproc\n");
                 print(".LFE%d:\n", func->func_id);
                 print("\t.size %s, .-%s\n", func->name, func->name);
                 break;

@@ -288,3 +288,23 @@ enum dwarf_tag_encoding {
     DW_TAG_hi_user           = 0xFFFF // 0xFFFF
 };
 
+// attribute encoding(基本型のタイプ)
+enum dwarf_ate_encoding {
+    DW_ATE_void,                   // 0x00
+    DW_ATE_address         = 0x01,  // 0x01
+    DW_ATE_boolean,                 // 0x02
+    DW_ATE_complex_float,           // 0x03
+    DW_ATE_float,                   // 0x04
+    DW_ATE_signed,                  // 0x05
+    DW_ATE_signed_char,             // 0x06
+    DW_ATE_unsigned,                // 0x07
+    DW_ATE_unsigned_char,           // 0x08
+    DW_ATE_imaginary_float,          // 0x09
+    DW_ATE_packed_decimal,          // 0x0A
+    DW_ATE_numeric_string,          // 0x0B
+    DW_ATE_edited,                  // 0x0C
+    DW_ATE_signed_fixed,            // 0x0D
+    DW_ATE_unsigned_fixed,          // 0x0E
+    DW_ATE_decimal_float,           // 0x0F
+    DW_ATE_UTF,
+};

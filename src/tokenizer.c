@@ -532,3 +532,11 @@ Token* get_token_before_eof(Token* tok){
     }
     return tok;
 }
+
+Token* create_token(TokenKind kind, char* str, int len){
+    Token* tok = calloc(1, sizeof(Token));
+    tok->kind = kind;
+    tok->pos = str;
+    tok->len = len;
+    return tok;
+}
