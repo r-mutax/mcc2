@@ -12,6 +12,7 @@ static int g_abbrev_idx = 1;            // .debug_abbrev用のインデックス
 static int g_abbrev_base_type_idx;      // .debug_abbrev用の基本型のインデックス
 static int g_abbrev_pointer_type_idx;   // .debug_abbrev用のポインタ型のインデックス
 static int g_abbrev_struct_type_idx;    // .debug_abbrev用の構造体型のインデックス
+static int g_abbrev_enum_type_idx;      // .debug_abbrev用のenum型のインデックス
 
 static void dwarf_init();       // 初期化
 static void dwarf_abbrev();     // .debug_abbrev
@@ -35,6 +36,7 @@ static void dwarf_info_type(QualType* type);
 static void dwarf_info_base_type(QualType* type);
 static void dwarf_info_pointer_type(QualType* qtype);
 static void dwarf_info_struct_type(QualType* qtype);
+static void dwarf_info_enum_type(QualType* qtype);
 
 void dwarf(){
     g_scope = get_global_scope();
@@ -204,6 +206,15 @@ static void dwarf_abbrev(){
     DW_ATTR(DW_AT_name, DW_FORM_strp);
     DW_ATTR(0x00, 0x00);
 
+    // enum_typeも出しておく
+    g_abbrev_enum_type_idx = g_abbrev_idx;
+    DW_ABBREV_IDX();
+    DW_ABBREV_TAG(DW_TAG_enumeration_type);
+    DW_CHILDREN_no();
+    DW_ATTR(DW_AT_byte_size, DW_FORM_data1);
+    DW_ATTR(DW_AT_name, DW_FORM_strp);
+    DW_ATTR(0x00, 0x00);
+
     // TODO : いろいろだす
     for(Ident* func = g_scope->ident; func != NULL; func = func->next){
         if(func->kind == ID_FUNC){
@@ -323,7 +334,25 @@ static void dwarf_info_struct_type(QualType* qtype){
     print("\t.uleb128 %d\n", g_abbrev_struct_type_idx); // Abbreviation Code;
 
     // サイズ
-    print("// size output\n");
+    print("\t.byte %d\n", qtype->type->size);  // DW_AT_byte_size
+
+    // 名前
+    print("\t.long .LASF%d\n", DWARF_Str("%s", get_token_string(qtype->type->name))->id); // DW_AT_name
+}
+
+// .debug_infoの出力（列挙体型）
+static void dwarf_info_enum_type(QualType* qtype){
+    // 型のIDを出しておく
+    if(qtype->id == 0){
+        qtype->id = g_type_id++;
+    }
+    // ラベルを出しておく
+    print(".Ldtype_%d:\n", qtype->id);
+
+    // enum型の情報を出力
+    print("\t.uleb128 %d\n", g_abbrev_enum_type_idx); // Abbreviation Code;
+
+    // サイズ
     print("\t.byte %d\n", qtype->type->size);  // DW_AT_byte_size
 
     // 名前
@@ -333,20 +362,26 @@ static void dwarf_info_struct_type(QualType* qtype){
 // .debug_infoの出力(型)
 static void dwarf_info_type(QualType* qtype){
 
-    bool is_base_type = qtype->type->kind == TY_INT
-                     || qtype->type->kind == TY_BOOL
-                     || qtype->type->kind == TY_VOID;
-
-    if(is_base_type){
-        dwarf_info_base_type(qtype);
-    }
-
-    if(qtype->type->kind == TY_POINTER){
-        dwarf_info_pointer_type(qtype);
-    }
-
-    if(qtype->type->kind == TY_STRUCT){
-        dwarf_info_struct_type(qtype);
+    switch(qtype->type->kind){
+        case TY_INT:
+        case TY_BOOL:
+        case TY_VOID:
+            dwarf_info_base_type(qtype);
+            break;
+        case TY_POINTER:
+            dwarf_info_pointer_type(qtype);
+            break;
+        case TY_STRUCT:
+            dwarf_info_struct_type(qtype);
+            break;
+        case TY_UNION:
+            // dwarf_info_union_type(qtype);
+            break;
+        case TY_ENUM:
+            dwarf_info_enum_type(qtype);
+            break;
+        default:
+            break;
     }
 }
 
