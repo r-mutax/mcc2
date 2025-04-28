@@ -575,6 +575,7 @@ struct SimpleType {
 struct QualType{
     SimpleType* type;
     bool        is_const;
+    int         id;
 };
 
 struct StringLiteral{
@@ -664,6 +665,7 @@ Token* get_token_before_eof(Token* tok);
 void output_token(Token* tok);
 Token* tokenize_string(char* src);
 Token* scan(char* src);
+Token* create_token(TokenKind kind, char* str, int len);
 
 // type.c
 extern SimpleType* ty_void;

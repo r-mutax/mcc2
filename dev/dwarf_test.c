@@ -11,6 +11,11 @@ int g(int k){
     return 0;
 }
 
+char* get_pointer(){
+    char* p = "hello";
+    return p;
+}
+
 int main(int a){
     int abc = 10;
     {

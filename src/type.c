@@ -14,21 +14,38 @@ SimpleType* ty_ulong;
 
 void ty_init(){
     ty_void = new_type(TY_VOID, 1);
+    ty_void->name = create_token(TK_VOID, "void", 4);
+
     ty_bool = new_type(TY_BOOL, 1);
+    ty_bool->name = create_token(TK_BOOL, "bool", 4);
 
     ty_char = new_type(TY_INT, 1);
+    ty_char->name = create_token(TK_CHAR, "char", 4);
+
     ty_short = new_type(TY_INT, 2);
+    ty_short->name = create_token(TK_SHORT, "short", 5);
+
     ty_int = new_type(TY_INT, 4);
+    ty_int->name = create_token(TK_INT, "int", 3);
+
     ty_long = new_type(TY_INT, 8);
+    ty_long->name = create_token(TK_LONG, "long", 4);
 
     ty_uchar = new_type(TY_INT, 1);
     ty_uchar->is_unsigned = 1;
+    ty_uchar->name = create_token(TK_UNSIGNED, "unsigned char", 13);
+
     ty_ushort = new_type(TY_INT, 2);
     ty_ushort->is_unsigned = 1;
+    ty_ushort->name = create_token(TK_UNSIGNED, "unsigned short", 14);
+
     ty_uint = new_type(TY_INT, 4);
     ty_uint->is_unsigned = 1;
+    ty_uint->name = create_token(TK_UNSIGNED, "unsigned int", 12);
+
     ty_ulong = new_type(TY_INT, 8);
     ty_ulong->is_unsigned = 1;
+    ty_ulong->name = create_token(TK_UNSIGNED, "unsigned long", 13);
 }
 
 QualType* pointer_to(QualType* base){
