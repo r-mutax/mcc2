@@ -290,6 +290,9 @@ static void gen_stmt(Node* node){
         case ND_VOID_STMT:
             // 空文なのでなにもしない
             break;
+        case ND_MEMZERO:
+            new_IR(IR_MEMZERO, NULL, gen_lvar(node->lhs), new_RegImm(get_qtype_size(node->lhs->qtype)));
+            break;
         default:
             gen_expr(node);
             break;

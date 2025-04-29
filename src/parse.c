@@ -46,7 +46,7 @@
 
 typedef struct Intializer {
     QualType* qtype;
-    Node* expr;
+    Node* init_node;    // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
 } Initializer;
 
 static Node* switch_node = NULL;
@@ -60,7 +60,7 @@ static Node* compound_stmt();
 static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
-static Initializer* initialize(QualType* ty);
+static Initializer* initialize(QualType* ty, Node* var_node);
 static Relocation* make_relocation(Initializer* init, QualType* qty);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
@@ -96,6 +96,7 @@ static Node* new_node_mul(Node* lhs, Node* rhs);
 static Node* new_node_mod(Node* lhs, Node* rhs);
 static Node* new_node_num(unsigned long num);
 static Node* new_node_var(Ident* ident);
+static Node* new_node_memzero(Node* var_node);
 static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
 static bool is_function();
@@ -488,12 +489,11 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
             Node* var_node = new_node_var(ident);
             var_node->pos = ident->tok;
 
-            Initializer* init = initialize(ident->qtype);
+            Initializer* init = initialize(ident->qtype, var_node);
+            node = init->init_node;
 
             if(is_global){
                 ident->reloc = make_relocation(init, ident->qtype);
-            } else {
-                node = new_node(ND_ASSIGN, var_node, init->expr);
             }
         }
     }
@@ -503,23 +503,43 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
 }
 
 static Relocation* make_relocation(Initializer* init, QualType* qty){
-    Relocation* reloc = calloc(1, sizeof(Relocation));
-    reloc->data = emit2(init->expr, &(reloc->label));
-    reloc->size = get_qtype_size(qty);
-    return reloc;
+
+    if(init->init_node->kind == ND_ASSIGN){
+        Relocation* reloc = calloc(1, sizeof(Relocation));
+        reloc->data = emit2(init->init_node->rhs, &(reloc->label));
+        reloc->size = get_qtype_size(init->qtype);
+        return reloc;
+    } else if(init->init_node->kind == ND_BLOCK){
+        return NULL;
+    }
 }
 
-static Initializer* initialize(QualType* ty){
+static Initializer* initialize(QualType* ty, Node* var_node){
     Initializer* init = calloc(1, sizeof(Initializer));
 
     switch(get_qtype_kind(ty)){
-        case TY_ARRAY:
         case TY_STRUCT:
+        {
+            if(consume_token(TK_L_BRACKET)){
+                Node* block = new_node(ND_BLOCK, NULL, NULL);
+
+                // 構造体のメンバを初期化する
+                Node* head = new_node_memzero(var_node);
+                Node* cur = head;
+
+                init->qtype = ty;
+                init->init_node = head;
+                expect_token(TK_R_BRACKET);
+            }
+        }
+            break;
+        case TY_ARRAY:
         case TY_UNION:
             error("not implemented initializer array, struct, union.\n");
             break;
         default:
-            init->expr = assign();
+            init->init_node = new_node(ND_ASSIGN, var_node, assign());
+            init->qtype = ty;
             break;
     }
     return init;
@@ -1579,6 +1599,13 @@ static Node* new_node_var(Ident* ident){
 
     return result;
 }
+
+static Node* new_node_memzero(Node* var_node){
+    Node* result = new_node(ND_MEMZERO, var_node, NULL);
+    result->qtype = var_node->qtype;
+    return result;
+}
+
 
 static Node* new_node_add(Node* lhs, Node* rhs){
 

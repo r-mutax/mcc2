@@ -60,6 +60,22 @@ int test_variable(){
     ASSERT(g_init_i, 3);
     ASSERT(g_init_l, 4);
 
+
+    // test of struct initialize
+    printf("test of struct initialize..\n");
+    struct INIT_STRUCT{
+        char a;
+        short b;
+        int c;
+        long d;
+    };
+
+    struct INIT_STRUCT is = { };
+    ASSERT(is.a, 0);
+    ASSERT(is.b, 0);
+    ASSERT(is.c, 0);
+    ASSERT(is.d, 0);
+
     return 0;
 }
 

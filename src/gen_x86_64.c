@@ -920,6 +920,16 @@ static void convert_ir2x86asm(IR* ir){
                 pop(ir->s1->rreg);
                 freeReg(ir->s1);
                 break;
+            case IR_MEMZERO:
+                activateRegLhs(ir->s1);
+                activateRegRhs(ir->s2);
+                print("\tmov rcx, %d\n", ir->s2->val);
+                print("\tmov al, 0x00\n");
+                print("\tmov rdi, %s\n", ir->s1->rreg);
+                print("\trep stosb\n");
+                freeReg(ir->s1);
+                freeReg(ir->s2);
+                break;
             default:
                 unreachable();
         }
