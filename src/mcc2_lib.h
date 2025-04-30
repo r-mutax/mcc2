@@ -19,7 +19,7 @@ int fprintf(FILE *stream, const char *fmt, ...);
 size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
 long int ftell(FILE *stream);
 int printf(const char *fmt, ...);
-
+int sprintf(char *buffer, const char *format, ...);
 extern FILE *stdout;
 extern FILE *stderr;
 
@@ -39,6 +39,7 @@ int strcmp(const char *string1, const char *string2);
 char *strcpy(char *string1, const char *string2);
 void *memcpy(void *dest, const void *src, size_t count);
 void *malloc(size_t size);
+int memcmp(const void *buf1, const void *buf2, size_t count);
 
 // errno.h
 extern int errno;
