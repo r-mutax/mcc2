@@ -97,6 +97,7 @@ static Node* new_node_mod(Node* lhs, Node* rhs);
 static Node* new_node_num(unsigned long num);
 static Node* new_node_var(Ident* ident);
 static Node* new_node_memzero(Node* var_node);
+static Node* new_node_member(Node* var_node, Ident* member);
 static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
 static bool is_function();
@@ -527,9 +528,40 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                 Node* head = new_node_memzero(var_node);
                 Node* cur = head;
 
+                // 初期化できる対象は構造体のメンバしかないので、
+                // 構造体のメンバの数だけループを回せばいい
+                for(Member* mem = ty->type->member; mem; mem = mem->next){
+                    Token* error_pos = get_token();
+                    if(consume_token(TK_R_BRACKET)){
+                        // 構造体の初期化が終わった
+                        break;
+                    }
+
+                    if(consume_token(TK_COMMA)){
+                        // 初期化の値を読む前にカンマが来るのはおかしい
+                        error_tok(error_pos, "expected expression token before ',' token.\n");
+                    }
+
+                    // 今から初期化するメンバの型を取得
+                    QualType* mem_qty = mem->ident->qtype;
+
+                    // 代入する値を取得
+                    Node* val_node = assign();
+                    cur->next = new_node(ND_ASSIGN, new_node_member(var_node, mem->ident), val_node);
+                    cur = cur->next;
+
+                    // 次に移行するのでカンマを読む
+                    if(!consume_token(TK_COMMA)){
+                        // カンマが来ない場合は初期化は終わり
+                        // 次は}が来るはず
+                        expect_token(TK_R_BRACKET);
+                        break;
+                    }
+                }
+                block->body = head;
+
                 init->qtype = ty;
-                init->init_node = head;
-                expect_token(TK_R_BRACKET);
+                init->init_node = block;
             }
         }
             break;
@@ -1393,17 +1425,14 @@ static Node* postfix(){
         if(consume_token(TK_DOT)){
             add_type(node);
 
-            node = new_node(ND_MEMBER, node, NULL);
-
             // find a member
             Token* tok = expect_ident();
-            Ident* ident = get_member(node->lhs->qtype->type, tok);
+            Ident* ident = get_member(node->qtype->type, tok);
             if(!ident){
                 error_tok(tok, "Not a member.\n");
             }
 
-            node->qtype = ident->qtype;
-            node->val = ident->offset;
+            node = new_node_member(node, ident);
             continue;
         }
 
@@ -1606,6 +1635,12 @@ static Node* new_node_memzero(Node* var_node){
     return result;
 }
 
+static Node* new_node_member(Node* var_node, Ident* member){
+    Node* result = new_node(ND_MEMBER, var_node, NULL);
+    result->qtype = member->qtype;
+    result->val = member->offset;
+    return result;
+}
 
 static Node* new_node_add(Node* lhs, Node* rhs){
 
