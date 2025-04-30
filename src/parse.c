@@ -542,6 +542,27 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                         error_tok(error_pos, "expected expression token before ',' token.\n");
                     }
 
+                    if(consume_token(TK_DOT)){
+                        Token* tok = expect_ident();
+                        bool is_find = false;
+                        for(Member* fm = mem; fm; fm = fm->next){
+                            if(is_equal_token(tok, fm->ident->tok)){
+                                mem = fm;
+                                is_find = true;
+                                break;
+                            }
+                        }
+
+                        if(!is_find){
+                            char* struct_name = get_token_string(ty->type->name);
+                            char* member_name = get_token_string(tok);
+                            error_tok(error_pos, "'%s' has no specific member is '%s'.\n", struct_name, member_name);
+                        } else {
+                            // メンバの初期化を行うので、イコールが来るはず
+                            expect_token(TK_ASSIGN);
+                        }
+                    }
+
                     // 今から初期化するメンバの型を取得
                     QualType* mem_qty = mem->ident->qtype;
 

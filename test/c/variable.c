@@ -88,6 +88,24 @@ int test_variable(){
     ASSERT(is3.c, 0);
     ASSERT(is3.d, 0);
 
+    struct INIT_STRUCT is4 = { .b = 1, 2 };
+    ASSERT(is4.a, 0);
+    ASSERT(is4.b, 1);
+    ASSERT(is4.c, 2);
+    ASSERT(is4.d, 0);
+
+    struct INIT_STRUCT is5 = { 1, .c = 2 };
+    ASSERT(is5.a, 1);
+    ASSERT(is5.b, 0);
+    ASSERT(is5.c, 2);
+    ASSERT(is5.d, 0);
+
+    struct INIT_STRUCT is6 = { .b = 2, .d = 4 };
+    ASSERT(is6.a, 0);
+    ASSERT(is6.b, 2);
+    ASSERT(is6.c, 0);
+    ASSERT(is6.d, 4);
+
     return 0;
 }
 
