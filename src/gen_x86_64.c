@@ -606,6 +606,30 @@ static void convert_ir2x86asm(IR* ir){
                         print("\t.type\t%s, @object\n", ident->name);
                         print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
                         print("%s:\n", ir->s1->ident->name);
+
+                        for(Relocation* reloc = ident->reloc; reloc; reloc = reloc->next){
+                            if(reloc->label){
+                                print("\t.quad %s\n", reloc->label);
+                            } else if(reloc->is_padding) {
+                                print("\t.zero %d\n", reloc->size);
+                            } else {
+                                switch(reloc->size){
+                                    case 1:
+                                        print("\t.byte %d\n", reloc->data);
+                                        break;
+                                    case 2:
+                                        print("\t.value %d\n", reloc->data);
+                                        break;
+                                    case 4:
+                                        print("\t.long %d\n", reloc->data);
+                                        break;
+                                    case 8:
+                                        print("\t.quad %d\n", reloc->data);
+                                        break;
+                                }
+                            }
+                        }
+#if 0
                         if(!(ident->reloc->label)){
                             switch(ident->reloc->size){
                                 case 1:
@@ -624,6 +648,7 @@ static void convert_ir2x86asm(IR* ir){
                         } else {
                             print("\t.quad %s\n", ident->reloc->label);
                         }
+#endif
                     } else {
                         print("\t.globl\t%s\n", ident->name);
                         set_section(BSS);

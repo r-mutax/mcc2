@@ -207,6 +207,8 @@ struct Relocation{
     int size;
     int data;
     char* label;
+    bool is_padding;
+    Relocation* next;
 };
 
 typedef enum IdentKind {
