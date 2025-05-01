@@ -21,6 +21,8 @@ struct INIT_STRUCT g_is2 = { .b = 1, 2 };
 struct INIT_STRUCT g_is3 = { 1, 2 };
 struct INIT_STRUCT g_is4 = { .b = 2, 4, .d = 4 };
 
+static struct INIT_STRUCT g_is5 = { 1, 2 };
+
 extern int test_extern_int;
 
 int test_variable(){
@@ -118,20 +120,25 @@ int test_variable(){
     ASSERT(g_is1.c, 3);
     ASSERT(g_is1.d, 4);
 
-    // ASSERT(g_is2.a, 0);
-    // ASSERT(g_is2.b, 1);
-    // ASSERT(g_is2.c, 2);
-    // ASSERT(g_is2.d, 0);
+    ASSERT(g_is2.a, 0);
+    ASSERT(g_is2.b, 1);
+    ASSERT(g_is2.c, 2);
+    ASSERT(g_is2.d, 0);
 
-    // ASSERT(g_is3.a, 1);
-    // ASSERT(g_is3.b, 2);
-    // ASSERT(g_is3.c, 0);
-    // ASSERT(g_is3.d, 0);
+    ASSERT(g_is3.a, 1);
+    ASSERT(g_is3.b, 2);
+    ASSERT(g_is3.c, 0);
+    ASSERT(g_is3.d, 0);
 
-    // ASSERT(g_is4.a, 0);
-    // ASSERT(g_is4.b, 2);
-    // ASSERT(g_is4.c, 0);
-    // ASSERT(g_is4.d, 4);
+    ASSERT(g_is4.a, 0);
+    ASSERT(g_is4.b, 2);
+    ASSERT(g_is4.c, 4);
+    ASSERT(g_is4.d, 4);
+
+    ASSERT(g_is5.a, 1);
+    ASSERT(g_is5.b, 2);
+    ASSERT(g_is5.c, 0);
+    ASSERT(g_is5.d, 0);
 
     return 0;
 }

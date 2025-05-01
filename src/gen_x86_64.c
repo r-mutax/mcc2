@@ -593,20 +593,35 @@ static void convert_ir2x86asm(IR* ir){
                     set_section(DATA);
                     print("%s:\n", ident->name);
                     print("\t.string \"%s\"\n", get_token_string_literal(ident->tok));
-                } else if(ident->is_static) {
-                    set_section(BSS);
-                    print(".L%s:\n", ir->s1->ident->name);
-                    print("\t.zero %d\n", ir->s2->val);
                 } else {
-                    if(ident->reloc){
-                        // 初期化あり
-                        print("\t.globl\t%s\n", ident->name);
-                        set_section(DATA);
-                        print("\t.align %d\n", get_qtype_align(ident->qtype));
-                        print("\t.type\t%s, @object\n", ident->name);
-                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
-                        print("%s:\n", ir->s1->ident->name);
 
+                    // ファイルローカルかグローバルか？
+                    if(!ident->is_static){
+                        print("\t.globl\t%s\n", ident->name);
+                    }
+
+                    // 初期化ありか？
+                    if(ident->reloc){
+                        set_section(DATA);
+                    } else {
+                        set_section(BSS);
+                    }
+
+                    // 構造体のアライメント、タイプ、サイズなどの指定
+                    print("\t.align %d\n", get_qtype_align(ident->qtype));
+                    print("\t.type\t%s, @object\n", ident->name);
+                    print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
+
+                    // 構造体名の指定
+                    if(ident->is_static){
+                        print(".L%s:\n", ir->s1->ident->name);
+                    } else {
+                        print("%s:\n", ir->s1->ident->name);
+                    }
+
+                    // 初期化子の出力
+                    if(ident->reloc){
+                        // 初期化ありの場合
                         for(Relocation* reloc = ident->reloc; reloc; reloc = reloc->next){
                             if(reloc->label){
                                 print("\t.quad %s\n", reloc->label);
@@ -629,32 +644,8 @@ static void convert_ir2x86asm(IR* ir){
                                 }
                             }
                         }
-#if 0
-                        if(!(ident->reloc->label)){
-                            switch(ident->reloc->size){
-                                case 1:
-                                    print("\t.byte %d\n", ident->reloc->data);
-                                    break;
-                                case 2:
-                                    print("\t.value %d\n", ident->reloc->data);
-                                    break;
-                                case 4:
-                                    print("\t.long %d\n", ident->reloc->data);
-                                    break;
-                                case 8:
-                                    print("\t.quad %d\n", ident->reloc->data);
-                                    break;
-                            }
-                        } else {
-                            print("\t.quad %s\n", ident->reloc->label);
-                        }
-#endif
                     } else {
-                        print("\t.globl\t%s\n", ident->name);
-                        set_section(BSS);
-                        print("\t.type\t%s, @object\n", ident->name);
-                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
-                        print("%s:\n", ir->s1->ident->name);
+                        // 初期化なしの場合
                         print("\t.zero %d\n", ir->s2->val);
                     }
                 }
