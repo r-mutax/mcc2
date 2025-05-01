@@ -532,6 +532,20 @@ static Relocation* make_relocation(Initializer* init, QualType* qty){
                 cur = cur->next;
             }
 
+            if(!block_stmt){
+                if(offset != get_qtype_size(qty)){
+                    // 初期化式がもうないが、構造体のサイズに満たない場合は、
+                    // 残りのサイズ分のリロケーション情報を追加する
+                    Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                    reloc_remain->data = 0;
+                    reloc_remain->size = abs(get_qtype_size(qty) - offset);
+                    reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                    cur->next = reloc_remain;
+                    cur = cur->next;
+                    break;
+                }
+            }
+
             Relocation* reloc = calloc(1, sizeof(Relocation));
             if(!is_equal_token(mem->ident->tok, block_stmt->lhs->pos)){
                 // メンバの初期化が飛んでいるので、このメンバはゼロで初期化する
