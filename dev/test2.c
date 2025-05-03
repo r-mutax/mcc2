@@ -5,8 +5,15 @@ typedef __builtin_va_list va_list;
 #define _VA_LIST
 #endif
 
-int a = 40;
+struct INIT_STRUCT{
+    char a;
+    short b;
+    int c;
+    long d;
+};
 
 int main(int aa){
-    return a;
+    struct INIT_STRUCT is = { };
+
+    return 0;
 }

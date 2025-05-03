@@ -46,7 +46,7 @@
 
 typedef struct Intializer {
     QualType* qtype;
-    Node* expr;
+    Node* init_node;    // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
 } Initializer;
 
 static Node* switch_node = NULL;
@@ -60,7 +60,7 @@ static Node* compound_stmt();
 static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
-static Initializer* initialize(QualType* ty);
+static Initializer* initialize(QualType* ty, Node* var_node);
 static Relocation* make_relocation(Initializer* init, QualType* qty);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
 static void count_decl_spec(int* type_flg, int flg, Token* tok);
@@ -96,6 +96,8 @@ static Node* new_node_mul(Node* lhs, Node* rhs);
 static Node* new_node_mod(Node* lhs, Node* rhs);
 static Node* new_node_num(unsigned long num);
 static Node* new_node_var(Ident* ident);
+static Node* new_node_memzero(Node* var_node);
+static Node* new_node_member(Node* var_node, Ident* member);
 static Node* new_inc(Node* var);
 static Node* new_dec(Node* var);
 static bool is_function();
@@ -488,12 +490,11 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
             Node* var_node = new_node_var(ident);
             var_node->pos = ident->tok;
 
-            Initializer* init = initialize(ident->qtype);
+            Initializer* init = initialize(ident->qtype, var_node);
+            node = init->init_node;
 
             if(is_global){
                 ident->reloc = make_relocation(init, ident->qtype);
-            } else {
-                node = new_node(ND_ASSIGN, var_node, init->expr);
             }
         }
     }
@@ -503,23 +504,151 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
 }
 
 static Relocation* make_relocation(Initializer* init, QualType* qty){
-    Relocation* reloc = calloc(1, sizeof(Relocation));
-    reloc->data = emit2(init->expr, &(reloc->label));
-    reloc->size = get_qtype_size(qty);
-    return reloc;
+
+    if(init->init_node->kind == ND_ASSIGN){
+        Relocation* reloc = calloc(1, sizeof(Relocation));
+        reloc->data = emit2(init->init_node->rhs, &(reloc->label));
+        reloc->size = get_qtype_size(init->qtype);
+        return reloc;
+    } else if(init->init_node->kind == ND_BLOCK){
+        Relocation head = {};
+        Relocation* cur = &head;
+        Node* block_stmt = init->init_node->body->next;     // blockの1個目はND_MEMZEROなので飛ばす
+
+        int offset = 0;
+
+        for(Member* mem = qty->type->member; mem; mem = mem->next){
+            if(offset != mem->ident->offset){
+                // メンバのオフセットがずれているのでパディングを入れないといけない
+                // パディングを入れたことを前提としてメンバのオフセット外れているので、
+                // 単純に差分のサイズの0を入れてあげればいい
+                Relocation* reloc = calloc(1, sizeof(Relocation));
+                reloc->data = 0;
+                reloc->size = abs(offset - mem->ident->offset);
+                reloc->is_padding = true;
+
+                offset += reloc->size;
+                cur->next = reloc;
+                cur = cur->next;
+            }
+
+            if(!block_stmt){
+                if(offset != get_qtype_size(qty)){
+                    // 初期化式がもうないが、構造体のサイズに満たない場合は、
+                    // 残りのサイズ分のリロケーション情報を追加する
+                    Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                    reloc_remain->data = 0;
+                    reloc_remain->size = abs(get_qtype_size(qty) - offset);
+                    reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                    cur->next = reloc_remain;
+                    cur = cur->next;
+                    break;
+                }
+            }
+
+            Relocation* reloc = calloc(1, sizeof(Relocation));
+            if(!is_equal_token(mem->ident->tok, block_stmt->lhs->pos)){
+                // メンバの初期化が飛んでいるので、このメンバはゼロで初期化する
+                reloc->data = 0;
+                reloc->size = get_qtype_size(mem->ident->qtype);
+            } else {
+                // メンバの初期化があるので、初期化の値を取得する
+                reloc->data = emit2(block_stmt->rhs, &(reloc->label));
+                reloc->size = get_qtype_size(mem->ident->qtype);
+
+                // メンバの初期化を消化したので、block_stmtを次に進める
+                if(block_stmt->next){
+                    block_stmt = block_stmt->next;
+                }
+            }
+
+            // 次の準備
+            offset += get_qtype_size(mem->ident->qtype);
+            cur->next = reloc;
+            cur = cur->next;
+        }
+        return head.next;
+    }
 }
 
-static Initializer* initialize(QualType* ty){
+static Initializer* initialize(QualType* ty, Node* var_node){
     Initializer* init = calloc(1, sizeof(Initializer));
 
     switch(get_qtype_kind(ty)){
-        case TY_ARRAY:
         case TY_STRUCT:
+        {
+            if(consume_token(TK_L_BRACKET)){
+                Node* block = new_node(ND_BLOCK, NULL, NULL);
+
+                // 構造体のメンバを初期化する
+                Node* head = new_node_memzero(var_node);
+                Node* cur = head;
+
+                // 初期化できる対象は構造体のメンバしかないので、
+                // 構造体のメンバの数だけループを回せばいい
+                for(Member* mem = ty->type->member; mem; mem = mem->next){
+                    Token* error_pos = get_token();
+                    if(consume_token(TK_R_BRACKET)){
+                        // 構造体の初期化が終わった
+                        break;
+                    }
+
+                    if(consume_token(TK_COMMA)){
+                        // 初期化の値を読む前にカンマが来るのはおかしい
+                        error_tok(error_pos, "expected expression token before ',' token.\n");
+                    }
+
+                    if(consume_token(TK_DOT)){
+                        Token* tok = expect_ident();
+                        bool is_find = false;
+                        for(Member* fm = mem; fm; fm = fm->next){
+                            if(is_equal_token(tok, fm->ident->tok)){
+                                mem = fm;
+                                is_find = true;
+                                break;
+                            }
+                        }
+
+                        if(!is_find){
+                            char* struct_name = get_token_string(ty->type->name);
+                            char* member_name = get_token_string(tok);
+                            error_tok(error_pos, "'%s' has no specific member is '%s'.\n", struct_name, member_name);
+                        } else {
+                            // メンバの初期化を行うので、イコールが来るはず
+                            expect_token(TK_ASSIGN);
+                        }
+                    }
+
+                    // 今から初期化するメンバの型を取得
+                    QualType* mem_qty = mem->ident->qtype;
+
+                    // 代入する値を取得
+                    Node* val_node = assign();
+                    cur->next = new_node(ND_ASSIGN, new_node_member(var_node, mem->ident), val_node);
+                    cur = cur->next;
+
+                    // 次に移行するのでカンマを読む
+                    if(!consume_token(TK_COMMA)){
+                        // カンマが来ない場合は初期化は終わり
+                        // 次は}が来るはず
+                        expect_token(TK_R_BRACKET);
+                        break;
+                    }
+                }
+                block->body = head;
+
+                init->qtype = ty;
+                init->init_node = block;
+            }
+        }
+            break;
+        case TY_ARRAY:
         case TY_UNION:
             error("not implemented initializer array, struct, union.\n");
             break;
         default:
-            init->expr = assign();
+            init->init_node = new_node(ND_ASSIGN, var_node, assign());
+            init->qtype = ty;
             break;
     }
     return init;
@@ -1019,7 +1148,13 @@ static int emit2(Node* expr, char** label){
             // アドレス取得先がグローバル変数ならOK
             Node* var = expr->lhs;
             if(var->kind == ND_VAR && var->ident->kind == ID_GVAR){
-                val = var->ident->offset;
+                if(label){
+                    if(var->ident->is_static){
+                        *label = format_string(".L%s", var->ident->name);
+                    } else {
+                        *label = var->ident->name;
+                    }
+                }
             } else {
                 error_tok(expr->pos, "invalid const expression.\n");
             }
@@ -1373,17 +1508,14 @@ static Node* postfix(){
         if(consume_token(TK_DOT)){
             add_type(node);
 
-            node = new_node(ND_MEMBER, node, NULL);
-
             // find a member
             Token* tok = expect_ident();
-            Ident* ident = get_member(node->lhs->qtype->type, tok);
+            Ident* ident = get_member(node->qtype->type, tok);
             if(!ident){
                 error_tok(tok, "Not a member.\n");
             }
 
-            node->qtype = ident->qtype;
-            node->val = ident->offset;
+            node = new_node_member(node, ident);
             continue;
         }
 
@@ -1577,6 +1709,20 @@ static Node* new_node_var(Ident* ident){
     result->ident = ident;
     result->qtype = ident->qtype;
 
+    return result;
+}
+
+static Node* new_node_memzero(Node* var_node){
+    Node* result = new_node(ND_MEMZERO, var_node, NULL);
+    result->qtype = var_node->qtype;
+    return result;
+}
+
+static Node* new_node_member(Node* var_node, Ident* member){
+    Node* result = new_node(ND_MEMBER, var_node, NULL);
+    result->pos = member->tok;
+    result->qtype = member->qtype;
+    result->val = member->offset;
     return result;
 }
 
