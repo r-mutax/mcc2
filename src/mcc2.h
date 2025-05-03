@@ -207,6 +207,8 @@ struct Relocation{
     int size;
     int data;
     char* label;
+    bool is_padding;
+    Relocation* next;
 };
 
 typedef enum IdentKind {
@@ -299,6 +301,7 @@ typedef enum NodeKind {
     ND_CAST,
     ND_NOP,
     ND_VA_START,
+    ND_MEMZERO,
 } NodeKind;
 
 struct Node {
@@ -439,6 +442,9 @@ typedef enum IRCmd{
     IR_POP,
         // pop (null) s1
         //  pop s1
+    IR_MEMZERO,
+        // memzero (null) s1 s2
+        // [s1] = 0
 
     // DEFINITION
     IR_FN_LABEL,

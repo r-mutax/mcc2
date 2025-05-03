@@ -593,43 +593,59 @@ static void convert_ir2x86asm(IR* ir){
                     set_section(DATA);
                     print("%s:\n", ident->name);
                     print("\t.string \"%s\"\n", get_token_string_literal(ident->tok));
-                } else if(ident->is_static) {
-                    set_section(BSS);
-                    print(".L%s:\n", ir->s1->ident->name);
-                    print("\t.zero %d\n", ir->s2->val);
                 } else {
-                    if(ident->reloc){
-                        // 初期化あり
+
+                    // ファイルローカルかグローバルか？
+                    if(!ident->is_static){
                         print("\t.globl\t%s\n", ident->name);
+                    }
+
+                    // 初期化ありか？
+                    if(ident->reloc){
                         set_section(DATA);
-                        print("\t.align %d\n", get_qtype_align(ident->qtype));
-                        print("\t.type\t%s, @object\n", ident->name);
-                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
+                    } else {
+                        set_section(BSS);
+                    }
+
+                    // 構造体のアライメント、タイプ、サイズなどの指定
+                    print("\t.align %d\n", get_qtype_align(ident->qtype));
+                    print("\t.type\t%s, @object\n", ident->name);
+                    print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
+
+                    // 構造体名の指定
+                    if(ident->is_static){
+                        print(".L%s:\n", ir->s1->ident->name);
+                    } else {
                         print("%s:\n", ir->s1->ident->name);
-                        if(!(ident->reloc->label)){
-                            switch(ident->reloc->size){
-                                case 1:
-                                    print("\t.byte %d\n", ident->reloc->data);
-                                    break;
-                                case 2:
-                                    print("\t.value %d\n", ident->reloc->data);
-                                    break;
-                                case 4:
-                                    print("\t.long %d\n", ident->reloc->data);
-                                    break;
-                                case 8:
-                                    print("\t.quad %d\n", ident->reloc->data);
-                                    break;
+                    }
+
+                    // 初期化子の出力
+                    if(ident->reloc){
+                        // 初期化ありの場合
+                        for(Relocation* reloc = ident->reloc; reloc; reloc = reloc->next){
+                            if(reloc->label){
+                                print("\t.quad %s\n", reloc->label);
+                            } else if(reloc->is_padding) {
+                                print("\t.zero %d\n", reloc->size);
+                            } else {
+                                switch(reloc->size){
+                                    case 1:
+                                        print("\t.byte %d\n", reloc->data);
+                                        break;
+                                    case 2:
+                                        print("\t.value %d\n", reloc->data);
+                                        break;
+                                    case 4:
+                                        print("\t.long %d\n", reloc->data);
+                                        break;
+                                    case 8:
+                                        print("\t.quad %d\n", reloc->data);
+                                        break;
+                                }
                             }
-                        } else {
-                            print("\t.quad %s\n", ident->reloc->label);
                         }
                     } else {
-                        print("\t.globl\t%s\n", ident->name);
-                        set_section(BSS);
-                        print("\t.type\t%s, @object\n", ident->name);
-                        print("\t.size\t%s, %d\n", ident->name, ir->s2->val);
-                        print("%s:\n", ir->s1->ident->name);
+                        // 初期化なしの場合
                         print("\t.zero %d\n", ir->s2->val);
                     }
                 }
@@ -919,6 +935,16 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 pop(ir->s1->rreg);
                 freeReg(ir->s1);
+                break;
+            case IR_MEMZERO:
+                activateRegLhs(ir->s1);
+                activateRegRhs(ir->s2);
+                print("\tmov rcx, %d\n", ir->s2->val);
+                print("\tmov al, 0x00\n");
+                print("\tmov rdi, %s\n", ir->s1->rreg);
+                print("\trep stosb\n");
+                freeReg(ir->s1);
+                freeReg(ir->s2);
                 break;
             default:
                 unreachable();
