@@ -44,7 +44,7 @@ tmp: mcc2
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
-./selfhost/mcc2t: mcc2
+./selfhost/mcc2t:  mcc2
 	./mcc2 -c ./src/builtin_def.c -d PREDEFINED_MACRO -o ./selfhost/builtin_def.s -i ./src -x plvar -g
 	cc -c -o ./selfhost/builtin_def.o -no-pie ./selfhost/builtin_def.s -lc -MD -g
 
@@ -66,11 +66,14 @@ tmp: mcc2
 	./mcc2 -c ./src/type.c -d PREDEFINED_MACRO -o ./selfhost/type.s -i ./src -x plvar -g
 	cc -c -o ./selfhost/type.o -no-pie ./selfhost/type.s -lc -MD -g
 
+	./mcc2 -c ./src/ident.c -d PREDEFINED_MACRO -o ./selfhost/ident.s -i ./src -x plvar -g -x register
+	cc -c -o ./selfhost/ident.o -no-pie ./selfhost/ident.s -lc -MD -g
+
 	cp ./src/gen_x86_64.o ./selfhost/gen_x86_64.o
 	cp ./src/main.o ./selfhost/main.o
 	cp ./src/parse.o ./selfhost/parse.o
 	cp ./src/tokenizer.o ./selfhost/tokenizer.o
-	cp ./src/ident.o ./selfhost/ident.o
+	# cp ./src/ident.o ./selfhost/ident.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
 	cp ./src/dwarf.o ./selfhost/dwarf.o

@@ -1148,7 +1148,13 @@ static int emit2(Node* expr, char** label){
             // アドレス取得先がグローバル変数ならOK
             Node* var = expr->lhs;
             if(var->kind == ND_VAR && var->ident->kind == ID_GVAR){
-                val = var->ident->offset;
+                if(label){
+                    if(var->ident->is_static){
+                        *label = format_string(".L%s", var->ident->name);
+                    } else {
+                        *label = var->ident->name;
+                    }
+                }
             } else {
                 error_tok(expr->pos, "invalid const expression.\n");
             }

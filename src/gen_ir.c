@@ -207,6 +207,7 @@ static void gen_stmt(Node* node){
 
             if(node->init){
                 gen_expr(node->init);
+                new_IR(IR_RELEASE_REG_ALL, NULL, NULL, NULL);
             }
             new_IRLabel(l_start);
             new_IR(IR_JZ, NULL, gen_expr(node->cond), new_RegImm(l_end));
@@ -220,6 +221,7 @@ static void gen_stmt(Node* node){
             new_IRLabel(l_cont);
             if(node->incr){
                 gen_expr(node->incr);
+                new_IR(IR_RELEASE_REG_ALL, NULL, NULL, NULL);
             }
             new_IRJmp(l_start);
             new_IRLabel(l_end);
