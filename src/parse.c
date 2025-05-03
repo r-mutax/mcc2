@@ -216,6 +216,9 @@ static void function(QualType* func_type, StorageClassKind sck){
     }
 
     func->scope = get_current_scope();
+    if(sck == SCK_STATIC){
+        func->is_static = true;
+    }
 
     if(consume_token(TK_SEMICORON)){
         // ここでセミコロンがあるなら前方宣言

@@ -462,7 +462,9 @@ static void convert_ir2x86asm(IR* ir){
                 cfa_offset = 8;
                 Ident* func = ir->s1->ident;
                 set_section(TEXT);
-                print("\t.globl %s\n", func->name);
+                if(!func->is_static){
+                    print("\t.globl %s\n", func->name);
+                }
                 print("\t.type	%s, @function\n", func->name);
                 print("%s:\n", func->name);
 
