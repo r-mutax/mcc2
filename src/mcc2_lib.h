@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MCC_LIB
+#define MCC_LIB 1
 
 typedef void FILE;
 #define bool _Bool
@@ -63,3 +64,5 @@ int vsnprintf(char *fmt, size_t n, const char *format, va_list arg_ptr);
 
 // getopt_core.
 // extern int getopt (int ___argc, char *const *___argv, const char *__shortopts);
+
+#endif

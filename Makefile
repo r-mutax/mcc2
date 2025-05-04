@@ -3,25 +3,36 @@ SRCS=$(wildcard ./src/*.c)
 OBJS=$(SRCS:.c=.o)
 SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
 DEPS=$(SRCS:.c=.d)
+LDFLAGS=-L./lib/bin -lmcc2
 
 TESTS=$(wildcard ./test/c/*.c)
 TEST_OBJS=$(TESTS:.c=.o)
 TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
 
-mcc2: $(OBJS)
+LIBS=$(wildcard ./lib/*.c)
+LIBSOBJS=$(LIBS:.c=.o)
+
+mcc2: $(OBJS) ./lib/bin/libmcc2.a
 	$(CC) -o mcc2 $(OBJS) $(LDFLAGS)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) -MD -o $@ $<
 
+./lib/bin/libmcc2.a: $(LIBSOBJS)
+	echo ${LIBSOBJS}
+	ar rcs ./lib/bin/libmcc2.a $(LIBSOBJS)
+
+src/lib/%.o: src/lib/%.c
+	$(CC) -c $(CFLAGS) -MD -o $@ $<
+
 -include $(DEPS)
 
 test/c/%.o: test/c/%.c
-	./mcc2 -c $< -o $@.s -i ./test/testinc -i ./src -d PREDEFINED_MACRO -x plvar -g
+	./mcc2 -c $< -o $@.s -i ./test/testinc -i ./src -i ./lib -d PREDEFINED_MACRO -x plvar -g
 	cc -c -o $@ $@.s -static
 
 test : mcc2 $(TEST_OBJS)
-	cc -o test.exe $(TEST_OBJS)
+	cc -o test.exe $(TEST_OBJS) -L./lib/bin -lmcc2
 	./test.exe
 
 dwarf : mcc2
@@ -44,7 +55,7 @@ tmp: mcc2
 	cc -o tmp -no-pie tmp.s -lc
 	./tmp
 
-./selfhost/mcc2t:  mcc2
+./selfhost/mcc2t: mcc2 libmcc2.a
 	./mcc2 -c ./src/builtin_def.c -d PREDEFINED_MACRO -o ./selfhost/builtin_def.s -i ./src -x plvar -g
 	cc -c -o ./selfhost/builtin_def.o -no-pie ./selfhost/builtin_def.s -lc -MD -g
 
@@ -91,8 +102,9 @@ selft: self $(TEST_SELF_OBJS)
 	./test.exe
 
 clean:
-	rm -f mcc2 *~ tmp*
-	rm -f src/*.o src/*.d 
+	rm -f mcc2 *~ tmp* libmcc2.a
+	rm -f src/*.o src/*.d
+	rm -f lib/*.o lib/*.d
 	rm -f test/c/*.o test.exe test/c/*.s
 	rm -f ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2t
 	rm -f ./selfhost/test/c/*.o ./selfhost/test/c/*.s

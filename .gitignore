@@ -1,9 +1,12 @@
 mcc2
+libmcc2.a
 tmp
 tmp.s
 dwarf_test
 src/*.o
 src/*.d
+lib/*.o
+lib/*.d
 dev/cc.dwarf
 dev/cc.o
 dev/cc.s

@@ -114,19 +114,25 @@ Token* preprocess(Token* token){
                         Token* newline = next_newline(target);
                         if(!check_pragma_once_include(path))
                         {
-                            Token* inlcude = tokenize(path);
-                            cur->next = inlcude;
+                            Token* include = tokenize(path);
 
-                            // get tail of tokenlist from include
-                            Token* tail = inlcude;
-                            while(next_token(tail)){
-                                if(next_token(tail)->kind != TK_EOF){
-                                    tail = next_token(tail);
-                                } else {
-                                    break;
+                            // #ifdefの結果などから、読み込んだヘッダが空（==TK_EOFのみ）となることがあるが、
+                            // そいういうときは、includeのトークンリストは繋げない
+                            if(include->kind != TK_EOF){
+                                // get tail of tokenlist from include
+                                Token* tail = include;
+                                while(next_token(tail)){
+                                    if(next_token(tail)->kind != TK_EOF){
+                                        tail = next_token(tail);
+                                    } else {
+                                        break;
+                                    }
                                 }
+                                tail->next = next_token(newline);
+                                cur->next = include;
+                            } else {
+                                cur->next = next_token(newline);
                             }
-                            tail->next = next_token(newline);
                         } else {
                             cur->next = next_token(newline);
                         }
