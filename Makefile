@@ -21,6 +21,7 @@ mcc2: $(OBJS) ./lib/bin/libmcc2.a
 
 ./lib/bin/libmcc2.a: $(LIBSOBJS)
 	echo ${LIBSOBJS}
+	mkdir -p ./lib/bin
 	ar rcs ./lib/bin/libmcc2.a $(LIBSOBJS)
 
 src/lib/%.o: src/lib/%.c
