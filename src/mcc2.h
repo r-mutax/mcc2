@@ -231,6 +231,7 @@ struct Ident {
     int is_string_literal;  // 文字列リテラルか？のフラグ
     Scope* scope;           // 関数スコープ
     unsigned long val;      // 数値(enum用)
+    unsigned long level;    // スコープのレベル
 
     Relocation* reloc;      // リロケーション情報
 
@@ -244,7 +245,7 @@ struct Ident {
     int is_builtin;         // 組み込み定義か？
     Ident* va_area;         // 可変長引数のエリア
     int func_id;            // 識別子のID
-    PList* static_vars;     // static変数のリスト
+    PList* vars;            // 変数のリスト
     IR* ir_cmd;             // 中間命令の先頭
 
     int abbrev_idx;         // .debug_abbrevのインデックス

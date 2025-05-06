@@ -174,7 +174,7 @@ static void function(QualType* func_type, StorageClassKind sck){
     bool has_forward_def = false;       // 前方宣言あるか？（パラメータ個数チェック用）
     if(!func){
         func = declare_ident(tok, ID_FUNC, func_type);
-        func->static_vars = new_PList();
+        func->vars = new_PList();
     } else {
         // ある場合は戻り値型がconflictしてないかチェック
         if(!equal_type(func_type, func->qtype)){

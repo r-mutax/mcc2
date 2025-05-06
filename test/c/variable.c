@@ -28,6 +28,12 @@ extern int test_extern_int;
 int test_static_var_in_func(){
     static int a = 2;
     a++;
+    {
+        int b = 0;
+        {
+            int c = 0;
+        }
+    }
     printf("test_static_var_in_func: %d\n", a);
     return a;
 }

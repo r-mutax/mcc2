@@ -63,11 +63,6 @@ void register_ident(Ident* ident){
     if(ident->is_static && (cur_scope->level > 0)){
         ident->kind = ID_GVAR;
         ident->static_id = static_id++;
-
-        append_PList(cur_func->static_vars, ident);
-
-        // 関数内定義のstatic変数を追加する
-        printf("static var %s\n", ident->name);
     }
 
     if(ident->kind == ID_GVAR){
@@ -83,6 +78,12 @@ void register_ident(Ident* ident){
         stack_size += size + padding;
 
         ident->offset = stack_size;
+    }
+
+    ident->level = cur_scope->level;
+
+    if(cur_func){
+        append_PList(cur_func->vars, ident);
     }
 
     ident->next = cur_scope->ident;
@@ -209,7 +210,10 @@ void scope_in(){
 
 void scope_out(){
     if(cur_scope->level == 0) return;
-    if(cur_scope->level == 1) func_scope = NULL;
+    if(cur_scope->level == 1) {
+        func_scope = NULL;
+        cur_func = NULL;
+    }
 
     Scope* buf = cur_scope;
     cur_scope = cur_scope->parent;

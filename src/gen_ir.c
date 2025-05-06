@@ -113,12 +113,14 @@ static void gen_function(Ident* func){
     new_IR(IR_FN_END_LABEL, NULL, func_name_str, NULL);
 
     // static変数の定義
-    int size = size_PList(func->static_vars);
-    reset_PList(func->static_vars);
+    int size = size_PList(func->vars);
+    reset_PList(func->vars);
     for(int i = 0; i < size; ++i){
-        Ident* ident = get_current_PList(func->static_vars);
-        new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(get_qtype_size(ident->qtype)));
-        move_next_PList(func->static_vars);
+        Ident* ident = get_current_PList(func->vars);
+        if(ident->kind == ID_GVAR && ident->is_static){
+            new_IR(IR_GVAR_LABEL, NULL, new_RegVar(ident), new_RegImm(get_qtype_size(ident->qtype)));
+        }
+        move_next_PList(func->vars);
     }
 
 

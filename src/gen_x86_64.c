@@ -437,12 +437,14 @@ void gen_x86(){
             if(debug_plvar){
                 print("# %s\n", ident->name);
                 print("#\t stack size: %d\n", ident->stack_size);
-                for(Ident* it = ident->scope->ident; it; it = it->next){
-                    if(it->kind == ID_LVAR || (it->kind == ID_GVAR && it->is_static)){
-                        // TODO : スコープは木構造になっていて、子スコープの識別子は今は出せない。
-                        // そのためには、子供のスコープを覚えるようにしなければならない
-                        dprint_Ident(it, 0);
-                    }
+
+                PList* plist = ident->vars;
+                int size = size_PList(plist);
+                reset_PList(plist);
+                for(int i = 0; i < size; i++){
+                    Ident* ident = get_current_PList(plist);
+                    dprint_Ident(ident, ident->level);
+                    move_next_PList(plist);
                 }
             }
             convert_ir2x86asm(ir);
