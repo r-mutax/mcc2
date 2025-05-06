@@ -18,13 +18,13 @@ void enable_debug_mode(const char *mode) {
 
 void analy_opt(int argc, char** argv){
     int opt;
-    while((opt = getopt(argc, argv, "c:o:i:d:x:Eg")) != -1){
+    while((opt = getopt(argc, argv, "c:o:I:d:x:Eg")) != -1){
         switch(opt){
             case 'c':
                 filename = optarg;
                 cinfo.working_dir = get_dirname(optarg);
                 break;
-            case 'i':
+            case 'I':
                 if(optarg != NULL) {
                     add_include_path(optarg);
                 } else {
