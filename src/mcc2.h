@@ -19,6 +19,9 @@
 #include <bits/getopt_core.h>
 #endif
 
+// include mcc2 libraries
+#include "pointer_list.h"
+
 typedef struct CompilationInfo CompilationInfo;
 typedef struct Token Token;
 typedef struct Node Node;
@@ -237,10 +240,11 @@ struct Ident {
     int is_var_params;      // 可変長引数受け取るか？
     int is_extern;          // externか？
     int is_static;          // staticか？
+    int static_id;          // static変数のID
     int is_builtin;         // 組み込み定義か？
     Ident* va_area;         // 可変長引数のエリア
     int func_id;            // 識別子のID
-
+    PList* static_vars;     // static変数のリスト
     IR* ir_cmd;             // 中間命令の先頭
 
     int abbrev_idx;         // .debug_abbrevのインデックス
@@ -642,6 +646,7 @@ int get_stack_size();
 int set_stack_size(int size);
 Scope* get_current_scope();
 Scope* get_global_scope();
+void set_current_func(Ident* func);
 
 // parse.c
 void parse(Token* tok);

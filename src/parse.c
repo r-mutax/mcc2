@@ -174,6 +174,7 @@ static void function(QualType* func_type, StorageClassKind sck){
     bool has_forward_def = false;       // 前方宣言あるか？（パラメータ個数チェック用）
     if(!func){
         func = declare_ident(tok, ID_FUNC, func_type);
+        func->static_vars = new_PList();
     } else {
         // ある場合は戻り値型がconflictしてないかチェック
         if(!equal_type(func_type, func->qtype)){
@@ -230,6 +231,9 @@ static void function(QualType* func_type, StorageClassKind sck){
             error_tok(tok, "Conflict function definition.");
         }
     }
+
+    // ここからは関数bodyをコンパイルする
+    set_current_func(func);
 
     // 実レジスタ退避用の領域を確保(とりあえず30個確保する)
     Ident* spill_area = make_ident(&spill_area_token, ID_LVAR, make_qual_type(ty_char));
@@ -496,8 +500,9 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
             Initializer* init = initialize(ident->qtype, var_node);
             node = init->init_node;
 
-            if(is_global){
+            if(ident->kind == ID_GVAR){
                 ident->reloc = make_relocation(init, ident->qtype);
+                node = NULL;
             }
         }
     }

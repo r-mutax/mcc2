@@ -3,11 +3,12 @@
 static Scope global_scope = {};
 static Scope* cur_scope = &global_scope;
 static Scope* func_scope = NULL;
+static Ident* cur_func = NULL;
 static int stack_size = 0;
 
 static int string_literal_num = 0;
 
-
+static int static_id = 0;
 
 Ident* declare_ident(Token* tok, IdentKind kind, QualType* qty){
     Ident* ident = calloc(1, sizeof(Ident));
@@ -58,13 +59,31 @@ void register_ident(Ident* ident){
         }
     }
 
-    // パディングを計算
-    int padding = get_qtype_padding(stack_size, qty);
+    // static変数ならグローバル変数として登録する
+    if(ident->is_static && (cur_scope->level > 0)){
+        ident->kind = ID_GVAR;
+        ident->static_id = static_id++;
 
-    // スタックサイズを更新
-    stack_size += size + padding;
+        append_PList(cur_func->static_vars, ident);
 
-    ident->offset = stack_size;
+        // 関数内定義のstatic変数を追加する
+        printf("static var %s\n", ident->name);
+    }
+
+    if(ident->kind == ID_GVAR){
+        // グローバル変数は特に何もしない
+        // ID_GVARはグローバル扱いだが、関数スコープ内で定義されたstatic変数もあり得るので、
+        // 登録先のスコープはスコープごとにする
+        ident->offset = 0;
+    } else {
+        // パディングを計算
+        int padding = get_qtype_padding(stack_size, qty);
+
+        // スタックサイズを更新
+        stack_size += size + padding;
+
+        ident->offset = stack_size;
+    }
 
     ident->next = cur_scope->ident;
     cur_scope->ident = ident;
@@ -206,4 +225,16 @@ Scope* get_current_scope(){
 
 Scope* get_global_scope(){
     return &global_scope;
+}
+
+void set_current_func(Ident* func){
+    if(func == NULL) {
+        error("Internal error: set_current_func() : func is NULL");
+    }
+
+    if(func->kind != ID_FUNC){
+        error("Internal error: set_current_func() : func is not ID_FUNC");
+    }
+
+    cur_func = func;
 }

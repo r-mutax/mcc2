@@ -1,4 +1,4 @@
-CFLAGS=-std=c11 -g -static
+CFLAGS=-std=c11 -g -static -I./lib
 SRCS=$(wildcard ./src/*.c)
 OBJS=$(SRCS:.c=.o)
 SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
