@@ -1158,7 +1158,7 @@ static int emit2(Node* expr, char** label){
             if(var->kind == ND_VAR && var->ident->kind == ID_GVAR){
                 if(label){
                     if(var->ident->is_static){
-                        *label = format_string(".L%s", var->ident->name);
+                        *label = format_string(".L%s.%d", var->ident->name, var->ident->static_id);
                     } else {
                         *label = var->ident->name;
                     }

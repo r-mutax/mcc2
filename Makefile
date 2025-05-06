@@ -95,11 +95,11 @@ tmp: mcc2
 self: ./selfhost/mcc2t
 
 ./selfhost/test/c/%.o: test/c/%.c
-	./selfhost/mcc2t -c $< -o $@.s -I ./test/testinc -I ./src -d PREDEFINED_MACRO -x plvar -g
+	./selfhost/mcc2t -c $< -o $@.s -I ./test/testinc -I ./src -I ./lib -d PREDEFINED_MACRO -x plvar -g
 	cc -c -o $@ $@.s -static
 
 selft: self $(TEST_SELF_OBJS)
-	cc -o test.exe $(TEST_SELF_OBJS)
+	cc -o test.exe $(TEST_SELF_OBJS) -L./lib/bin -lmcc2
 	./test.exe
 
 clean:
