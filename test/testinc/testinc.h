@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../src/mcc2_lib.h"
+#include "mcc2_lib.h"
 
 #ifdef TESTINC_H
 #define DOUBLE_INCLUDE 1
@@ -35,3 +35,5 @@ int test_preprocess();
 int test_cast();
 int test_function();
 int test_varg();
+int test_lib();
+

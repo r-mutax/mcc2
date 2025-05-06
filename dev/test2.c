@@ -5,15 +5,17 @@ typedef __builtin_va_list va_list;
 #define _VA_LIST
 #endif
 
-struct INIT_STRUCT{
-    char a;
-    short b;
-    int c;
-    long d;
-};
+int printf(const char* format, ...);
+
+int func(){
+    static int i = 0;
+    static int j = 0;
+    printf("i = %d\n", i++);
+}
 
 int main(int aa){
-    struct INIT_STRUCT is = { };
-
+    func();
+    func();
+    func();
     return 0;
 }

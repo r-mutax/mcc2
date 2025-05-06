@@ -29,6 +29,7 @@ int main(){
     test_cast();
     test_function();
     test_varg();
+    test_lib();
 
     ASSERT(test_static, 20);
 

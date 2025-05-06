@@ -25,6 +25,19 @@ static struct INIT_STRUCT g_is5 = { 1, 2 };
 
 extern int test_extern_int;
 
+int test_static_var_in_func(){
+    static int a = 2;
+    a++;
+    {
+        int b = 0;
+        {
+            int c = 0;
+        }
+    }
+    printf("test_static_var_in_func: %d\n", a);
+    return a;
+}
+
 int test_variable(){
     printf("test of local variable..\n");
     int a; a = 15;
@@ -65,6 +78,11 @@ int test_variable(){
     ASSERT(test_extern_int, 10);
 
     test_static = 30;
+
+    printf("test of static variable in function..\n");
+    ASSERT(test_static_var_in_func(), 3);
+    ASSERT(test_static_var_in_func(), 4);
+    ASSERT(test_static_var_in_func(), 5);
 
     printf("test of assignment..\n");
 

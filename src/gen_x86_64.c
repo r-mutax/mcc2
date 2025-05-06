@@ -261,11 +261,11 @@ static void activateReg(Reg* reg, int is_lhs){
                 } else if(ident->kind == ID_GVAR){
                     if(ident->is_static){
                         if(size == 1){
-                            print("\tmovsx %s, BYTE PTR[.L%s]\n", reg->rreg, ident->name);
+                            print("\tmovsx %s, BYTE PTR[.L%s.%d]\n", reg->rreg, ident->name, ident->static_id);
                         } else if(size == 2){
-                            print("\tmovsx %s, WORD PTR[.L%s]\n", reg->rreg, ident->name);
+                            print("\tmovsx %s, WORD PTR[.L%s.%d]\n", reg->rreg, ident->name, ident->static_id);
                         } else if(size == 8){
-                            print("\tmov %s, QWORD PTR[.L%s]\n", reg->rreg, ident->name);
+                            print("\tmov %s, QWORD PTR[.L%s.%d]\n", reg->rreg, ident->name, ident->static_id);
                         }
                     } else {
                         if(size == 1){
@@ -437,12 +437,14 @@ void gen_x86(){
             if(debug_plvar){
                 print("# %s\n", ident->name);
                 print("#\t stack size: %d\n", ident->stack_size);
-                for(Ident* it = ident->scope->ident; it; it = it->next){
-                    if(it->kind == ID_LVAR){
-                        // TODO : スコープは木構造になっていて、子スコープの識別子は今は出せない。
-                        // そのためには、子供のスコープを覚えるようにしなければならない
-                        dprint_Ident(it, 0);
-                    }
+
+                PList* plist = ident->vars;
+                int size = size_PList(plist);
+                reset_PList(plist);
+                for(int i = 0; i < size; i++){
+                    Ident* ident = get_current_PList(plist);
+                    dprint_Ident(ident, ident->level);
+                    move_next_PList(plist);
                 }
             }
             convert_ir2x86asm(ir);
@@ -462,7 +464,9 @@ static void convert_ir2x86asm(IR* ir){
                 cfa_offset = 8;
                 Ident* func = ir->s1->ident;
                 set_section(TEXT);
-                print("\t.globl %s\n", func->name);
+                if(!func->is_static){
+                    print("\t.globl %s\n", func->name);
+                }
                 print("\t.type	%s, @function\n", func->name);
                 print("%s:\n", func->name);
 
@@ -614,7 +618,7 @@ static void convert_ir2x86asm(IR* ir){
 
                     // 構造体名の指定
                     if(ident->is_static){
-                        print(".L%s:\n", ir->s1->ident->name);
+                        print(".L%s.%d:\n", ir->s1->ident->name, ir->s1->ident->static_id);
                     } else {
                         print("%s:\n", ir->s1->ident->name);
                     }
@@ -799,7 +803,7 @@ static void convert_ir2x86asm(IR* ir){
                     print("\tlea %s, [rbp - %d]\n", ir->t->rreg, ir->s1->ident->offset);
                 } else if(ir->s1->ident->kind == ID_GVAR){
                     if(ir->s1->ident->is_static){
-                        print("\tlea %s, [ rip + .L%s ]\n", ir->t->rreg, ir->s1->ident->name);
+                        print("\tlea %s, [ rip + .L%s.%d ]\n", ir->t->rreg, ir->s1->ident->name, ir->s1->ident->static_id);
                     } else {
                         print("\tlea %s, [ rip + %s ]\n", ir->t->rreg, ir->s1->ident->name);
                     }
@@ -959,11 +963,12 @@ static void convert_ir2x86asm(IR* ir){
 }
 
 static void dprint_Ident(Ident* ident, int level){
-    if(ident->kind != ID_LVAR) return;
 
     print("#\t %s( ofs: %d, size: %d", ident->name, ident->offset, get_qtype_size(ident->qtype));
     if(get_qtype_kind(ident->qtype) == TY_ARRAY){
         print(", len: %d", get_qtype_array_len(ident->qtype));
+    } else if(ident->is_static){
+        print(", static");
     }
     print(") : level%d\n", level);
 }

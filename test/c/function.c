@@ -20,6 +20,10 @@ int farg2(int a, int b){
     return a + b;
 }
 
+static int static_func(){
+    return 43;
+}
+
 int test_function(){
 
     printf("test of function call..\n");
