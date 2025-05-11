@@ -169,7 +169,7 @@ Token* preprocess(Token* token){
                                 if(once_header_paths_cnt >= 1024){
                                     error("too many once header paths");
                                 }
-                                once_header_paths[once_header_paths_cnt++] = target->file->name;
+                                once_header_paths[once_header_paths_cnt++] = target->file->path;
                             }
                         }
                     }
