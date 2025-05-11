@@ -392,7 +392,8 @@ static Reg* gen_expr(Node* node){
             Reg* pointer = gen_expr(node->lhs);
             pointer->size = get_qtype_size(ptr_to);
             if((get_qtype_kind(ptr_to) != TY_STRUCT)
-                && (get_qtype_kind(ptr_to) != TY_UNION)){
+                && (get_qtype_kind(ptr_to) != TY_UNION)
+                && (get_qtype_kind(ptr_to) != TY_ARRAY)){
                 new_IR(IR_LOAD, NULL, ret, pointer);
             } else {
                 ret = pointer;

@@ -60,6 +60,8 @@ static Node* compound_stmt();
 static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
+static QualType* type_suffix(QualType* ty);
+static QualType* array_type_suffix(QualType* ty);
 static Initializer* initialize(QualType* ty, Node* var_node);
 static Relocation* make_relocation(Initializer* init, QualType* qty);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
@@ -661,17 +663,38 @@ static Initializer* initialize(QualType* ty, Node* var_node){
     }
     return init;
 }
+
+static QualType* array_type_suffix(QualType* qty){
+
+    // 長さ省略の場合
+    if(consume_token(TK_R_SQUARE_BRACKET)){
+        qty = type_suffix(qty);
+        return array_of(qty, -1);
+    }
+
+    // 長さがある場合
+    int len = expect_num();
+    expect_token(TK_R_SQUARE_BRACKET);
+    qty = type_suffix(qty);
+
+    return array_of(qty, len);
+}
+
+static QualType* type_suffix(QualType* qty){
+    if(consume_token(TK_L_SQUARE_BRACKET)){
+        return array_type_suffix(qty);
+    }
+
+    return qty;
+}
+
 static Ident* declare(QualType* qty, StorageClassKind sck){
     while(consume_token(TK_MUL)){
         qty = pointer_to(qty);
     }
 
     Token* ident_tok = expect_ident();
-    if(consume_token(TK_L_SQUARE_BRACKET)){
-        int len = expect_num();
-        qty = array_of(qty, len);
-        expect_token(TK_R_SQUARE_BRACKET);
-    }
+    qty = type_suffix(qty);
 
     Ident* ident = make_ident(ident_tok, ID_LVAR, qty);
     if(sck == SCK_EXTERN){
