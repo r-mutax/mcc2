@@ -44,10 +44,12 @@
     primary = '(' expr ')' | num | ident | ident '()'
 */
 
-typedef struct Intializer {
+typedef struct Initializer Initializer;
+struct Initializer {
     QualType* qtype;
-    Node* init_node;    // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
-} Initializer;
+    Node* init_node;        // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
+    Initializer* child;     // 子の初期化子
+};
 
 static Node* switch_node = NULL;
 static QualType* cur_func_type = NULL;
@@ -653,6 +655,23 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         }
             break;
         case TY_ARRAY:
+        {
+            expect_token(TK_L_BRACKET);
+
+            init->child = initialize(ty->type->ptr_to, var_node);
+
+            // ND_BLOCKを作っておく
+            Node* block = new_node(ND_BLOCK, NULL, NULL);
+
+            // 配列の初期化子を作る
+            Node* lhs = new_node(ND_DREF, new_node_add(var_node, new_node_num(0)), NULL);
+            Node* node = new_node(ND_ASSIGN, lhs, init->child->init_node->rhs);
+            block->body = node;
+
+            init->init_node = block;
+            expect_token(TK_R_BRACKET);
+        }
+            break;
         case TY_UNION:
             error("not implemented initializer array, struct, union.\n");
             break;

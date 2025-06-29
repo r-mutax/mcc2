@@ -135,8 +135,8 @@ int test_variable(){
     ASSERT(arr_arr_arr[1][2][1], 22);
     ASSERT(arr_arr_arr[1][2][2], 23);
     ASSERT(arr_arr_arr[1][2][3], 24);
-    
-    
+
+
     typedef int INT_T;
     int auto a1 = 1;
     signed register int a2 = 2;
@@ -225,6 +225,10 @@ int test_variable(){
     ASSERT(g_is5.b, 2);
     ASSERT(g_is5.c, 0);
     ASSERT(g_is5.d, 0);
+
+    printf("test of array initialize...\n");
+    int arr_init[0] = { 5 };
+    ASSERT(arr_init[0], 5);
 
     return 0;
 }
