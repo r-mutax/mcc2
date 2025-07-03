@@ -49,6 +49,7 @@ struct Initializer {
     QualType* qtype;
     Node* init_node;        // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
     Initializer* child;     // 子の初期化子
+    Initializer* next;
 };
 
 static Node* switch_node = NULL;
@@ -658,18 +659,51 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         {
             expect_token(TK_L_BRACKET);
 
-            init->child = initialize(ty->type->ptr_to, var_node);
+            long len = ty->type->array_len;
 
-            // ND_BLOCKを作っておく
+            // --------------------------
+            //  配列の初期化子を読み取る
+            // --------------------------
+            Initializer head = { 0 };
+            Initializer* cur = &head;
+            for(int i = 0; i < len; i++){
+                cur->next = initialize(ty->type->ptr_to, var_node);
+                cur = cur->next;
+
+                if(consume_token(TK_R_BRACKET)){
+                    // 配列の初期化が終わった
+                    break;
+                }
+
+                expect_token(TK_COMMA);
+            }
+            init->child = head.next;
+
+            // --------------------------
+            //  配列の初期化子から、Relocationを作る
+            // --------------------------
             Node* block = new_node(ND_BLOCK, NULL, NULL);
 
-            // 配列の初期化子を作る
-            Node* lhs = new_node(ND_DREF, new_node_add(var_node, new_node_num(0)), NULL);
-            Node* node = new_node(ND_ASSIGN, lhs, init->child->init_node->rhs);
-            block->body = node;
+            int idx = 0;
+            Node head_node = { 0 };
+            Node* cur_node = &head_node;
+            cur = head.next;
+            for(Initializer* cur_init = init->child; cur_init; cur_init = cur_init->next, idx++){
+                // lhs
+                Node* arr_node = new_node_add(var_node, new_node_num(idx));
+                Node* lhs = new_node(ND_DREF, arr_node, NULL);
+
+                Node* node = new_node(ND_ASSIGN, lhs, cur->init_node->rhs);
+
+                cur_node->next = node;
+                cur_node = cur_node->next;
+
+                cur = cur->next;
+            }
+
+            block->body = head_node.next;
 
             init->init_node = block;
-            expect_token(TK_R_BRACKET);
         }
             break;
         case TY_UNION:

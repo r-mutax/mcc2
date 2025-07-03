@@ -227,8 +227,9 @@ int test_variable(){
     ASSERT(g_is5.d, 0);
 
     printf("test of array initialize...\n");
-    int arr_init[0] = { 5 };
+    int arr_init[2] = { 5, 9 };
     ASSERT(arr_init[0], 5);
+    ASSERT(arr_init[1], 9);
 
     return 0;
 }
