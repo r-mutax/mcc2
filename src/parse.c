@@ -717,6 +717,11 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                 }
 
                 expect_token(TK_COMMA);
+                if(consume_token(TK_R_BRACKET)){
+                    // 配列の初期化が終わった
+                    // ※最後にカンマが来る場合もあるので、ここでチェックする
+                    break;
+                }
             }
             init->child = head.next;
 
