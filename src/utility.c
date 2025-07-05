@@ -1,7 +1,7 @@
 #include "mcc2.h"
 
 char* strnewcpyn(char* src, int n){
-    char* buf = calloc(n, sizeof(char));
+    char* buf = calloc(n + 1, sizeof(char));
     strncpy(buf, src, n);
 }
 
