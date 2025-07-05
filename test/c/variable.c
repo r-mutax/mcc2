@@ -252,6 +252,21 @@ int test_variable(){
     ASSERT(g_init_arr_not_specified_size[1], 10);
     ASSERT(g_init_arr_not_specified_size[2], 45);
 
+    int arr_zero[5] = {};
+    ASSERT(arr_zero[0], 0);
+    ASSERT(arr_zero[1], 0);
+    ASSERT(arr_zero[2], 0);
+    ASSERT(arr_zero[3], 0);
+    ASSERT(arr_zero[4], 0);
+
+    int arr_specified_zero[5] = { 0 };
+    ASSERT(arr_specified_zero[0], 0);
+    ASSERT(arr_specified_zero[1], 0);
+    ASSERT(arr_specified_zero[2], 0);
+    ASSERT(arr_specified_zero[3], 0);
+    ASSERT(arr_specified_zero[4], 0);
+
+
     printf("test of string table initialize...\n");
     ASSERT(strcmp(init_str_table[0], "hello") == 0, true);
     ASSERT(strcmp(init_str_table[1], "world") == 0, true);

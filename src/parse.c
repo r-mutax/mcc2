@@ -698,8 +698,12 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                 }
                 len++; // 最後の要素もカウントする
             }
-            if(len < 0){
-                error("array length is not specified.\n");
+
+            if(consume_token(TK_R_BRACKET)){
+                // 配列の初期化が空の場合は、全て0で初期化する
+                init->qtype = ty;
+                init->init_node = new_node(ND_MEMZERO, var_node, NULL);
+                return init;
             }
 
             // --------------------------
@@ -707,8 +711,10 @@ static Initializer* initialize(QualType* ty, Node* var_node){
             // --------------------------
             Initializer head = { 0 };
             Initializer* cur = &head;
+            int cnt_initialized = 0;
             for(int i = 0; i < len; i++){
                 cur->next = initialize(ty->type->ptr_to, var_node);
+                cnt_initialized++;
                 cur = cur->next;
 
                 if(consume_token(TK_R_BRACKET)){
@@ -740,6 +746,17 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                 cur_node = cur_node->next;
 
                 cur = cur->next;
+            }
+            if(cnt_initialized < len){
+                // 初期化子の数が配列の長さよりも少ない場合は、残りの要素は0で初期化する
+                for(int i = cnt_initialized; i < len; i++){
+                    Node* arr_node = new_node_add(var_node, new_node_num(i));
+                    Node* lhs = new_node(ND_DREF, arr_node, NULL);
+                    Node* node = new_node(ND_ASSIGN, lhs, new_node_num(0));
+
+                    cur_node->next = node;
+                    cur_node = cur_node->next;
+                }
             }
 
             block->body = head_node.next;
