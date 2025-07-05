@@ -687,6 +687,20 @@ static Initializer* initialize(QualType* ty, Node* var_node){
             expect_token(TK_L_BRACKET);
 
             long len = ty->type->array_len;
+            if(len < 0){
+                // 配列の長さが不明な場合は、初期化子の数を数える
+                len = 0;
+                Token* bk = get_token();
+                for(Token* tok = bk; tok->kind != TK_R_BRACKET; tok = next_token(tok)){
+                    if(tok->kind == TK_COMMA){
+                        len++;
+                    }
+                }
+                len++; // 最後の要素もカウントする
+            }
+            if(len < 0){
+                error("array length is not specified.\n");
+            }
 
             // --------------------------
             //  配列の初期化子を読み取る

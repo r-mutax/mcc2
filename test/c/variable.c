@@ -23,9 +23,10 @@ struct INIT_STRUCT g_is4 = { .b = 2, 4, .d = 4 };
 
 static struct INIT_STRUCT g_is5 = { 1, 2 };
 
-static int init_arr[2] = { 5, 9 };
-static int init_arr_init_lack[2] = { 5 };
-static int init_arr_guard = 10;
+static int g_init_arr[2] = { 5, 9 };
+static int g_init_arr_init_lack[2] = { 5 };
+static int g_init_arr_not_specified_size[] = { 7, 10, 45};
+static int g_init_arr_guard = 10;
 
 static char* init_str_table[2] = {
     "hello",
@@ -238,10 +239,18 @@ int test_variable(){
     ASSERT(arr_init[0], 5);
     ASSERT(arr_init[1], 9);
 
-    ASSERT(init_arr[0], 5);
-    ASSERT(init_arr[1], 9);
-    ASSERT(init_arr_init_lack[0], 5);
-    ASSERT(init_arr_init_lack[1], 0);
+    ASSERT(g_init_arr[0], 5);
+    ASSERT(g_init_arr[1], 9);
+    ASSERT(g_init_arr_init_lack[0], 5);
+    ASSERT(g_init_arr_init_lack[1], 0);
+
+    int arr_init_not_specified_size[] = { 5, 9 };
+    ASSERT(arr_init_not_specified_size[0], 5);
+    ASSERT(arr_init_not_specified_size[1], 9);
+
+    ASSERT(g_init_arr_not_specified_size[0], 7);
+    ASSERT(g_init_arr_not_specified_size[1], 10);
+    ASSERT(g_init_arr_not_specified_size[2], 45);
 
     printf("test of string table initialize...\n");
     ASSERT(strcmp(init_str_table[0], "hello") == 0, true);
