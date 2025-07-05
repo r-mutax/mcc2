@@ -23,6 +23,15 @@ struct INIT_STRUCT g_is4 = { .b = 2, 4, .d = 4 };
 
 static struct INIT_STRUCT g_is5 = { 1, 2 };
 
+static int init_arr[2] = { 5, 9 };
+static int init_arr_init_lack[2] = { 5 };
+static int init_arr_guard = 10;
+
+static char* init_str_table[2] = {
+    "hello",
+    "world"
+};
+
 extern int test_extern_int;
 
 int test_static_var_in_func(){
@@ -68,7 +77,6 @@ int test_variable(){
 
     arr[3]= 4;
     ASSERT(arr[3], 4);
-    printf("222");
 
     int arr_arr[3][2];
     arr_arr[0][0] = 1;
@@ -77,7 +85,6 @@ int test_variable(){
     arr_arr[1][1] = 4;
     arr_arr[2][0] = 5;
     arr_arr[2][1] = 6;
-    printf("222");
     ASSERT(arr_arr[0][0], 1);
     ASSERT(arr_arr[0][1], 2);
     ASSERT(arr_arr[1][0], 3);
@@ -230,6 +237,15 @@ int test_variable(){
     int arr_init[2] = { 5, 9 };
     ASSERT(arr_init[0], 5);
     ASSERT(arr_init[1], 9);
+
+    ASSERT(init_arr[0], 5);
+    ASSERT(init_arr[1], 9);
+    ASSERT(init_arr_init_lack[0], 5);
+    ASSERT(init_arr_init_lack[1], 0);
+
+    printf("test of string table initialize...\n");
+    ASSERT(strcmp(init_str_table[0], "hello") == 0, true);
+    ASSERT(strcmp(init_str_table[1], "world") == 0, true);
 
     return 0;
 }

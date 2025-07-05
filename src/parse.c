@@ -581,7 +581,25 @@ static Relocation* make_relocation(Initializer* init, QualType* qty){
         }
         case TY_ARRAY:
         {
-            break;
+            // Initializerの子のRelocationをすべて取得する
+            Relocation head = {};
+            Relocation* cur = &head;
+            int idx = 0;
+            for(Initializer* child = init->child; child; child = child->next){
+                cur->next = make_relocation(child, child->qtype);
+                cur = cur->next;
+                idx++;
+            }
+
+            if(idx < qty->type->array_len){
+                // 配列の初期化が足りないので、残りのサイズ分のパディングを入れる
+                Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                reloc_remain->data = 0;
+                reloc_remain->size = get_qtype_size(qty) * qty->type->array_len - idx * get_qtype_size(qty->type->ptr_to);
+                reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                cur->next = reloc_remain;
+            }
+            return head.next;
         }
         default:
         {
