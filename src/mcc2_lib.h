@@ -37,6 +37,7 @@ char *strrchr(const char *string, int c);
 size_t strlen(const char *string);
 char *strncpy(char *string1, const char *string2, size_t count);
 int strcmp(const char *string1, const char *string2);
+char *strstr(const char *string1, const char *string2);
 char *strcpy(char *string1, const char *string2);
 void *memcpy(void *dest, const void *src, size_t count);
 void *malloc(size_t size);
