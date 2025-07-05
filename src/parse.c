@@ -687,16 +687,10 @@ static Initializer* initialize(QualType* ty, Node* var_node){
             expect_token(TK_L_BRACKET);
 
             long len = ty->type->array_len;
+            bool is_len_known = true;
             if(len < 0){
-                // 配列の長さが不明な場合は、初期化子の数を数える
-                len = 0;
-                Token* bk = get_token();
-                for(Token* tok = bk; tok->kind != TK_R_BRACKET; tok = next_token(tok)){
-                    if(tok->kind == TK_COMMA){
-                        len++;
-                    }
-                }
-                len++; // 最後の要素もカウントする
+                len = __INT_MAX__; // 長さが不明な場合は無限大とする
+                is_len_known = false;
             }
 
             if(consume_token(TK_R_BRACKET)){
@@ -747,8 +741,9 @@ static Initializer* initialize(QualType* ty, Node* var_node){
 
                 cur = cur->next;
             }
-            if(cnt_initialized < len){
+            if(is_len_known && cnt_initialized < len){
                 // 初期化子の数が配列の長さよりも少ない場合は、残りの要素は0で初期化する
+                // ※長さが省略されているときは何もしない
                 for(int i = cnt_initialized; i < len; i++){
                     Node* arr_node = new_node_add(var_node, new_node_num(i));
                     Node* lhs = new_node(ND_DREF, arr_node, NULL);
