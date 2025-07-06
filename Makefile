@@ -49,7 +49,7 @@ dwarf : mcc2
 	cc -o dwarf_test ./dev/mcc2.o -lc
 
 test2: mcc2
-	./mcc2 -c ./dev/test2.c -o ./tmp.s -I ./test/testinc -I ./src -x plvar -g
+	./mcc2 -c ./dev/test2.c -o ./tmp.s -I ./test/testinc -I ./src -I ./lib -x plvar -g
 	cc -o ./dev/tmp -no-pie tmp.s -lc
 	./dev/tmp
 
@@ -82,11 +82,12 @@ tmp: mcc2
 	./mcc2 -c ./src/ident.c -d PREDEFINED_MACRO -o ./selfhost/ident.s $(CFLAGS_SELF) -x register
 	cc -c -o ./selfhost/ident.o -no-pie ./selfhost/ident.s -lc -MD -g
 
+	./mcc2 -c ./src/tokenizer.c -d PREDEFINED_MACRO -o ./selfhost/tokenizer.s $(CFLAGS_SELF) -x register
+	cc -c -o ./selfhost/tokenizer.o -no-pie ./selfhost/tokenizer.s -lc -MD -g
+
 	cp ./src/gen_x86_64.o ./selfhost/gen_x86_64.o
 	cp ./src/main.o ./selfhost/main.o
 	cp ./src/parse.o ./selfhost/parse.o
-	cp ./src/tokenizer.o ./selfhost/tokenizer.o
-	# cp ./src/ident.o ./selfhost/ident.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/pre_macro_map.o ./selfhost/pre_macro_map.o
 	cp ./src/dwarf.o ./selfhost/dwarf.o

@@ -1,21 +1,8 @@
-// #define MCC
-// #include "../src/mcc2.h"
-#ifndef _VA_LIST
-typedef __builtin_va_list va_list;
-#define _VA_LIST
-#endif
-
-int printf(const char* format, ...);
-
-int func(){
-    static int i = 0;
-    static int j = 0;
-    printf("i = %d\n", i++);
-}
+#include "keyword_map.h"
 
 int main(int aa){
-    func();
-    func();
-    func();
+
+    int TK_R_ANGLE_BRACKET_EQUAL;
+    TK_R_ANGLE_BRACKET_EQUAL = 10;
     return 0;
 }

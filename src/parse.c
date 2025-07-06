@@ -587,7 +587,10 @@ static Relocation* make_relocation(Initializer* init, QualType* qty){
             int idx = 0;
             for(Initializer* child = init->child; child; child = child->next){
                 cur->next = make_relocation(child, child->qtype);
-                cur = cur->next;
+
+                while(cur->next){
+                    cur = cur->next;
+                }
                 idx++;
             }
 
@@ -724,6 +727,9 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                 }
             }
             init->child = head.next;
+            if(!is_len_known){
+                ty->type->array_len = cnt_initialized;
+            }
 
             // --------------------------
             //  配列の初期化子から、Relocationを作る

@@ -33,7 +33,8 @@ Token* tokenize(char* path){
 
 Token* tokenize_string(char* src){
     cur_file = NULL;
-    Token* tok = scan(src);
+    Token* tok;
+    tok = scan(src);
     tok = preprocess(tok);
     if(!is_preprocess)
         tok = delete_newline_token(tok);
@@ -48,11 +49,9 @@ Token* scan(char* src){
     row = 1;
     row_start = p;
 
-    /*
-        次のトークンの1文字目で処理を分岐し、
-        場合によっては2文字目、3文字目を先読みする。
-        すぐに抜けたいときはcontinue_flgを立てる。
-    */
+    //    次のトークンの1文字目で処理を分岐し、
+    //    場合によっては2文字目、3文字目を先読みする。
+    //    すぐに抜けたいときはcontinue_flgを立てる。
 
     bool continue_flg = true;
     while(continue_flg){
@@ -312,13 +311,12 @@ Token* scan(char* src){
                     cur->val = strtoul(p, &p, 10);
                     cur->len = p - cur->pos;
 
-                    /*
-                        1 : 'u' 'l'opt
-                        2 : 'u' 'll'opt
-                        3 : 'l' 'u'opt
-                        4 : 'll' 'u'opt
-                        なら読み飛ばす
-                    */
+                    //    1 : 'u' 'l'opt
+                    //    2 : 'u' 'll'opt
+                    //    3 : 'l' 'u'opt
+                    //    4 : 'll' 'u'opt
+                    //    なら読み飛ばす
+
                     if(toupper(*p) == 'U'){
                         p++;
                         if(toupper(*p) == 'L'){
