@@ -44,10 +44,13 @@
     primary = '(' expr ')' | num | ident | ident '()'
 */
 
-typedef struct Intializer {
+typedef struct Initializer Initializer;
+struct Initializer {
     QualType* qtype;
-    Node* init_node;    // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
-} Initializer;
+    Node* init_node;        // 初期化のノード（ND_ASSIGN, ND_BLOCKなど）
+    Initializer* child;     // 子の初期化子
+    Initializer* next;
+};
 
 static Node* switch_node = NULL;
 static QualType* cur_func_type = NULL;
@@ -60,6 +63,8 @@ static Node* compound_stmt();
 static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
+static QualType* type_suffix(QualType* ty);
+static QualType* array_type_suffix(QualType* ty);
 static Initializer* initialize(QualType* ty, Node* var_node);
 static Relocation* make_relocation(Initializer* init, QualType* qty);
 static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok);
@@ -513,69 +518,99 @@ static Node* declaration(QualType* qty, StorageClassKind sck){
 
 static Relocation* make_relocation(Initializer* init, QualType* qty){
 
-    if(init->init_node->kind == ND_ASSIGN){
-        Relocation* reloc = calloc(1, sizeof(Relocation));
-        reloc->data = emit2(init->init_node->rhs, &(reloc->label));
-        reloc->size = get_qtype_size(init->qtype);
-        return reloc;
-    } else if(init->init_node->kind == ND_BLOCK){
-        Relocation head = {};
-        Relocation* cur = &head;
-        Node* block_stmt = init->init_node->body->next;     // blockの1個目はND_MEMZEROなので飛ばす
+    switch(get_qtype_kind(qty)){
+        case TY_STRUCT:
+        {
+            Relocation head = {};
+            Relocation* cur = &head;
+            Node* block_stmt = init->init_node->body->next;     // blockの1個目はND_MEMZEROなので飛ばす
 
-        int offset = 0;
+            int offset = 0;
 
-        for(Member* mem = qty->type->member; mem; mem = mem->next){
-            if(offset != mem->ident->offset){
-                // メンバのオフセットがずれているのでパディングを入れないといけない
-                // パディングを入れたことを前提としてメンバのオフセット外れているので、
-                // 単純に差分のサイズの0を入れてあげればいい
+            for(Member* mem = qty->type->member; mem; mem = mem->next){
+                if(offset != mem->ident->offset){
+                    // メンバのオフセットがずれているのでパディングを入れないといけない
+                    // パディングを入れたことを前提としてメンバのオフセット外れているので、
+                    // 単純に差分のサイズの0を入れてあげればいい
+                    Relocation* reloc = calloc(1, sizeof(Relocation));
+                    reloc->data = 0;
+                    reloc->size = abs(offset - mem->ident->offset);
+                    reloc->is_padding = true;
+
+                    offset += reloc->size;
+                    cur->next = reloc;
+                    cur = cur->next;
+                }
+
+                if(!block_stmt){
+                    if(offset != get_qtype_size(qty)){
+                        // 初期化式がもうないが、構造体のサイズに満たない場合は、
+                        // 残りのサイズ分のリロケーション情報を追加する
+                        Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                        reloc_remain->data = 0;
+                        reloc_remain->size = abs(get_qtype_size(qty) - offset);
+                        reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                        cur->next = reloc_remain;
+                        cur = cur->next;
+                        break;
+                    }
+                }
+
                 Relocation* reloc = calloc(1, sizeof(Relocation));
-                reloc->data = 0;
-                reloc->size = abs(offset - mem->ident->offset);
-                reloc->is_padding = true;
+                if(!is_equal_token(mem->ident->tok, block_stmt->lhs->pos)){
+                    // メンバの初期化が飛んでいるので、このメンバはゼロで初期化する
+                    reloc->data = 0;
+                    reloc->size = get_qtype_size(mem->ident->qtype);
+                } else {
+                    // メンバの初期化があるので、初期化の値を取得する
+                    reloc->data = emit2(block_stmt->rhs, &(reloc->label));
+                    reloc->size = get_qtype_size(mem->ident->qtype);
 
-                offset += reloc->size;
+                    // メンバの初期化を消化したので、block_stmtを次に進める
+                    if(block_stmt->next){
+                        block_stmt = block_stmt->next;
+                    }
+                }
+
+                // 次の準備
+                offset += get_qtype_size(mem->ident->qtype);
                 cur->next = reloc;
                 cur = cur->next;
             }
-
-            if(!block_stmt){
-                if(offset != get_qtype_size(qty)){
-                    // 初期化式がもうないが、構造体のサイズに満たない場合は、
-                    // 残りのサイズ分のリロケーション情報を追加する
-                    Relocation* reloc_remain = calloc(1, sizeof(Relocation));
-                    reloc_remain->data = 0;
-                    reloc_remain->size = abs(get_qtype_size(qty) - offset);
-                    reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
-                    cur->next = reloc_remain;
-                    cur = cur->next;
-                    break;
-                }
-            }
-
-            Relocation* reloc = calloc(1, sizeof(Relocation));
-            if(!is_equal_token(mem->ident->tok, block_stmt->lhs->pos)){
-                // メンバの初期化が飛んでいるので、このメンバはゼロで初期化する
-                reloc->data = 0;
-                reloc->size = get_qtype_size(mem->ident->qtype);
-            } else {
-                // メンバの初期化があるので、初期化の値を取得する
-                reloc->data = emit2(block_stmt->rhs, &(reloc->label));
-                reloc->size = get_qtype_size(mem->ident->qtype);
-
-                // メンバの初期化を消化したので、block_stmtを次に進める
-                if(block_stmt->next){
-                    block_stmt = block_stmt->next;
-                }
-            }
-
-            // 次の準備
-            offset += get_qtype_size(mem->ident->qtype);
-            cur->next = reloc;
-            cur = cur->next;
+            return head.next;
         }
-        return head.next;
+        case TY_ARRAY:
+        {
+            // Initializerの子のRelocationをすべて取得する
+            Relocation head = {};
+            Relocation* cur = &head;
+            int idx = 0;
+            for(Initializer* child = init->child; child; child = child->next){
+                cur->next = make_relocation(child, child->qtype);
+
+                while(cur->next){
+                    cur = cur->next;
+                }
+                idx++;
+            }
+
+            if(idx < qty->type->array_len){
+                // 配列の初期化が足りないので、残りのサイズ分のパディングを入れる
+                Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                reloc_remain->data = 0;
+                reloc_remain->size = get_qtype_size(qty) * qty->type->array_len - idx * get_qtype_size(qty->type->ptr_to);
+                reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                cur->next = reloc_remain;
+            }
+            return head.next;
+        }
+        default:
+        {
+            Relocation* reloc = calloc(1, sizeof(Relocation));
+            reloc->data = emit2(init->init_node->rhs, &(reloc->label));
+            reloc->size = get_qtype_size(init->qtype);
+            return reloc;
+        }
     }
 }
 
@@ -651,8 +686,92 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         }
             break;
         case TY_ARRAY:
+        {
+            expect_token(TK_L_BRACKET);
+
+            long len = ty->type->array_len;
+            bool is_len_known = true;
+            if(len < 0){
+                len = __INT_MAX__; // 長さが不明な場合は無限大とする
+                is_len_known = false;
+            }
+
+            if(consume_token(TK_R_BRACKET)){
+                // 配列の初期化が空の場合は、全て0で初期化する
+                init->qtype = ty;
+                init->init_node = new_node(ND_MEMZERO, var_node, NULL);
+                return init;
+            }
+
+            // --------------------------
+            //  配列の初期化子を読み取る
+            // --------------------------
+            Initializer head = { 0 };
+            Initializer* cur = &head;
+            int cnt_initialized = 0;
+            for(int i = 0; i < len; i++){
+                cur->next = initialize(ty->type->ptr_to, var_node);
+                cnt_initialized++;
+                cur = cur->next;
+
+                if(consume_token(TK_R_BRACKET)){
+                    // 配列の初期化が終わった
+                    break;
+                }
+
+                expect_token(TK_COMMA);
+                if(consume_token(TK_R_BRACKET)){
+                    // 配列の初期化が終わった
+                    // ※最後にカンマが来る場合もあるので、ここでチェックする
+                    break;
+                }
+            }
+            init->child = head.next;
+            if(!is_len_known){
+                ty->type->array_len = cnt_initialized;
+            }
+
+            // --------------------------
+            //  配列の初期化子から、Relocationを作る
+            // --------------------------
+            Node* block = new_node(ND_BLOCK, NULL, NULL);
+
+            int idx = 0;
+            Node head_node = { 0 };
+            Node* cur_node = &head_node;
+            cur = head.next;
+            for(Initializer* cur_init = init->child; cur_init; cur_init = cur_init->next, idx++){
+                // lhs
+                Node* arr_node = new_node_add(var_node, new_node_num(idx));
+                Node* lhs = new_node(ND_DREF, arr_node, NULL);
+
+                Node* node = new_node(ND_ASSIGN, lhs, cur->init_node->rhs);
+
+                cur_node->next = node;
+                cur_node = cur_node->next;
+
+                cur = cur->next;
+            }
+            if(is_len_known && cnt_initialized < len){
+                // 初期化子の数が配列の長さよりも少ない場合は、残りの要素は0で初期化する
+                // ※長さが省略されているときは何もしない
+                for(int i = cnt_initialized; i < len; i++){
+                    Node* arr_node = new_node_add(var_node, new_node_num(i));
+                    Node* lhs = new_node(ND_DREF, arr_node, NULL);
+                    Node* node = new_node(ND_ASSIGN, lhs, new_node_num(0));
+
+                    cur_node->next = node;
+                    cur_node = cur_node->next;
+                }
+            }
+
+            block->body = head_node.next;
+
+            init->init_node = block;
+        }
+            break;
         case TY_UNION:
-            error("not implemented initializer array, struct, union.\n");
+            error("not implemented initializer, struct, union.\n");
             break;
         default:
             init->init_node = new_node(ND_ASSIGN, var_node, assign());
@@ -661,17 +780,38 @@ static Initializer* initialize(QualType* ty, Node* var_node){
     }
     return init;
 }
+
+static QualType* array_type_suffix(QualType* qty){
+
+    // 長さ省略の場合
+    if(consume_token(TK_R_SQUARE_BRACKET)){
+        qty = type_suffix(qty);
+        return array_of(qty, -1);
+    }
+
+    // 長さがある場合
+    int len = expect_num();
+    expect_token(TK_R_SQUARE_BRACKET);
+    qty = type_suffix(qty);
+
+    return array_of(qty, len);
+}
+
+static QualType* type_suffix(QualType* qty){
+    if(consume_token(TK_L_SQUARE_BRACKET)){
+        return array_type_suffix(qty);
+    }
+
+    return qty;
+}
+
 static Ident* declare(QualType* qty, StorageClassKind sck){
     while(consume_token(TK_MUL)){
         qty = pointer_to(qty);
     }
 
     Token* ident_tok = expect_ident();
-    if(consume_token(TK_L_SQUARE_BRACKET)){
-        int len = expect_num();
-        qty = array_of(qty, len);
-        expect_token(TK_R_SQUARE_BRACKET);
-    }
+    qty = type_suffix(qty);
 
     Ident* ident = make_ident(ident_tok, ID_LVAR, qty);
     if(sck == SCK_EXTERN){

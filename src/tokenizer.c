@@ -33,7 +33,8 @@ Token* tokenize(char* path){
 
 Token* tokenize_string(char* src){
     cur_file = NULL;
-    Token* tok = scan(src);
+    Token* tok;
+    tok = scan(src);
     tok = preprocess(tok);
     if(!is_preprocess)
         tok = delete_newline_token(tok);
@@ -48,11 +49,9 @@ Token* scan(char* src){
     row = 1;
     row_start = p;
 
-    /*
-        次のトークンの1文字目で処理を分岐し、
-        場合によっては2文字目、3文字目を先読みする。
-        すぐに抜けたいときはcontinue_flgを立てる。
-    */
+    //    次のトークンの1文字目で処理を分岐し、
+    //    場合によっては2文字目、3文字目を先読みする。
+    //    すぐに抜けたいときはcontinue_flgを立てる。
 
     bool continue_flg = true;
     while(continue_flg){
@@ -220,10 +219,18 @@ Token* scan(char* src){
             case '"':
                 {
                     char* start = ++p;
-                    while(*p != '"'){
-                        p++;
-                    }
                     cur = new_token(TK_STRING_LITERAL, cur, start, 0);
+                    while(*p != '"'){
+                        if(*p == '\\'){
+                            // エスケープシーケンスの分進める
+                            read_escaped_char(&p);
+                        } else if(*p == '\n'){
+                            error_at_src(p, cur_file, "error: unclosed string literal.\n");
+                        } else {
+                            p++;
+                        }
+                    }
+
                     cur->len = p - start;
                     cur->str = strnewcpyn(start, cur->len);
                     p++;
@@ -304,13 +311,12 @@ Token* scan(char* src){
                     cur->val = strtoul(p, &p, 10);
                     cur->len = p - cur->pos;
 
-                    /*
-                        1 : 'u' 'l'opt
-                        2 : 'u' 'll'opt
-                        3 : 'l' 'u'opt
-                        4 : 'll' 'u'opt
-                        なら読み飛ばす
-                    */
+                    //    1 : 'u' 'l'opt
+                    //    2 : 'u' 'll'opt
+                    //    3 : 'l' 'u'opt
+                    //    4 : 'll' 'u'opt
+                    //    なら読み飛ばす
+
                     if(toupper(*p) == 'U'){
                         p++;
                         if(toupper(*p) == 'L'){
@@ -400,18 +406,45 @@ static TokenKind check_preprocess_keyword(char* p, int len){
 static char read_escaped_char(char** p){
     char c = *++*p;
     switch(c){
-        case 'a': return '\a';
-        case 'b': return '\b';
-        case 'f': return '\f';
-        case 'n': return '\n';
-        case 'r': return '\r';
-        case 't': return '\t';
-        case 'v': return '\v';
-        case '\\': return '\\';
-        case '\'': return '\'';
-        case '\"': return '\"';
-        case '?': return '\?';
-        case '0': return '\0';
+        case 'a':
+            ++*p;
+            return '\a';
+        case 'b':
+            ++*p;
+            return '\b';
+        case 'f':
+            ++*p;
+            return '\f';
+        case 'n':
+            ++*p;
+            return '\n';
+        case 'r':
+            ++*p;
+            return '\r';
+        case 't':
+            ++*p;
+            return '\t';
+        case 'v':
+            ++*p;
+            return '\v';
+        case 'e':
+            ++*p;
+            return '\e';
+        case '\\':
+            ++*p;
+            return '\\';
+        case '\'':
+            ++*p;
+            return '\'';
+        case '\"':
+            ++*p;
+            return '\"';
+        case '?':
+            ++*p;
+            return '\?';
+        case '0':
+            ++*p;
+            return '\0';
         default:
             error_at_src(*p, cur_file, "invalid escape character.\n");
             return 0;

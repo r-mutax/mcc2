@@ -577,7 +577,6 @@ struct SimpleType {
     int         array_len;
     bool        is_user_def;
     bool        is_imcomplete;
-    QualType*   base_type;
     QualType*   ptr_to;
     Member*     member;         // 構造体 or 共用体のメンバー
     SimpleType* next;

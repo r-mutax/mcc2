@@ -44,8 +44,8 @@ void dwarf(){
     g_scope = get_global_scope();
     dwarf_init();
 
-    dwarf_abbrev();
-    dwarf_info();
+    // dwarf_abbrev();
+    // dwarf_info();
     dwarf_line();
     dwarf_str();
 }

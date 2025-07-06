@@ -23,6 +23,16 @@ struct INIT_STRUCT g_is4 = { .b = 2, 4, .d = 4 };
 
 static struct INIT_STRUCT g_is5 = { 1, 2 };
 
+static int g_init_arr[2] = { 5, 9 };
+static int g_init_arr_init_lack[2] = { 5 };
+static int g_init_arr_not_specified_size[] = { 7, 10, 45};
+static int g_init_arr_guard = 10;
+
+static char* init_str_table[2] = {
+    "hello",
+    "world"
+};
+
 extern int test_extern_int;
 
 int test_static_var_in_func(){
@@ -68,6 +78,72 @@ int test_variable(){
 
     arr[3]= 4;
     ASSERT(arr[3], 4);
+
+    int arr_arr[3][2];
+    arr_arr[0][0] = 1;
+    arr_arr[0][1] = 2;
+    arr_arr[1][0] = 3;
+    arr_arr[1][1] = 4;
+    arr_arr[2][0] = 5;
+    arr_arr[2][1] = 6;
+    ASSERT(arr_arr[0][0], 1);
+    ASSERT(arr_arr[0][1], 2);
+    ASSERT(arr_arr[1][0], 3);
+    ASSERT(arr_arr[1][1], 4);
+    ASSERT(arr_arr[2][0], 5);
+    ASSERT(arr_arr[2][1], 6);
+    ASSERT(arr_arr[1][0] + arr_arr[2][1], 9);
+
+    int arr_arr_arr[2][3][4];
+    arr_arr_arr[0][0][0] = 1;
+    arr_arr_arr[0][0][1] = 2;
+    arr_arr_arr[0][0][2] = 3;
+    arr_arr_arr[0][0][3] = 4;
+    arr_arr_arr[0][1][0] = 5;
+    arr_arr_arr[0][1][1] = 6;
+    arr_arr_arr[0][1][2] = 7;
+    arr_arr_arr[0][1][3] = 8;
+    arr_arr_arr[0][2][0] = 9;
+    arr_arr_arr[0][2][1] = 10;
+    arr_arr_arr[0][2][2] = 11;
+    arr_arr_arr[0][2][3] = 12;
+    arr_arr_arr[1][0][0] = 13;
+    arr_arr_arr[1][0][1] = 14;
+    arr_arr_arr[1][0][2] = 15;
+    arr_arr_arr[1][0][3] = 16;
+    arr_arr_arr[1][1][0] = 17;
+    arr_arr_arr[1][1][1] = 18;
+    arr_arr_arr[1][1][2] = 19;
+    arr_arr_arr[1][1][3] = 20;
+    arr_arr_arr[1][2][0] = 21;
+    arr_arr_arr[1][2][1] = 22;
+    arr_arr_arr[1][2][2] = 23;
+    arr_arr_arr[1][2][3] = 24;
+    ASSERT(arr_arr_arr[0][0][0], 1);
+    ASSERT(arr_arr_arr[0][0][1], 2);
+    ASSERT(arr_arr_arr[0][0][2], 3);
+    ASSERT(arr_arr_arr[0][0][3], 4);
+    ASSERT(arr_arr_arr[0][1][0], 5);
+    ASSERT(arr_arr_arr[0][1][1], 6);
+    ASSERT(arr_arr_arr[0][1][2], 7);
+    ASSERT(arr_arr_arr[0][1][3], 8);
+    ASSERT(arr_arr_arr[0][2][0], 9);
+    ASSERT(arr_arr_arr[0][2][1], 10);
+    ASSERT(arr_arr_arr[0][2][2], 11);
+    ASSERT(arr_arr_arr[0][2][3], 12);
+    ASSERT(arr_arr_arr[1][0][0], 13);
+    ASSERT(arr_arr_arr[1][0][1], 14);
+    ASSERT(arr_arr_arr[1][0][2], 15);
+    ASSERT(arr_arr_arr[1][0][3], 16);
+    ASSERT(arr_arr_arr[1][1][0], 17);
+    ASSERT(arr_arr_arr[1][1][1], 18);
+    ASSERT(arr_arr_arr[1][1][2], 19);
+    ASSERT(arr_arr_arr[1][1][3], 20);
+    ASSERT(arr_arr_arr[1][2][0], 21);
+    ASSERT(arr_arr_arr[1][2][1], 22);
+    ASSERT(arr_arr_arr[1][2][2], 23);
+    ASSERT(arr_arr_arr[1][2][3], 24);
+
 
     typedef int INT_T;
     int auto a1 = 1;
@@ -157,6 +233,43 @@ int test_variable(){
     ASSERT(g_is5.b, 2);
     ASSERT(g_is5.c, 0);
     ASSERT(g_is5.d, 0);
+
+    printf("test of array initialize...\n");
+    int arr_init[2] = { 5, 9 };
+    ASSERT(arr_init[0], 5);
+    ASSERT(arr_init[1], 9);
+
+    ASSERT(g_init_arr[0], 5);
+    ASSERT(g_init_arr[1], 9);
+    ASSERT(g_init_arr_init_lack[0], 5);
+    ASSERT(g_init_arr_init_lack[1], 0);
+
+    int arr_init_not_specified_size[] = { 5, 9 };
+    ASSERT(arr_init_not_specified_size[0], 5);
+    ASSERT(arr_init_not_specified_size[1], 9);
+
+    ASSERT(g_init_arr_not_specified_size[0], 7);
+    ASSERT(g_init_arr_not_specified_size[1], 10);
+    ASSERT(g_init_arr_not_specified_size[2], 45);
+
+    int arr_zero[5] = {};
+    ASSERT(arr_zero[0], 0);
+    ASSERT(arr_zero[1], 0);
+    ASSERT(arr_zero[2], 0);
+    ASSERT(arr_zero[3], 0);
+    ASSERT(arr_zero[4], 0);
+
+    int arr_specified_zero[5] = { 0 };
+    ASSERT(arr_specified_zero[0], 0);
+    ASSERT(arr_specified_zero[1], 0);
+    ASSERT(arr_specified_zero[2], 0);
+    ASSERT(arr_specified_zero[3], 0);
+    ASSERT(arr_specified_zero[4], 0);
+
+
+    printf("test of string table initialize...\n");
+    ASSERT(strcmp(init_str_table[0], "hello") == 0, true);
+    ASSERT(strcmp(init_str_table[1], "world") == 0, true);
 
     return 0;
 }

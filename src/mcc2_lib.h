@@ -37,7 +37,9 @@ char *strrchr(const char *string, int c);
 size_t strlen(const char *string);
 char *strncpy(char *string1, const char *string2, size_t count);
 int strcmp(const char *string1, const char *string2);
+char *strstr(const char *string1, const char *string2);
 char *strcpy(char *string1, const char *string2);
+unsigned long int strtoul(const char * string1, char ** string2, int base);
 void *memcpy(void *dest, const void *src, size_t count);
 void *malloc(size_t size);
 int memcmp(const void *buf1, const void *buf2, size_t count);
@@ -47,7 +49,10 @@ extern int errno;
 
 // ctype.h
 /* excluding space */
+int isalpha(int c);
 int isspace(int c);
+int isdigit(int c);
+int toupper(int c);
 
 // stdarg.h
 #ifndef _VA_LIST
