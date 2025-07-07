@@ -91,7 +91,9 @@ tmp: mcc2
 	./mcc2 -c ./src/gen_x86_64.c -d PREDEFINED_MACRO -o ./selfhost/gen_x86_64.s $(CFLAGS_SELF) -x register
 	cc -c -o ./selfhost/gen_x86_64.o -no-pie ./selfhost/gen_x86_64.s -lc -MD -g
 
-	cp ./src/main.o ./selfhost/main.o
+	./mcc2 -c ./src/main.c -d PREDEFINED_MACRO -o ./selfhost/main.s $(CFLAGS_SELF) -x register
+	cc -c -o ./selfhost/main.o -no-pie ./selfhost/main.s -lc -MD -g
+
 	cp ./src/parse.o ./selfhost/parse.o
 	cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/dwarf.o ./selfhost/dwarf.o
