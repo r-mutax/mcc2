@@ -443,7 +443,7 @@ static Node* stmt(){
 
 static Node* compound_stmt(){
     Node* node = new_node(ND_BLOCK, NULL, NULL);
-
+    scope_in();
     Node head = {};
     Node* cur = &head;
     while(!consume_token(TK_R_BRACKET)){
@@ -466,6 +466,7 @@ static Node* compound_stmt(){
         add_type(cur);
     }
     node->body = head.next;
+    scope_out();
     return node;
 }
 

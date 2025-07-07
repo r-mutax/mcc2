@@ -53,16 +53,15 @@ static void set_section(SECTION set){
     g_section = set;
 }
 
-/*
-    CAST CMD のルール
-    1. 拡張長方向のキャスト
-        <32 bit : 32bit
-        64bit : 64bit
-    2. 縮小方向のキャストはターゲットのサイズにする
+    // CAST CMD のルール
+    // 1. 拡張長方向のキャスト
+    //     <32 bit : 32bit
+    //     64bit : 64bit
+    // 2. 縮小方向のキャストはターゲットのサイズにする
 
-    キャストコマンドの命名ルール
-    (src_type)_(dst_type)
-*/
+    // キャストコマンドの命名ルール
+    // (src_type)_(dst_type)
+
 typedef enum
 {
     // to char
