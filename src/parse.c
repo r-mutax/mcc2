@@ -689,6 +689,8 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         {
             expect_token(TK_L_BRACKET);
 
+            init->qtype = ty;
+
             long len = ty->type->array_len;
             bool is_len_known = true;
             if(len < 0){
