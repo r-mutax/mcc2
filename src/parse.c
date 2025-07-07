@@ -443,7 +443,7 @@ static Node* stmt(){
 
 static Node* compound_stmt(){
     Node* node = new_node(ND_BLOCK, NULL, NULL);
-
+    scope_in();
     Node head = {};
     Node* cur = &head;
     while(!consume_token(TK_R_BRACKET)){
@@ -466,6 +466,7 @@ static Node* compound_stmt(){
         add_type(cur);
     }
     node->body = head.next;
+    scope_out();
     return node;
 }
 
@@ -688,6 +689,8 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         case TY_ARRAY:
         {
             expect_token(TK_L_BRACKET);
+
+            init->qtype = ty;
 
             long len = ty->type->array_len;
             bool is_len_known = true;

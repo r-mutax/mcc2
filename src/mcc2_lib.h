@@ -30,6 +30,7 @@ extern FILE *stderr;
 // stdlib.h
 void *calloc(size_t num, size_t size);
 void exit(int status);
+void free(void *ptr);
 
 // string.h
 char *strerror(int errnum);

@@ -53,16 +53,15 @@ static void set_section(SECTION set){
     g_section = set;
 }
 
-/*
-    CAST CMD のルール
-    1. 拡張長方向のキャスト
-        <32 bit : 32bit
-        64bit : 64bit
-    2. 縮小方向のキャストはターゲットのサイズにする
+    // CAST CMD のルール
+    // 1. 拡張長方向のキャスト
+    //     <32 bit : 32bit
+    //     64bit : 64bit
+    // 2. 縮小方向のキャストはターゲットのサイズにする
 
-    キャストコマンドの命名ルール
-    (src_type)_(dst_type)
-*/
+    // キャストコマンドの命名ルール
+    // (src_type)_(dst_type)
+
 typedef enum
 {
     // to char
@@ -98,7 +97,7 @@ static CAST_CMD cast_table[][8] = {
 /* s:u64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED  },
 };
 
-static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD);
+static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd);
 
 static void pop(char* reg);
 static void push(char* reg);
