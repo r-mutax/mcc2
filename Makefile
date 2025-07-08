@@ -94,9 +94,10 @@ tmp: mcc2
 	./mcc2 -c ./src/preprocess.c -d PREDEFINED_MACRO -o ./selfhost/preprocess.s $(CFLAGS_SELF) -x register
 	cc -c -o ./selfhost/preprocess.o -no-pie ./selfhost/preprocess.s -lc -MD -g
 
+	./mcc2 -c ./src/parse.c -d PREDEFINED_MACRO -o ./selfhost/parse.s $(CFLAGS_SELF) -x register
+	cc -c -o ./selfhost/parse.o -no-pie ./selfhost/parse.s -lc -MD -g
+
 	cp ./src/main.o ./selfhost/main.o
-	cp ./src/parse.o ./selfhost/parse.o
-	#cp ./src/preprocess.o ./selfhost/preprocess.o
 	cp ./src/dwarf.o ./selfhost/dwarf.o
 
 	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)

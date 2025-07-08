@@ -671,11 +671,11 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                     cur->next = new_node(ND_ASSIGN, new_node_member(var_node, mem->ident), val_node);
                     cur = cur->next;
 
-                    // 次に移行するのでカンマを読む
-                    if(!consume_token(TK_COMMA)){
-                        // カンマが来ない場合は初期化は終わり
-                        // 次は}が来るはず
-                        expect_token(TK_R_BRACKET);
+                    if(consume_token(TK_R_BRACKET)){
+                        break;
+                    }
+                    expect_token(TK_COMMA);
+                    if(consume_token(TK_R_BRACKET)){
                         break;
                     }
                 }
