@@ -184,6 +184,17 @@ int test_statement(){
     ASSERT(s3, 10);
     ASSERT(s4, 12);
 
+    int s5 = 5;
+    switch(s5){
+        case 2:
+            s5 = 20;
+            break;
+        case 1 + 4:
+            s5 = 10;
+            break;
+    }
+    ASSERT(s5, 10);
+
     printf("test of label and goto..\n");
 
     int li = 0;

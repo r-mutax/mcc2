@@ -1833,10 +1833,8 @@ static Node* primary(){
 static Node* const_expr(){
     Token* tok = get_token();
     Node* node = expr();
-    if(node->kind != ND_NUM){
-        error_tok(tok, "expected constant expression.");
-    }
-    return node;
+    unsigned int a = emit(node);
+    return new_node_num(a);
 }
 
 static Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
