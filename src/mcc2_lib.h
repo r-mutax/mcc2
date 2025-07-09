@@ -32,6 +32,7 @@ void *calloc(size_t num, size_t size);
 void *realloc(void *ptr, size_t size);
 void exit(int status);
 void free(void *ptr);
+int abs(int n);
 
 // string.h
 char *strerror(int errnum);
