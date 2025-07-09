@@ -89,7 +89,7 @@ static int get_token_int(Token* token);
 static void print_macros();
 
 void init_preprocess(){
-    for(int i = 0; i < 1; i++){
+    for(int i = 0; i < 2; i++){
         tokenize_string(PRE_MACRO[i]);
     }
 }
