@@ -148,6 +148,10 @@ Ident* find_ident(Token* tok){
 }
 
 Ident* find_typedef(Token* tok){
+    if(tok->kind != TK_IDENT){
+        return NULL;
+    }
+
     for(Scope* sc = cur_scope; sc; sc = sc->parent){
         for(Ident* id = sc->ident; id; id = id->next){
             if(id->kind == ID_TYPE){
