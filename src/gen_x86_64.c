@@ -788,7 +788,15 @@ static void convert_ir2x86asm(IR* ir){
                     if(depth % 2){
                         print("\tsub rsp, 8\n");
                     }
+                    push("r11");
+                    push("r10");
+                    push("r9");
+                    push("r8");
                     print("\tcall %s\n", ir->s1->ident->name);
+                    pop("r8");
+                    pop("r9");
+                    pop("r10");
+                    pop("r11");
                     if(depth % 2){
                         print("\tadd rsp, 8\n");
                     }

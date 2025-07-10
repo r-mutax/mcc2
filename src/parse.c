@@ -1,48 +1,47 @@
 #include "mcc2.h"
 
-/*
-    program = ( function | declaration )*
-    function = ident '(' (declspec ident)*'){' compound_stmt
-    stmt = expr ';' |
-            'return' expr ';' |
-            'if(' expr ')' stmt ('else' stmt)? |
-            'while(' expr ')' stmt |
-            'for(' (expr | declspec ident ('=' assign) ? )? ';' expr? '; expr? )' stmt |
-            '{' compound_stmt |
-            'switch(' expr ')' stmt |
-            'case' const_expr ':' |
-            'default:' |
-            'goto' ident ';'
-    compound_stmt = stmt* | declaration* '}'
-    declaration = declare '=' (expr)? ';'
-    declare = declspec ident
-    declspec = 'int' '*' * | 'char' '*' * | 'short' '*' * | 'struct' ident | 'union' ident
-    expr = assign (',' assign)*
-    assign = cond_expr ( '=' assign
-                        | '+=' assign
-                        | '-=' assign
-                        | '*=' assign
-                        | '/=' assign
-                        | '%=' assign
-                        | '<<' assign
-                        | '>>' assign
-                    )?
-    cond_expr = logicOR ( '?' expr : cond_expr );
-    logicOr = logicAnd ( '||' logicOr )*
-    logicAnd = bitOr ( '&&' bitOr )*
-    bitOr = bitXor ('|' bitXor)*
-    bitXor = bitAnd ('^' bitAnd )*
-    bitAnd = equality ('&' equality )*
-    equality = relational ('==' relational | '!=' relational)*
-    relational = bitShift ('<' bitShift | '<=' bitShift | '>' bitShift | '>=' bitShift)*
-    bitShift = add ('<<' add | '>>' add)?
-    add = mul ('+' mul | '-' mul)*
-    mul = unary ('*' cast | '/' cast | '%' cast)*
-    cast = '(' type-name ')' cast | unary
-    unary = ('+' | '-' | '&' unary | '*' unary | 'sizeof' unary )? postfix
-    postfix = primary ('[' expr ']')*
-    primary = '(' expr ')' | num | ident | ident '()'
-*/
+// program = ( function | declaration )*
+// function = ident '(' (declspec ident)*'){' compound_stmt
+// stmt = expr ';' |
+//         'return' expr ';' |
+//         'if(' expr ')' stmt ('else' stmt)? |
+//         'while(' expr ')' stmt |
+//         'for(' (expr | declspec ident ('=' assign) ? )? ';' expr? '; expr? )' stmt |
+//         '{' compound_stmt |
+//         'switch(' expr ')' stmt |
+//         'case' const_expr ':' |
+//         'default:' |
+//         'goto' ident ';'
+// compound_stmt = stmt* | declaration* '}'
+// declaration = declare '=' (expr)? ';'
+// declare = declspec ident
+// declspec = 'int' '*' * | 'char' '*' * | 'short' '*' * | 'struct' ident | 'union' ident
+// expr = assign (',' assign)*
+// assign = cond_expr ( '=' assign
+//                     | '+=' assign
+//                     | '-=' assign
+//                     | '*=' assign
+//                     | '/=' assign
+//                     | '%=' assign
+//                     | '<<' assign
+//                     | '>>' assign
+//                 )?
+// cond_expr = logicOR ( '?' expr : cond_expr );
+// logicOr = logicAnd ( '||' logicOr )*
+// logicAnd = bitOr ( '&&' bitOr )*
+// bitOr = bitXor ('|' bitXor)*
+// bitXor = bitAnd ('^' bitAnd )*
+// bitAnd = equality ('&' equality )*
+// equality = relational ('==' relational | '!=' relational)*
+// relational = bitShift ('<' bitShift | '<=' bitShift | '>' bitShift | '>=' bitShift)*
+// bitShift = add ('<<' add | '>>' add)?
+// add = mul ('+' mul | '-' mul)*
+// mul = unary ('*' cast | '/' cast | '%' cast)*
+// cast = '(' type-name ')' cast | unary
+// unary = ('+' | '-' | '&' unary | '*' unary | 'sizeof' unary )? postfix
+// postfix = primary ('[' expr ']')*
+// primary = '(' expr ')' | num | ident | ident '()'
+
 
 typedef struct Initializer Initializer;
 struct Initializer {
@@ -1033,22 +1032,20 @@ static Member* struct_or_union_member(){
 }
 
 static SimpleType* struct_or_union_spec(bool is_union){
-    /*
-        1. 名前付き構造体
-        struct ident {
-            declspec ident;
-            ...
-        }
+    // 1. 名前付き構造体
+    // struct ident {
+    //     declspec ident;
+    //     ...
+    // }
 
-        2. 不完全な名前付き構造体
-        struct ident;
+    // 2. 不完全な名前付き構造体
+    // struct ident;
 
-        3. 無名構造体
-        struct {
-            declspec ident;
-            ...
-        }
-    */
+    // 3. 無名構造体
+    // struct {
+    //     declspec ident;
+    //     ...
+    // }
 
     Token* tok = consume_ident();
     if(tok){
