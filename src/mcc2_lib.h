@@ -73,4 +73,7 @@ int vsnprintf(char *fmt, size_t n, const char *format, va_list arg_ptr);
 // getopt_core.
 // extern int getopt (int ___argc, char *const *___argv, const char *__shortopts);
 
+// unistd.h
+char *getcwd(char *buffer, size_t size);
+
 #endif

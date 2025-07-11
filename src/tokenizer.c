@@ -307,10 +307,30 @@ Token* scan(char* src){
                 break;
             default:
                 if(isdigit(c)){
-                    cur = new_token(TK_NUM, cur, p, 0);
-                    cur->val = strtoul(p, &p, 10);
-                    cur->len = p - cur->pos;
-
+                    if(c == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X')){
+                        // 16進数
+                        p += 2;
+                        cur = new_token(TK_NUM, cur, p - 2, 0);
+                        cur->val = strtoul(p, &p, 16);
+                        cur->len = p - cur->pos;
+                    } else if(c == '0' && (*(p + 1) == 'b' || *(p + 1) == 'B')){
+                        // 2進数
+                        p += 2;
+                        cur = new_token(TK_NUM, cur, p - 2, 0);
+                        cur->val = strtoul(p, &p, 2);
+                        cur->len = p - cur->pos;
+                    } else if(c == '0'){
+                        // 8進数
+                        p++;
+                        cur = new_token(TK_NUM, cur, p - 1, 0);
+                        cur->val = strtoul(p, &p, 8);
+                        cur->len = p - cur->pos;
+                    } else {
+                        // 10進数
+                        cur = new_token(TK_NUM, cur, p, 0);
+                        cur->val = strtoul(p, &p, 10);
+                        cur->len = p - cur->pos;
+                    }
                     //    1 : 'u' 'l'opt
                     //    2 : 'u' 'll'opt
                     //    3 : 'l' 'u'opt
