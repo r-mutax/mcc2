@@ -97,8 +97,11 @@ tmp: mcc2
 	./mcc2 -c ./src/parse.c -d PREDEFINED_MACRO -o ./selfhost/parse.s $(CFLAGS_SELF) -x register
 	cc -c -o ./selfhost/parse.o -no-pie ./selfhost/parse.s -lc -MD -g
 
+	./mcc2 -c ./src/dwarf.c -d PREDEFINED_MACRO -o ./selfhost/dwarf.s $(CFLAGS_SELF) -x register
+	cc -c -o ./selfhost/dwarf.o -no-pie ./selfhost/dwarf.s -lc -MD -g
+
 	cp ./src/main.o ./selfhost/main.o
-	cp ./src/dwarf.o ./selfhost/dwarf.o
+#	cp ./src/dwarf.o ./selfhost/dwarf.o
 
 	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)
 

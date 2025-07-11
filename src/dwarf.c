@@ -1,6 +1,5 @@
 #include "mcc2.h"
 #include "dwarf.h"
-#include <unistd.h>
 
 static int g_asf = 0;           // .debug_str用のラベル
 static Dwarf_dstr* g_dstr;      // .debug_str用の文字列テーブル
