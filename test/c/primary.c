@@ -43,6 +43,19 @@ int test_primary(){
     ASSERT(st2.a, 1);
     ASSERT(st2.b, 2);
 
+    printf("test of num...\n");
+    int num = 0;
+    num = 1;
+    ASSERT(num, 1);
+    num = 2;
+    ASSERT(num, 2);
+    num = 010; // 8進数
+    ASSERT(num, 8);
+    num = 0x10; // 16進数
+    ASSERT(num, 16);
+    num = 0b10; // 2進数
+    ASSERT(num, 2);
+
     return 0;
 }
 
