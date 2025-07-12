@@ -53,8 +53,12 @@ test : mcc2 $(TEST_OBJS)
 # CFLAGS for mcc2
 CFLAGS_SELF=-g -I./lib -I./src -I./lib -x plvar
 
+# Library flags for mcc2
+LDFLAGS_SELF=-L./lib/bin -lmcc2
+
 # file paths
 SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
+SELF_LIBOBJS=$(patsubst ./lib/%.c, ./selfhost/lib/%.o, $(LIBS))
 
 # Test objects
 TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
@@ -63,8 +67,17 @@ TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
 	./mcc2 -c $< -d PREDEFINED_MACRO -o $@.s $(CFLAGS_SELF)
 	cc -c -o $@ -no-pie $@.s -lc -MD -g
 
-self: $(SELF_OBJS) ./lib/bin/libmcc2.a
-	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)
+self: $(SELF_OBJS) ./selfhost/lib/bin/libmcc2.a
+	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS_SELF)
+
+./selfhost/lib/bin/libmcc2.a: $(SELF_LIBOBJS)
+	echo make selfhost/lib/bin/libmcc2.a
+	mkdir -p ./selfhost/lib/bin
+	ar rcs ./selfhost/lib/bin/libmcc2.a $(SELF_LIBOBJS)
+
+./selfhost/lib/%.o: ./lib/%.c ./mcc2
+	./mcc2 -c $< -d PREDEFINED_MACRO -o $@.s $(CFLAGS_SELF)
+	cc -c -o $@ -no-pie $@.s -lc -MD -g
 
 ./selfhost/test/c/%.o: test/c/%.c
 	./selfhost/mcc2t -c $< -o $@.s -I ./test/testinc -I ./src -I ./lib -d PREDEFINED_MACRO -x plvar -g
@@ -104,5 +117,6 @@ clean:
 	rm -f test/c/*.o test.exe test/c/*.s
 	rm -f ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2t
 	rm -f ./selfhost/test/c/*.o ./selfhost/test/c/*.s
+	rm -f ./selfhost/lib/*.o ./selfhost/lib/bin/libmcc2.a
 
-.PHONY: test clean tmp test2 test3 test4 self selft dwarf
+.PHONY: test clean tmp test2 test3 test4 self selft dwarf a

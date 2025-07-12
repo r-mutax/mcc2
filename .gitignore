@@ -23,3 +23,6 @@ selfhost/mcc2
 selfhost/test/c/*.o
 selfhost/test/c/*.s
 selfhost/mcc2t
+selfhost/lib/*.o
+selfhost/lib/*.s
+selfhost/lib/bin/libmcc2.a
