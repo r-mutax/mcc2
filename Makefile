@@ -1,17 +1,27 @@
+###########################################
+# Makefile for mcc2 compiler
+###########################################
+-include $(DEPS)
+
+#############################################
+# Compiler and flags for the mcc2
+#############################################
+# CFLAGS for gcc
 CFLAGS=-std=c11 -g -static -I./lib
-CFLAGS_SELF=-g -I./lib -I./src -I./lib -x plvar
-SRCS=$(wildcard ./src/*.c)
-OBJS=$(SRCS:.c=.o)
-SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
-DEPS=$(SRCS:.c=.d)
+
+# Library flags for gcc
 LDFLAGS=-L./lib/bin -lmcc2
 
-TESTS=$(wildcard ./test/c/*.c)
-TEST_OBJS=$(TESTS:.c=.o)
-TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
-
+# file paths
+SRCS=$(wildcard ./src/*.c)
+OBJS=$(SRCS:.c=.o)
+DEPS=$(SRCS:.c=.d)
 LIBS=$(wildcard ./lib/*.c)
 LIBSOBJS=$(LIBS:.c=.o)
+
+# Test objects
+TESTS=$(wildcard ./test/c/*.c)
+TEST_OBJS=$(TESTS:.c=.o)
 
 mcc2: $(OBJS) ./lib/bin/libmcc2.a
 	$(CC) -o mcc2 $(OBJS) $(LDFLAGS)
@@ -27,8 +37,7 @@ mcc2: $(OBJS) ./lib/bin/libmcc2.a
 src/lib/%.o: src/lib/%.c
 	$(CC) -c $(CFLAGS) -MD -o $@ $<
 
--include $(DEPS)
-
+# Rules for test objects
 test/c/%.o: test/c/%.c
 	./mcc2 -c $< -o $@.s -I ./test/testinc -I ./src -I ./lib -d PREDEFINED_MACRO -x plvar -g
 	cc -c -o $@ $@.s -static
@@ -37,25 +46,18 @@ test : mcc2 $(TEST_OBJS)
 	cc -o test.exe $(TEST_OBJS) -L./lib/bin -lmcc2
 	./test.exe
 
-dwarf : mcc2
-	cc ./dev/dwarf_test.c -o ./dev/cc.s -S -g
-	cc -c -o ./dev/cc.o ./dev/cc.s -lc -MD
-	readelf -w ./dev/cc.o > ./dev/cc.dwarf
 
-	./mcc2 -c ./dev/dwarf_test.c -o ./dev/mcc2.s -I ./test/testinc -I ./src -x plvar -g
-	cc -c -o ./dev/mcc2.o ./dev/mcc2.s -lc -MD
-	readelf -w ./dev/mcc2.o > ./dev/mcc2.dwarf
+#############################################
+# Compiler and flags for the mcc2t
+#############################################
+# CFLAGS for mcc2
+CFLAGS_SELF=-g -I./lib -I./src -I./lib -x plvar
 
-	cc -o dwarf_test ./dev/mcc2.o -lc
+# file paths
+SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
 
-test2: mcc2
-	./mcc2 -c ./dev/test2.c -o ./tmp.s -I ./test/testinc -I ./src -I ./lib -x plvar -g
-	cc -o ./dev/tmp -no-pie tmp.s -lc
-	./dev/tmp
-
-tmp: mcc2
-	cc -o tmp -no-pie tmp.s -lc
-	./tmp
+# Test objects
+TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
 
 ./selfhost/mcc2t: mcc2 ./lib/bin/libmcc2.a
 	./mcc2 -c ./src/builtin_def.c -d PREDEFINED_MACRO -o ./selfhost/builtin_def.s $(CFLAGS_SELF)
@@ -114,6 +116,29 @@ self: ./selfhost/mcc2t
 selft: self $(TEST_SELF_OBJS)
 	cc -o test.exe $(TEST_SELF_OBJS) -L./lib/bin -lmcc2
 	./test.exe
+
+#############################################
+# Utilities and tools
+#############################################
+dwarf : mcc2
+	cc ./dev/dwarf_test.c -o ./dev/cc.s -S -g
+	cc -c -o ./dev/cc.o ./dev/cc.s -lc -MD
+	readelf -w ./dev/cc.o > ./dev/cc.dwarf
+
+	./mcc2 -c ./dev/dwarf_test.c -o ./dev/mcc2.s -I ./test/testinc -I ./src -x plvar -g
+	cc -c -o ./dev/mcc2.o ./dev/mcc2.s -lc -MD
+	readelf -w ./dev/mcc2.o > ./dev/mcc2.dwarf
+
+	cc -o dwarf_test ./dev/mcc2.o -lc
+
+test2: mcc2
+	./mcc2 -c ./dev/test2.c -o ./tmp.s -I ./test/testinc -I ./src -I ./lib -x plvar -g
+	cc -o ./dev/tmp -no-pie tmp.s -lc
+	./dev/tmp
+
+tmp: mcc2
+	cc -o tmp -no-pie tmp.s -lc
+	./tmp
 
 clean:
 	rm -f mcc2 *~ tmp* libmcc2.a
