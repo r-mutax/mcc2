@@ -100,8 +100,8 @@ tmp: mcc2
 	./mcc2 -c ./src/dwarf.c -d PREDEFINED_MACRO -o ./selfhost/dwarf.s $(CFLAGS_SELF) -x register
 	cc -c -o ./selfhost/dwarf.o -no-pie ./selfhost/dwarf.s -lc -MD -g
 
-	cp ./src/main.o ./selfhost/main.o
-#	cp ./src/dwarf.o ./selfhost/dwarf.o
+	./mcc2 -c ./src/main.c -d PREDEFINED_MACRO -o ./selfhost/main.s $(CFLAGS_SELF) -x register
+	cc -c -o ./selfhost/main.o -no-pie ./selfhost/main.s -lc -MD -g
 
 	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS)
 

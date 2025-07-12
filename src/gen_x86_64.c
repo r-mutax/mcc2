@@ -801,7 +801,37 @@ static void convert_ir2x86asm(IR* ir){
                         print("\tadd rsp, 8\n");
                     }
                     activateRegLhs(ir->t);
-                    print("\tmov %s, rax\n", ir->t->rreg);
+                    int sz = get_qtype_size(ir->s1->ident->qtype);
+                    bool is_unsigned = get_qtype_is_unsigned(ir->s1->ident->qtype);
+
+                    switch(sz){
+                        case 1:
+                            if(is_unsigned){
+                                print("\tmovzx %s, al\n", ir->t->rreg);
+                            } else {
+                                print("\tmovsx %s, al\n", ir->t->rreg);
+                            }
+                            break;
+                        case 2:
+                            if(is_unsigned){
+                                print("\tmovzx %s, ax\n", ir->t->rreg);
+                            } else {
+                                print("\tmovsx %s, ax\n", ir->t->rreg);
+                            }
+                            break;
+                        case 4:
+                            if(is_unsigned){
+                                print("\tmov %s, eax\n", ir->t->rreg);
+                            } else {
+                                print("\tmovsxd %s, eax\n", ir->t->rreg);
+                            }
+                            break;
+                        case 8:
+                            print("\tmov %s, rax\n", ir->t->rreg);
+                            break;
+                        default:
+                            error("invalid size for function return value: %d\n", sz);
+                    }
                 }
                 break;
             case IR_REL:

@@ -71,7 +71,8 @@ int vfprintf(FILE *  __restrict__stream, const char *  __restrict__format, va_li
 int vsnprintf(char *fmt, size_t n, const char *format, va_list arg_ptr);
 
 // getopt_core.
-// extern int getopt (int ___argc, char *const *___argv, const char *__shortopts);
+extern int getopt (int ___argc, char * *___argv, const char *__shortopts);
+extern char* optarg;
 
 // unistd.h
 char *getcwd(char *buffer, size_t size);
