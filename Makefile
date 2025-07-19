@@ -117,6 +117,20 @@ $(eval $(call COMPILE_SELF,self1,selfhost1,./mcc2))
 $(eval $(call COMPILE_SELF,self2,selfhost2,./self/selfhost1/mcc2))
 $(eval $(call COMPILE_SELF,self3,selfhost3,./self/selfhost2/mcc2))
 
+selftest: self3
+	@echo "Comparing self-hosted compiler binaries..."
+	@if ! cmp -s ./self/selfhost2/mcc2 ./self/selfhost3/mcc2; then \
+		echo "WARNING: Binary difference detected between selfhost2 and selfhost3!"; \
+		echo "Self-hosting may not be stable."; \
+		ls -la ./self/selfhost2/mcc2 ./self/selfhost3/mcc2; \
+		echo "Hash comparison:"; \
+		sha256sum ./self/selfhost2/mcc2 ./self/selfhost3/mcc2; \
+		exit 1; \
+	else \
+		echo "SUCCESS: selfhost2 and selfhost3 binaries are identical."; \
+		echo "Self-hosting is stable!"; \
+	fi
+
 
 #############################################
 # Utilities and tools

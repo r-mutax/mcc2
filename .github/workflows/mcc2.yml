@@ -19,3 +19,8 @@ jobs:
       - run: make self1t
       - run: make self2t
       - run: make self3t
+  selfhost:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - run: make selfhost
