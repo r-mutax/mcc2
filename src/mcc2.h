@@ -686,10 +686,12 @@ extern SimpleType* ty_int;
 extern SimpleType* ty_char;
 extern SimpleType* ty_short;
 extern SimpleType* ty_long;
+extern SimpleType* ty_llong;
 extern SimpleType* ty_uchar;
 extern SimpleType* ty_ushort;
 extern SimpleType* ty_uint;
 extern SimpleType* ty_ulong;
+extern SimpleType* ty_ullong;
 
 void ty_init();
 QualType* pointer_to(QualType* base);
