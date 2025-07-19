@@ -16,4 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: make test
-      - run: make selft
+      - run: make self1t
+      - run: make self2t
+      - run: make self3t

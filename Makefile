@@ -53,39 +53,70 @@ test : mcc2 $(TEST_OBJS)
 # CFLAGS for mcc2
 CFLAGS_SELF=-g -I./lib -I./src -I./lib -x plvar
 
-# Library flags for mcc2
-LDFLAGS_SELF=-L./lib/bin -lmcc2
+#############################################
+# Self-hosted compiler
+#############################################
+# Define a macro to create the self-hosted compiler directory structure
+define COMPILE_SELF
+$(eval $(1)_BASE_DIR := self/$(2))
+$(eval $(1)_LIB_DIR := self/$(2)/lib)
+$(eval $(1)_MCC := $(3))
+$(eval $(1)_TARGET_COMPILER := self/$(2)/mcc2)
+$(eval $(1)_SELF_OBJS := $(patsubst ./src/%.c, $(value $(1)_BASE_DIR)/%.o, $(SRCS)))
+$(eval $(1)_SELF_LIB_OBJS := $(patsubst ./lib/%.c, $(value $(1)_BASE_DIR)/lib/%.o, $(LIBS)))
+$(eval $(1)_LDFLAGS_SELF := -L$(value $(1)_BASE_DIR)/lib/bin -lmcc2)
 
-# file paths
-SELF_OBJS=$(patsubst ./src/%.c, ./selfhost/%.o, $(SRCS))
-SELF_LIBOBJS=$(patsubst ./lib/%.c, ./selfhost/lib/%.o, $(LIBS))
+$(eval $(1)_SELF_TEST_OBJS := $(patsubst ./test/c/%.c, $(value $(1)_BASE_DIR)/test/c/%.o, $(TESTS)))
 
-# Test objects
-TEST_SELF_OBJS := $(patsubst ./test/c/%.c, ./selfhost/test/c/%.o, $(TESTS))
+# Create the base directory and subdirectories
+$(value $(1)_BASE_DIR):
+	mkdir -p $(value $(1)_BASE_DIR)
+	mkdir -p $(value $(1)_BASE_DIR)/lib/bin
+	mkdir -p $(value $(1)_BASE_DIR)/test/c
 
-./selfhost/%.o: ./src/%.c ./mcc2
-	./mcc2 -c $< -d PREDEFINED_MACRO -o $@.s $(CFLAGS_SELF)
-	cc -c -o $@ -no-pie $@.s -lc -MD -g
+# Compile library objects for self-hosted compiler
+$(value $(1)_LIB_DIR)/%.o: ./lib/%.c $(value $(1)_MCC)
+	$(value $(1)_MCC) -c $$< -d PREDEFINED_MACRO -o $$@.s $(CFLAGS_SELF)
+	cc -c -o $$@ -no-pie $$@.s -lc -MD -g
 
-self: $(SELF_OBJS) ./selfhost/lib/bin/libmcc2.a
-	cc -o ./selfhost/mcc2t $(SELF_OBJS) $(LDFLAGS_SELF)
+# Make library objects
+$(value $(1)_BASE_DIR)/lib/bin/libmcc2.a: $(value $(1)_SELF_LIB_OBJS)
+	echo make $(value $(1)_BASE_DIR)/lib/bin/libmcc2.a
+	mkdir -p $(value $(1)_BASE_DIR)/lib/bin
+	ar rcs $(value $(1)_BASE_DIR)/lib/bin/libmcc2.a $(value $(1)_SELF_LIB_OBJS)
 
-./selfhost/lib/bin/libmcc2.a: $(SELF_LIBOBJS)
-	echo make selfhost/lib/bin/libmcc2.a
-	mkdir -p ./selfhost/lib/bin
-	ar rcs ./selfhost/lib/bin/libmcc2.a $(SELF_LIBOBJS)
+# Compile self-hosted compiler objects
+$(value $(1)_BASE_DIR)/%.o: ./src/%.c $(value $(1)_MCC)
+	$(value $(1)_MCC) -c $$< -d PREDEFINED_MACRO -o $$@.s $(CFLAGS_SELF)
+	cc -c -o $$@ -no-pie $$@.s -lc -MD -g
 
-./selfhost/lib/%.o: ./lib/%.c ./mcc2
-	./mcc2 -c $< -d PREDEFINED_MACRO -o $@.s $(CFLAGS_SELF)
-	cc -c -o $@ -no-pie $@.s -lc -MD -g
+# Make self-hosted compiler
+$(value $(1)_TARGET_COMPILER): $(value $(1)_BASE_DIR) $(value $(1)_SELF_OBJS) $(value $(1)_BASE_DIR)/lib/bin/libmcc2.a
+	@echo "Compiling self-hosted compiler: $(value $(1)_TARGET_COMPILER)"
+	cc -o $(value $(1)_TARGET_COMPILER) $(value $(1)_SELF_OBJS) $(value $(1)_BASE_DIR)/lib/bin/libmcc2.a $(value $(1)_LDFLAGS_SELF)
 
-./selfhost/test/c/%.o: test/c/%.c
-	./selfhost/mcc2t -c $< -o $@.s -I ./test/testinc -I ./src -I ./lib -d PREDEFINED_MACRO -x plvar -g
-	cc -c -o $@ $@.s -static
+# Target rule for the self-hosted compiler
+$(1): $(value $(1)_BASE_DIR) $(value $(1)_TARGET_COMPILER)
 
-selft: self $(TEST_SELF_OBJS)
-	cc -o test.exe $(TEST_SELF_OBJS) -L./lib/bin -lmcc2
-	./test.exe
+# Compile test objects for self-hosted compiler
+$(value $(1)_BASE_DIR)/test/c/%.o: test/c/%.c
+	$(value $(1)_TARGET_COMPILER) -c $$< -o $$@.s -I ./test/testinc -I ./src -I ./lib -d PREDEFINED_MACRO -x plvar -g
+	cc -c -o $$@ $$@.s -static
+
+# Compile test executable for self-hosted compiler
+$(1)t: $(1) $(value $(1)_SELF_TEST_OBJS)
+	cc -o $(value $(1)_BASE_DIR)/test/test.exe $(value $(1)_SELF_TEST_OBJS) $(value $(1)_LDFLAGS_SELF)
+	$(value $(1)_BASE_DIR)/test/test.exe
+
+endef
+
+# arg1 : task name
+# arg2 : base directory name
+# arg3 : use compiler path
+$(eval $(call COMPILE_SELF,self1,selfhost1,./mcc2))
+$(eval $(call COMPILE_SELF,self2,selfhost2,./self/selfhost1/mcc2))
+$(eval $(call COMPILE_SELF,self3,selfhost3,./self/selfhost2/mcc2))
+
 
 #############################################
 # Utilities and tools
@@ -115,8 +146,6 @@ clean:
 	rm -f src/*.o src/*.d
 	rm -f lib/*.o lib/*.d
 	rm -f test/c/*.o test.exe test/c/*.s
-	rm -f ./selfhost/*.o ./selfhost/*.s ./selfhost/mcc2t
-	rm -f ./selfhost/test/c/*.o ./selfhost/test/c/*.s
-	rm -f ./selfhost/lib/*.o ./selfhost/lib/bin/libmcc2.a
+	rm -rf ./self
 
-.PHONY: test clean tmp test2 test3 test4 self selft dwarf a
+.PHONY: test clean tmp test2 self selft dwarf self1
