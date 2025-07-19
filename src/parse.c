@@ -1004,6 +1004,16 @@ static QualType* declspec(StorageClassKind* sck){
             case K_UNSIGNED + K_LONG + K_INT:
                 ty = ty_ulong;
                 break;
+            case K_LONG + K_LONG:
+            case K_LONG + K_LONG + K_INT:
+            case K_SIGNED + K_LONG + K_LONG:
+            case K_SIGNED + K_LONG + K_LONG + K_INT:
+                ty = ty_llong;
+                break;
+            case K_UNSIGNED + K_LONG + K_LONG:
+            case K_UNSIGNED + K_LONG + K_LONG + K_INT:
+                ty = ty_ullong;
+                break;
             default:
                 error_tok(get_token(), "Invalid type.\n");
                 break;

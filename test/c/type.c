@@ -37,6 +37,28 @@ int test_type(){
     long* lp;
     ASSERT(sizeof(lp), 8);
 
+    printf("test of long long type..\n");
+    long long ll; ll = 17;
+    ASSERT(ll, 17);
+    ASSERT(sizeof(ll), 8);
+    long long llarr[3];
+    ASSERT(sizeof(llarr), 24);
+    long long* llp;
+    ASSERT(sizeof(llp), 8);
+    ll = -3;
+    ASSERT(ll, -3);
+
+    printf("test of unsigned long long type..\n");
+    unsigned long long ull; ull = 17;
+    ASSERT(ull, 17);
+    ASSERT(sizeof(ull), 8);
+    unsigned long long ullarr[3];
+    ASSERT(sizeof(ullarr), 24);
+    unsigned long long* ullp;
+    ASSERT(sizeof(ullp), 8);
+    ull = -3;
+    ASSERT(ull, 18446744073709551613ULL); // -3のunsigned long long表現
+
     printf("test of struct..\n");
     struct {
         char c;
@@ -72,7 +94,7 @@ int test_type(){
     struct_array[5].c = 10;
     struct_array[5].s = 235;
     ASSERT(struct_array[5].c, 10);
-    ASSERT(struct_array[5].s, 235);    
+    ASSERT(struct_array[5].s, 235);
 
     struct abc_struct {
         int a;
