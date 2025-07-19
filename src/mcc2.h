@@ -168,6 +168,7 @@ typedef enum TokenKind {
     TK_UNDEF,                   // #undef
     TK_PRAGMA,                  // #pragma
     TK_ONCE,                    // #pragma once
+    TK_ERROR,                   // #error
     TK_PP_IF,
     TK_PP_IFDEF,
     TK_PP_IFNDEF,

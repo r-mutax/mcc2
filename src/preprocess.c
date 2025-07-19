@@ -175,6 +175,17 @@ Token* preprocess(Token* token){
                     }
                     cur->next = next_newline(target);
                     break;
+                case TK_ERROR:
+                    {
+                        Token* msg = next_token(target);
+                        if(msg->kind != TK_NEWLINE){
+                            error_at_src(msg->pos, msg->file, "preprocessor error: %s", get_token_string(msg));
+                        } else {
+                            error_at_src(msg->pos, msg->file, "preprocessor error");
+                        }
+                    }
+                    cur->next = next_newline(target);
+                    break;
                 default:
                     break;
             }
