@@ -1,4 +1,5 @@
 #include "testinc.h"
+#include "include_next.h"
 
 #define TEST_MACRO_2 1 + 2
 
@@ -167,5 +168,9 @@ int TEST_CIRC_A = 30;
     FUNC_MACRO_VACANCY(3);
     FUNC_MACRO_VACANCY(XXXXXXX_NODEFINED);
 
+
+    printf("test of include_next..\n");
+    int include_next = INCLUDE_NEXT;
+    ASSERT(include_next, 10);
     return 0;
 }

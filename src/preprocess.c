@@ -26,6 +26,7 @@ Token tok_place_holder = {
 Macro* macros = NULL;
 
 static char* find_include_file(char* filename);
+static char* find_include_next_file(char* filename);
 
 static void add_macro(Token* target);
 static void add_macro_objlike(Token* target);
@@ -139,6 +140,37 @@ Token* preprocess(Token* token){
                         continue;
                     }
                     break;
+                case TK_INCLUDE_NEXT:
+                    {
+                        char* filepath = get_token_string(next_token(target));
+                        char* path = find_include_next_file(filepath);
+                        if(!path){
+                            error("file not found: %s", filepath);
+                        }
+
+                        Token* newline = next_newline(target);
+                        if(!check_pragma_once_include(path))
+                        {
+                            Token* include = tokenize(path);
+                            if(include->kind == TK_EOF){
+                                Token* tail = include;
+                                while(next_token(tail)){
+                                    if(next_token(tail)->kind != TK_EOF){
+                                        tail = next_token(tail);
+                                    } else {
+                                        break;
+                                    }
+                                }
+                                tail->next = next_token(newline);
+                                cur->next = include;
+                            } else {
+                                cur->next = next_token(newline);
+                            }
+                        } else {
+                            cur->next = next_token(newline);
+                        }
+                        continue;
+                    }
                 case TK_DEFINE:
                         add_macro(target);
                         cur->next = next_newline(target);
@@ -429,6 +461,40 @@ static char* find_include_file(char* filename){
         char* path = format_string("%s/%s", p->path, filename);
         if(fopen(path, "r")){
             return path;
+        }
+    }
+
+    return NULL;
+}
+
+static char* find_include_next_file(char* filename){
+
+    int read_cnt = count_include_file(filename);
+    if(read_cnt == 0){
+        // 一度も読み込んでいないので、エラーとする
+        error("include_next: file not found: %s", filename);
+    }
+
+    read_cnt++;
+    IncludePath* p;
+    int find_cnt = 0;
+    for(p = include_paths; p; p = p->next){
+        char* path = format_string("%s/%s", p->path, filename);
+        if(fopen(path, "r")){
+            find_cnt++;
+            if(find_cnt == read_cnt){
+                return path;
+            }
+        }
+    }
+
+    for(p = std_include_paths; p; p = p->next){
+        char* path = format_string("%s/%s", p->path, filename);
+        if(fopen(path, "r")){
+            find_cnt++;
+            if(find_cnt == read_cnt){
+                return path;
+            }
         }
     }
 

@@ -57,4 +57,5 @@ static KEYWORD_MAP preprocess_keyword_map[] = {
     {   "endif",        TK_PP_ENDIF },
     {   "pragma",       TK_PRAGMA   },
     {   "error",        TK_ERROR    },
+    {   "include_next", TK_INCLUDE_NEXT },
 };
