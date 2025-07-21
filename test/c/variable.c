@@ -23,6 +23,14 @@ struct INIT_STRUCT g_is4 = { .b = 2, 4, .d = 4 };
 
 static struct INIT_STRUCT g_is5 = { 1, 2 };
 
+union INIT_UNION{
+    char a;
+    short b;
+    int c;
+    long d;
+};
+union INIT_UNION g_iu1 = { 3 };
+
 static int g_init_arr[2] = { 5, 9 };
 static int g_init_arr_init_lack[2] = { 5 };
 static int g_init_arr_not_specified_size[] = { 7, 10, 45};
@@ -270,6 +278,15 @@ int test_variable(){
     printf("test of string table initialize...\n");
     ASSERT(strcmp(init_str_table[0], "hello") == 0, true);
     ASSERT(strcmp(init_str_table[1], "world") == 0, true);
+
+    printf("test of union initialize...\n");
+    union INIT_UNION iu1 = { 255 };
+    ASSERT(iu1.a, -1);
+    ASSERT(iu1.b, 255);
+    ASSERT(iu1.c, 255);
+    ASSERT(iu1.d, 255);
+
+    ASSERT(g_iu1.a, 3);
 
     return 0;
 }

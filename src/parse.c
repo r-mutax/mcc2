@@ -604,6 +604,33 @@ static Relocation* make_relocation(Initializer* init, QualType* qty){
             }
             return head.next;
         }
+        case TY_UNION:
+        {
+            // 共用体のサイズ
+            int union_size = get_qtype_size(qty);
+
+            // 初期化するサイズ
+            Node* lhs = init->init_node->lhs;
+            int member_size = get_qtype_size(lhs->qtype);
+
+            Relocation head = {};
+            Relocation* cur = &head;
+            cur->next = calloc(1, sizeof(Relocation));
+            cur->next->data = emit2(init->init_node->rhs, &(cur->next->label));
+            cur->next->size = member_size;
+            cur = cur->next;
+
+            int remain_size = union_size - member_size;
+            if(remain_size > 0){
+                // 残りのサイズ分のパディングを入れる
+                Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                reloc_remain->data = 0;
+                reloc_remain->size = remain_size;
+                reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                cur->next = reloc_remain;
+            }
+            return head.next;
+        }
         default:
         {
             Relocation* reloc = calloc(1, sizeof(Relocation));
@@ -773,7 +800,57 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         }
             break;
         case TY_UNION:
-            error("not implemented initializer, struct, union.\n");
+        {
+            if(consume_token(TK_L_BRACKET)){
+                // 書き込みメンバの型を決定する
+                Node* var_mem_node = NULL;
+                if(consume_token(TK_DOT)){
+                    Token* tok = expect_ident();
+                    Ident* ident_mem = get_member(ty->type, tok);
+                    if(!ident_mem){
+                        error_tok(tok, "Not a member.\n");
+                    }
+                    var_mem_node = new_node_member(var_node, ident_mem);
+                    expect_token(TK_ASSIGN);
+                } else {
+                    var_mem_node = new_node_member(var_node, ty->type->member->ident);
+                }
+
+                init->child = initialize(var_mem_node->qtype, var_mem_node);
+                init->init_node = init->child->init_node;
+
+                if(consume_token(TK_COMMA)){
+
+                    do {
+                        if(consume_token(TK_DOT)){
+                            Token* tok = expect_ident();
+                            Ident* ident_mem = get_member(ty->type, tok);
+                            if(!ident_mem){
+                                error_tok(tok, "Not a member.\n");
+                            }
+                            expect_token(TK_ASSIGN);
+                        }
+                        // 余分な初期化子がある
+                        Token* excess_tok = get_token();
+                        warn_tok(excess_tok, "excess initializers for union.\n");
+                        initialize(var_mem_node->qtype, var_mem_node);
+                    } while(consume_token(TK_COMMA));
+                    expect_token(TK_R_BRACKET);
+                } else if(consume_token(TK_R_BRACKET)){
+                    // 初期化子が1つだけで終わった
+                    // 何もしない
+                } else {
+                    error_tok(get_token(), "expected '}' token.\n");
+                }
+
+                if(!consume_token(TK_R_BRACKET)){
+                    while(consume_token(TK_COMMA)){
+                        Token* excess_tok = get_token();
+                        warn_tok(excess_tok, "excess initializers for union.\n");
+                    }
+                }
+            }
+        }
             break;
         default:
             init->init_node = new_node(ND_ASSIGN, var_node, assign());
