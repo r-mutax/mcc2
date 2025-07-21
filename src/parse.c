@@ -604,6 +604,33 @@ static Relocation* make_relocation(Initializer* init, QualType* qty){
             }
             return head.next;
         }
+        case TY_UNION:
+        {
+            // 共用体のサイズ
+            int union_size = get_qtype_size(qty);
+
+            // 初期化するサイズ
+            Node* lhs = init->init_node->lhs;
+            int member_size = get_qtype_size(lhs->qtype);
+
+            Relocation head = {};
+            Relocation* cur = &head;
+            cur->next = calloc(1, sizeof(Relocation));
+            cur->next->data = emit2(init->init_node->rhs, &(cur->next->label));
+            cur->next->size = member_size;
+            cur = cur->next;
+
+            int remain_size = union_size - member_size;
+            if(remain_size > 0){
+                // 残りのサイズ分のパディングを入れる
+                Relocation* reloc_remain = calloc(1, sizeof(Relocation));
+                reloc_remain->data = 0;
+                reloc_remain->size = remain_size;
+                reloc_remain->is_padding = true;   // パディングではないが、.zeroで入れてほしいのでパディング扱いする
+                cur->next = reloc_remain;
+            }
+            return head.next;
+        }
         default:
         {
             Relocation* reloc = calloc(1, sizeof(Relocation));
@@ -775,7 +802,6 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         case TY_UNION:
         {
             if(consume_token(TK_L_BRACKET)){
-                
                 // 書き込みメンバの型を決定する
                 Node* var_mem_node = NULL;
                 if(consume_token(TK_DOT)){
