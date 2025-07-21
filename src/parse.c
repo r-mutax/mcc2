@@ -773,7 +773,58 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         }
             break;
         case TY_UNION:
-            error("not implemented initializer, struct, union.\n");
+        {
+            if(consume_token(TK_L_BRACKET)){
+                
+                // 書き込みメンバの型を決定する
+                Node* var_mem_node = NULL;
+                if(consume_token(TK_DOT)){
+                    Token* tok = expect_ident();
+                    Ident* ident_mem = get_member(ty->type, tok);
+                    if(!ident_mem){
+                        error_tok(tok, "Not a member.\n");
+                    }
+                    var_mem_node = new_node_member(var_node, ident_mem);
+                    expect_token(TK_ASSIGN);
+                } else {
+                    var_mem_node = new_node_member(var_node, ty->type->member->ident);
+                }
+
+                init->child = initialize(var_mem_node->qtype, var_mem_node);
+                init->init_node = init->child->init_node;
+
+                if(consume_token(TK_COMMA)){
+
+                    do {
+                        if(consume_token(TK_DOT)){
+                            Token* tok = expect_ident();
+                            Ident* ident_mem = get_member(ty->type, tok);
+                            if(!ident_mem){
+                                error_tok(tok, "Not a member.\n");
+                            }
+                            expect_token(TK_ASSIGN);
+                        }
+                        // 余分な初期化子がある
+                        Token* excess_tok = get_token();
+                        warn_tok(excess_tok, "excess initializers for union.\n");
+                        initialize(var_mem_node->qtype, var_mem_node);
+                    } while(consume_token(TK_COMMA));
+                    expect_token(TK_R_BRACKET);
+                } else if(consume_token(TK_R_BRACKET)){
+                    // 初期化子が1つだけで終わった
+                    // 何もしない
+                } else {
+                    error_tok(get_token(), "expected '}' token.\n");
+                }
+
+                if(!consume_token(TK_R_BRACKET)){
+                    while(consume_token(TK_COMMA)){
+                        Token* excess_tok = get_token();
+                        warn_tok(excess_tok, "excess initializers for union.\n");
+                    }
+                }
+            }
+        }
             break;
         default:
             init->init_node = new_node(ND_ASSIGN, var_node, assign());
