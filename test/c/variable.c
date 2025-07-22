@@ -281,17 +281,12 @@ int test_variable(){
 
     printf("test of union initialize...\n");
     union INIT_UNION iu1 = { 255 };
-    printf("iu1.a = %d\n", iu1.a);
     ASSERT(iu1.a, -1);
-    printf("iu1.b = %d\n", iu1.b);
     ASSERT(iu1.b, 255);
-    printf("iu1.c = %d\n", iu1.c);
     ASSERT(iu1.c, 255);
-    printf("iu1.d = %ld\n", iu1.d);
     ASSERT(iu1.d, 255);
 
     printf("test of global union initialize...\n");
-    printf("g_iu1.a = %d\n", g_iu1.a);
     ASSERT(g_iu1.a, 3);
 
     return 0;
