@@ -67,6 +67,7 @@ struct SrcFile{
     char*   body;
     int     label;
     bool    labeled;
+    SrcFile* next;
 };
 
 struct IF_GROUP {
@@ -164,6 +165,7 @@ typedef enum TokenKind {
 
     // preprocess
     TK_INCLUDE,                 // #include
+    TK_INCLUDE_NEXT,            // #include_next
     TK_DEFINE,                  // #define
     TK_UNDEF,                   // #undef
     TK_PRAGMA,                  // #pragma
@@ -678,6 +680,7 @@ void output_token(Token* tok);
 Token* tokenize_string(char* src);
 Token* scan(char* src);
 Token* create_token(TokenKind kind, char* str, int len);
+int count_include_file(char* filename);
 
 // type.c
 extern SimpleType* ty_void;

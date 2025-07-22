@@ -6,6 +6,7 @@ on:
       - '.github/workflows/mcc2.yml'
       - 'src/*'
       - 'test/*'
+      - 'test/c/*'
       - 'lib/*'
       - 'lib/bin/*'
       - 'Makefile'

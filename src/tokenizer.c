@@ -2,6 +2,7 @@
 #include "keyword_map.h"
 
 Token* token;
+SrcFile* src_files;
 SrcFile* cur_file;
 extern bool is_preprocess;
 static long row = 0;
@@ -19,6 +20,17 @@ Token* delete_newline_token(Token* tok);
 
 Token* tokenize(char* path){
     SrcFile* file = read_file(path);
+
+    if(!src_files){
+        src_files = file;
+    } else {
+        SrcFile* last = src_files;
+        while(last->next) {
+            last = last->next;
+        }
+        last->next = file;
+    }
+
     cur_file = file;
     if(!cinfo.compile_file){
         cinfo.compile_file = file;
@@ -592,4 +604,17 @@ Token* create_token(TokenKind kind, char* str, int len){
     tok->pos = str;
     tok->len = len;
     return tok;
+}
+
+// 指定名のヘッダを何回読み込んだか数える
+int count_include_file(char* filename){
+    int count = 0;
+    SrcFile* file = src_files;
+    while(file){
+        if(strcmp(file->name, filename) == 0){
+            count++;
+        }
+        file = file->next;
+    }
+    return count;
 }

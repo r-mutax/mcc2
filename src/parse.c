@@ -610,13 +610,14 @@ static Relocation* make_relocation(Initializer* init, QualType* qty){
             int union_size = get_qtype_size(qty);
 
             // 初期化するサイズ
-            Node* lhs = init->init_node->lhs;
+            Node* assign = init->init_node->body->next;
+            Node* lhs = assign->lhs;
             int member_size = get_qtype_size(lhs->qtype);
 
             Relocation head = {};
             Relocation* cur = &head;
             cur->next = calloc(1, sizeof(Relocation));
-            cur->next->data = emit2(init->init_node->rhs, &(cur->next->label));
+            cur->next->data = emit2(assign->rhs, &(cur->next->label));
             cur->next->size = member_size;
             cur = cur->next;
 
@@ -802,6 +803,10 @@ static Initializer* initialize(QualType* ty, Node* var_node){
         case TY_UNION:
         {
             if(consume_token(TK_L_BRACKET)){
+                Node* block = new_node(ND_BLOCK, NULL, NULL);
+                Node* memzero = new_node_memzero(var_node);
+                block->body = memzero;
+
                 // 書き込みメンバの型を決定する
                 Node* var_mem_node = NULL;
                 if(consume_token(TK_DOT)){
@@ -817,7 +822,8 @@ static Initializer* initialize(QualType* ty, Node* var_node){
                 }
 
                 init->child = initialize(var_mem_node->qtype, var_mem_node);
-                init->init_node = init->child->init_node;
+                memzero->next = init->child->init_node;
+                init->init_node = block;
 
                 if(consume_token(TK_COMMA)){
 
