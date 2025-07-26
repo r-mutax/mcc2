@@ -7,8 +7,8 @@
 #include "mcc2_lib.h"
 
 #else
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdarg.h>
@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <bits/getopt_core.h>
 #endif
+
+
 
 // include mcc2 libraries
 #include "pointer_list.h"
@@ -87,6 +89,7 @@ typedef enum TokenKind {
     TK_MINUS_MINUS,             // --
     TK_MUL,                     // *
     TK_DIV,                     // /
+    TK_BACK_SLASH,              // BACK SLASH
     TK_NOT,                     // !
     TK_PERCENT,                 // %
     TK_PERCENT_EQUAL,           // %=
@@ -657,6 +660,7 @@ void parse(Token* tok);
 // preprocess.c
 Token* preprocess(Token* token);
 void add_include_path(char* path);
+void add_std_include_path(char* path);
 void add_predefine_macro(char* path);
 void init_preprocess();
 

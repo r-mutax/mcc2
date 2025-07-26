@@ -123,6 +123,9 @@ Token* scan(char* src){
                     cur = new_token(TK_DIV, cur, p++, 1);
                 }
                 break;
+            case '\\':
+                cur = new_token(TK_BACK_SLASH, cur, p++, 1);
+                break;
             case '%':
                 if(*(p + 1) == '='){
                     cur = new_token(TK_PERCENT_EQUAL, cur, p, 2);
@@ -289,19 +292,20 @@ Token* scan(char* src){
                         cur = new_token(TK_HASH_HASH, cur, p, 2);
                         p += 2;
                     } else {
+                        char* hash = p;
+                        p++;
                         // space除去
                         while(isspace(*p)){
                             p++;
                         }
 
-                        if(is_ident1(*(p+1))){
-                            char* hash = p;
-                            char* s = p + 1;
-                            p += 2;
+                        if(is_ident1(*(p))){
+                            char* s = p;
+                            p++;
                             while(is_ident2(*p)) {
                                 p++;
                             }
-                            TokenKind kind = check_preprocess_keyword(s, p - s);
+                            TokenKind kind = check_preprocess_keyword(s, p - s );
                             if(kind == TK_IDENT){
                                 cur = new_token(TK_HASH, cur, hash, 1);
                                 cur = new_token(TK_IDENT, cur, s, 0);

@@ -85,6 +85,12 @@ int main(int argc, char **argv){
     char* dir = get_dirname(filename);
     add_include_path(dir);
 
+    // add standard include path
+    add_std_include_path("/usr/local/include");
+    add_std_include_path("/usr/include/x86_64-linux-gnu");
+    add_std_include_path("/usr/lib/gcc/x86_64-linux-gnu/13/include");
+    add_std_include_path("/usr/include");
+
     // builtin def scan
     Token* tok = tokenize_string(builtin_def);
 
