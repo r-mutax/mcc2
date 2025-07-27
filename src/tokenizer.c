@@ -163,6 +163,9 @@ Token* scan(char* src){
             case '^':
                 cur = new_token(TK_HAT, cur, p++ , 1);
                 break;
+            case '~':
+                cur = new_token(TK_TILDE, cur, p++ , 1);
+                break;
             case '|':
                 if(*(p + 1) == '|'){
                     cur = new_token(TK_PIPE_PIPE, cur, p , 2);

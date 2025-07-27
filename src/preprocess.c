@@ -953,6 +953,8 @@ static int pp_unary(){
         return -pp_primary();
     } else if(pp_consume(TK_NOT)){
         return !pp_primary();
+    } else if(pp_consume(TK_TILDE)){
+        return ~pp_primary();
     } else {
         return pp_primary();
     }
