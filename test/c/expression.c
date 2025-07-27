@@ -88,6 +88,12 @@ int test_expression(){
     ASSERT(!6, 0);
     ASSERT(!0, 1);
 
+    printf("test of bitnot operator...\n");
+    ASSERT(~0, -1);
+    ASSERT(~1, -2);
+    char c = 127;
+    ASSERT(~c, -128);
+
     printf("test of sizeof ...\n");
     ASSERT(sizeof(1), 4);
     ASSERT(sizeof(1), 4);

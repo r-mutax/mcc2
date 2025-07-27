@@ -1687,6 +1687,10 @@ static Node* unary(){
         Node* node =  new_node(ND_NOT, cast(), NULL);
         node->pos = tok;
         return node;
+    } else if(consume_token(TK_TILDE)){
+        Node* node =  new_node(ND_BIT_NOT, cast(), NULL);
+        node->pos = tok;
+        return node;
     } else if(consume_token(TK_PLUS_PLUS)){
         Node* node = unary();
         node = new_node(ND_ASSIGN, node, new_node_add(node, new_node_num(1)));

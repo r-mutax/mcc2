@@ -89,6 +89,7 @@ typedef enum TokenKind {
     TK_MINUS_MINUS,             // --
     TK_MUL,                     // *
     TK_DIV,                     // /
+    TK_TILDE,                   // ~
     TK_BACK_SLASH,              // BACK SLASH
     TK_NOT,                     // !
     TK_PERCENT,                 // %
@@ -286,6 +287,7 @@ typedef enum NodeKind {
     ND_BIT_AND,
     ND_BIT_XOR,
     ND_BIT_OR,
+    ND_BIT_NOT,
     ND_L_BITSHIFT,
     ND_R_BITSHIFT,
     ND_ASSIGN,
@@ -399,6 +401,7 @@ typedef enum IRCmd{
     IR_BIT_AND,
     IR_BIT_XOR,
     IR_BIT_OR,
+    IR_BIT_NOT,
     IR_L_BIT_SHIFT,
     IR_R_BIT_SHIFT,
     IR_ASSIGN,

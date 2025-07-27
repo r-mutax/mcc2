@@ -737,6 +737,23 @@ static void convert_ir2x86asm(IR* ir){
             case IR_BIT_OR:
                 emit_binop("or", ir->t, ir->s1, ir->s2);
                 break;
+            case IR_BIT_NOT:
+                {
+                    activateRegLhs(ir->t);
+
+                    if(ir->s1->kind == REG_IMM){
+                        // not命令はレジスタしか受け取れないので、即値はレジスタに変換する
+                        activateRegLhs(ir->s1);
+                    } else {
+                        activateRegRhs(ir->s1);
+                    }
+                    print("\tnot %s\n", ir->s1->rreg);
+                    if(ir->t){
+                        print("\tmov %s, %s\n", ir->t->rreg, ir->s1->rreg);
+                    }
+                    freeReg(ir->s1);
+                }
+                break;
             case IR_L_BIT_SHIFT:
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
