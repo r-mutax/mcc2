@@ -42,7 +42,7 @@ void warn_tok(Token* tok, char* fmt, ...){
 
 void error_tok(Token* tok, char* fmt, ...){
     char* user_input = tok->file->body;
-    char* filename = tok->file->name;
+    char* filename = tok->file->path;
     char* loc = tok->pos;
 
     // 行頭を見つける
@@ -83,7 +83,7 @@ void error_tok(Token* tok, char* fmt, ...){
 
 void error_at_src(char* pos, SrcFile* src, char* fmt, ...){
     char* user_input = src->body;
-    char* filename = src->name;
+    char* filename = src->path;
 
     // 行頭を見つける
     char *line = pos;
