@@ -753,7 +753,11 @@ static Token* expand_defined(Token* tok){
             }
             target = next_token(target);
 
-            cur->next = find_macro(ident, macros) ? &tok_one : &tok_zero;
+            if(find_macro(ident, macros)){
+                cur->next = copy_token(&tok_one);
+            } else {
+                cur->next = copy_token(&tok_zero);
+            }
             cur->next->next = target;
         } else {
             cur = next_token(cur);
