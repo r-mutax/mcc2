@@ -965,6 +965,9 @@ static bool check_storage_class_keyword(StorageClassKind* sck, Token* tok){
 
 static QualType* declspec(StorageClassKind* sck){
 
+    // GNU拡張の__extension__は無視する
+    consume_token(TK_GNU_EXTENSION);
+
     int type_flg = 0;
     bool is_const = false;
     bool is_restrict = false;
@@ -1315,6 +1318,9 @@ static SimpleType* enum_spec(){
 }
 
 static Node* expr(){
+    // GNU拡張の__extension__は無視する
+    consume_token(TK_GNU_EXTENSION);
+
     Node* node = assign();
     while(consume_token(TK_COMMA)){
         node = new_node(ND_COMMA, node, assign());

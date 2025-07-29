@@ -167,6 +167,9 @@ typedef enum TokenKind {
     TK_VA_ARG,                  // va_arg
     TK_VA_LIST,                 // va_list
 
+    // gnu extensions
+    TK_GNU_EXTENSION,           // __extension__
+
     // preprocess
     TK_INCLUDE,                 // #include
     TK_INCLUDE_NEXT,            // #include_next

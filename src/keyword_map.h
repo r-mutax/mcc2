@@ -43,6 +43,8 @@ static KEYWORD_MAP keyword_map[] = {
     {   "__builtin_va_start",       TK_VA_START },
     {   "__builtin_va_end",         TK_VA_END   },
     {   "__builtin_va_arg",         TK_VA_ARG   },
+    // GNU extensions
+    {   "__extension__", TK_GNU_EXTENSION },
 };
 
 static KEYWORD_MAP preprocess_keyword_map[] = {
