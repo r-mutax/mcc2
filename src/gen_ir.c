@@ -535,6 +535,12 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_EQUAL, ret, gen_expr(node->lhs), new_RegImm(0));
             return ret;
         }
+        case ND_BIT_NOT:
+        {
+            Reg* ret = new_Reg();
+            new_IR(IR_BIT_NOT, ret, gen_expr(node->lhs), NULL);
+            return ret;
+        }
         case ND_NOP:
         {
             // 現状ND_NOPとするのはva_end()のみ

@@ -25,7 +25,7 @@ Token tok_place_holder = {
 
 Macro* macros = NULL;
 
-static char* find_include_file(char* filename);
+static char* find_include_file(char* filename, bool is_std);
 static char* find_include_next_file(char* filename);
 
 static void add_macro(Token* target);
@@ -43,6 +43,7 @@ static Token* read_if(Token* token);
 static bool eval_if_cond(Token* token);
 static bool eval_expr(Token* token);
 static Token* expand_defined(Token* tok);
+static Token* replace_ident_to_zero(Token* tok);
 
 // constant_expr for preprocessor
 Token* expr_token = NULL;
@@ -90,7 +91,7 @@ static int get_token_int(Token* token);
 static void print_macros();
 
 void init_preprocess(){
-    for(int i = 0; i < 2; i++){
+    for(int i = 0; i < 403; i++){
         tokenize_string(PRE_MACRO[i]);
     }
 }
@@ -106,8 +107,25 @@ Token* preprocess(Token* token){
             switch(target->kind){
                 case TK_INCLUDE:
                     {
-                        char* filepath = get_token_string(next_token(target));
-                        char* path = find_include_file(filepath);
+                        char* filepath = NULL;
+                        bool is_std = false;
+                        if(next_token(target)->kind == TK_L_ANGLE_BRACKET){
+                            is_std = true;
+                            char filename[256] = {};
+                            target = next_token(target);    // <
+                            target = next_token(target);    // filename first token
+                            while(target->kind != TK_R_ANGLE_BRACKET){
+                                if(target->kind == TK_EOF){
+                                    error("include file not found: %s", filename);
+                                }
+                                strcat(filename, get_token_string(target));
+                                target = target->next;
+                            }
+                            filepath = filename;
+                        } else {
+                            filepath = get_token_string(next_token(target));
+                        }
+                        char* path = find_include_file(filepath, is_std);
                         if(!path){
                             error("file not found: %s", filepath);
                         }
@@ -259,6 +277,13 @@ void add_include_path(char* path){
     p->path = path;
     p->next = include_paths;
     include_paths = p;
+}
+
+void add_std_include_path(char* path){
+    IncludePath* p = calloc(1, sizeof(IncludePath));
+    p->path = path;
+    p->next = std_include_paths;
+    std_include_paths = p;
 }
 
 void add_predefine_macro(char* name){
@@ -448,12 +473,14 @@ static Token* replace_token(Token* tok, Macro* mac, Macro* list){
     return head.next;
 }
 
-static char* find_include_file(char* filename){
+static char* find_include_file(char* filename, bool is_std){
     IncludePath* p;
-    for(p = include_paths; p; p = p->next){
-        char* path = format_string("%s/%s", p->path, filename);
-        if(fopen(path, "r")){
-            return path;
+    if(!is_std){
+        for(p = include_paths; p; p = p->next){
+            char* path = format_string("%s/%s", p->path, filename);
+            if(fopen(path, "r")){
+                return path;
+            }
         }
     }
 
@@ -560,7 +587,7 @@ static void add_macro_funclike(Token* target){
 static void add_macro(Token* target){
     Token* name = next_token(target);
 
-    if(next_token(name)->kind == TK_L_PAREN){
+    if(name->next->kind == TK_L_PAREN){
         add_macro_funclike(target);
     } else {
         add_macro_objlike(target);
@@ -726,12 +753,33 @@ static Token* expand_defined(Token* tok){
             }
             target = next_token(target);
 
-            cur->next = find_macro(ident, macros) ? &tok_one : &tok_zero;
+            if(find_macro(ident, macros)){
+                cur->next = copy_token(&tok_one);
+            } else {
+                cur->next = copy_token(&tok_zero);
+            }
             cur->next->next = target;
         } else {
             cur = next_token(cur);
         }
     }
+    return head.next;
+}
+
+static Token* replace_ident_to_zero(Token* tok){
+    Token head = {};
+    Token* cur = &head;
+    cur->next = tok;
+
+    while(cur && cur->next){
+        Token* target = next_token(cur);
+        if(target->kind == TK_IDENT){
+            cur->next = copy_token(&tok_zero);
+            cur->next->next = target->next;
+        }
+        cur = next_token(cur);
+    }
+
     return head.next;
 }
 
@@ -757,6 +805,8 @@ static Token* expand_macros(Token* token){
 static bool eval_expr(Token* token){
     token = expand_defined(token);
     token = expand_macros(token);
+    token = replace_ident_to_zero(token);
+
     return pp_constant_expr(token);
 }
 
@@ -903,6 +953,8 @@ static int pp_unary(){
         return -pp_primary();
     } else if(pp_consume(TK_NOT)){
         return !pp_primary();
+    } else if(pp_consume(TK_TILDE)){
+        return ~pp_primary();
     } else {
         return pp_primary();
     }

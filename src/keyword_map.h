@@ -18,6 +18,8 @@ static KEYWORD_MAP keyword_map[] = {
     {   "long",         TK_LONG     },
     {   "void",         TK_VOID     },
     {   "_Bool",        TK_BOOL     },
+    {   "float",        TK_FLOAT    },
+    {   "double",       TK_DOUBLE   },
     {   "sizeof",       TK_SIZEOF   },
     {   "break",        TK_BREAK    },
     {   "continue",     TK_CONTINUE },
@@ -43,6 +45,14 @@ static KEYWORD_MAP keyword_map[] = {
     {   "__builtin_va_start",       TK_VA_START },
     {   "__builtin_va_end",         TK_VA_END   },
     {   "__builtin_va_arg",         TK_VA_ARG   },
+    // GNU extensions
+    {   "__extension__", TK_GNU_EXTENSION },
+    {   "__attribute__", TK_GNU_ATTRIBUTE },
+    // GNU attributes
+    {   "__nothrow__",  TK_GNU_ATTR_NOTHROW },
+    {   "nothrow",      TK_GNU_ATTR_NOTHROW },
+    {   "__leaf__",     TK_GNU_ATTR_LEAF },
+    {   "leaf",         TK_GNU_ATTR_LEAF },
 };
 
 static KEYWORD_MAP preprocess_keyword_map[] = {

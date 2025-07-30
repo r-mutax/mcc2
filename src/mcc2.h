@@ -7,8 +7,8 @@
 #include "mcc2_lib.h"
 
 #else
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdarg.h>
@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <bits/getopt_core.h>
 #endif
+
+
 
 // include mcc2 libraries
 #include "pointer_list.h"
@@ -87,6 +89,8 @@ typedef enum TokenKind {
     TK_MINUS_MINUS,             // --
     TK_MUL,                     // *
     TK_DIV,                     // /
+    TK_TILDE,                   // ~
+    TK_BACK_SLASH,              // BACK SLASH
     TK_NOT,                     // !
     TK_PERCENT,                 // %
     TK_PERCENT_EQUAL,           // %=
@@ -142,6 +146,8 @@ typedef enum TokenKind {
     TK_LONG,                    // "long"
     TK_VOID,                    // "void"
     TK_BOOL,                    // "bool"
+    TK_FLOAT,                   // "float"
+    TK_DOUBLE,                  // "double"
     TK_STRUCT,                  // "struct"
     TK_ENUM,                    // "enum"
     TK_UNION,                   // "union"
@@ -162,6 +168,14 @@ typedef enum TokenKind {
     TK_VA_END,                  // va_end
     TK_VA_ARG,                  // va_arg
     TK_VA_LIST,                 // va_list
+
+    // gnu extensions
+    TK_GNU_EXTENSION,           // __extension__
+    TK_GNU_ATTRIBUTE,           // __attribute__
+
+    // gnu attributes
+    TK_GNU_ATTR_NOTHROW,        // __nothrow__
+    TK_GNU_ATTR_LEAF,           // __leaf__
 
     // preprocess
     TK_INCLUDE,                 // #include
@@ -283,6 +297,7 @@ typedef enum NodeKind {
     ND_BIT_AND,
     ND_BIT_XOR,
     ND_BIT_OR,
+    ND_BIT_NOT,
     ND_L_BITSHIFT,
     ND_R_BITSHIFT,
     ND_ASSIGN,
@@ -396,6 +411,7 @@ typedef enum IRCmd{
     IR_BIT_AND,
     IR_BIT_XOR,
     IR_BIT_OR,
+    IR_BIT_NOT,
     IR_L_BIT_SHIFT,
     IR_R_BIT_SHIFT,
     IR_ASSIGN,
@@ -657,6 +673,7 @@ void parse(Token* tok);
 // preprocess.c
 Token* preprocess(Token* token);
 void add_include_path(char* path);
+void add_std_include_path(char* path);
 void add_predefine_macro(char* path);
 void init_preprocess();
 
