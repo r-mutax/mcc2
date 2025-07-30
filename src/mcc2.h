@@ -146,6 +146,8 @@ typedef enum TokenKind {
     TK_LONG,                    // "long"
     TK_VOID,                    // "void"
     TK_BOOL,                    // "bool"
+    TK_FLOAT,                   // "float"
+    TK_DOUBLE,                  // "double"
     TK_STRUCT,                  // "struct"
     TK_ENUM,                    // "enum"
     TK_UNION,                   // "union"
@@ -169,6 +171,11 @@ typedef enum TokenKind {
 
     // gnu extensions
     TK_GNU_EXTENSION,           // __extension__
+    TK_GNU_ATTRIBUTE,           // __attribute__
+
+    // gnu attributes
+    TK_GNU_ATTR_NOTHROW,        // __nothrow__
+    TK_GNU_ATTR_LEAF,           // __leaf__
 
     // preprocess
     TK_INCLUDE,                 // #include

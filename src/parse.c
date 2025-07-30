@@ -59,6 +59,7 @@ static void Program();
 static void function(QualType* ty, StorageClassKind sck);
 static Node* stmt();
 static Node* compound_stmt();
+static void attribute_spec();
 static Node* declaration(QualType* ty, StorageClassKind sck);
 static Ident* declare(QualType* ty, StorageClassKind sck);
 static QualType* declspec(StorageClassKind* sck);
@@ -161,6 +162,26 @@ void Program(){
     return;
 }
 
+static void attribute_spec(){
+    // attributeも読めるようにしたいからやるけど、とくになにもしない
+    if(consume_token(TK_GNU_ATTRIBUTE)){
+        expect_token(TK_L_PAREN);
+        expect_token(TK_L_PAREN);
+
+        do {
+            if(consume_token(TK_GNU_ATTR_NOTHROW)){
+                // 特に何もしない
+            } else if(consume_token(TK_GNU_ATTR_LEAF)){
+                // 特に何もしない
+            } else {
+                error_tok(get_token(), "unknown attribute.");
+            }
+        } while(consume_token(TK_COMMA));
+        expect_token(TK_R_PAREN);
+        expect_token(TK_R_PAREN);
+    }
+}
+
 static void function(QualType* func_type, StorageClassKind sck){
 
     while(consume_token(TK_MUL)){
@@ -209,6 +230,9 @@ static void function(QualType* func_type, StorageClassKind sck){
             } else {
                 StorageClassKind sck = 0;
                 QualType* qty = declspec(&sck);
+                // if(get_qtype_kind(qty) == TY_VOID){
+                //     break;
+                // }
                 Ident* ident = declare(qty, sck);
                 register_ident(ident);
                 Parameter* param = calloc(1, sizeof(Parameter));
@@ -219,6 +243,9 @@ static void function(QualType* func_type, StorageClassKind sck){
         func->params = head.next;
         expect_token(TK_R_PAREN);
     }
+
+    // __attribute__
+    attribute_spec();
 
     func->scope = get_current_scope();
     if(sck == SCK_STATIC){
