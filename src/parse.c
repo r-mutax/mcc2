@@ -112,6 +112,7 @@ static bool is_var_func();
 // トークン操作
 void expect_token(TokenKind kind);
 bool consume_token(TokenKind kind);
+bool test_token(TokenKind kind);
 Token* consume_ident();
 Token* expect_ident();
 Token* consume_string_literal();
@@ -224,15 +225,23 @@ static void function(QualType* func_type, StorageClassKind sck){
         Parameter head = {};
         Parameter* cur = &head;
         do {
+            Token* tok = get_token();
             if(consume_token(TK_DOT_DOT_DOT)){
                 func->is_var_params = true;
                 break;
             } else {
                 StorageClassKind sck = 0;
                 QualType* qty = declspec(&sck);
-                // if(get_qtype_kind(qty) == TY_VOID){
-                //     break;
-                // }
+                if(get_qtype_kind(qty) == TY_VOID){
+                    if(!test_token(TK_MUL)){
+                        if(cur != &head){
+                            error_tok(tok, "'void' must be the only parameter and noname.");
+                        } else if(test_token(TK_R_PAREN)){
+                            // void1個だけの場合は、引数なし扱いにする
+                            break;
+                        }
+                    }
+                }
                 Ident* ident = declare(qty, sck);
                 register_ident(ident);
                 Parameter* param = calloc(1, sizeof(Parameter));
@@ -2176,6 +2185,13 @@ bool consume_token(TokenKind kind){
         return false;
     }
     token = token->next;
+    return true;
+}
+
+bool test_token(TokenKind kind){
+    if(token->kind != kind){
+        return false;
+    }
     return true;
 }
 
