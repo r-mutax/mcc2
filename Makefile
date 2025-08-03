@@ -10,7 +10,7 @@
 CFLAGS=-std=c11 -g -static -I./lib
 
 # Library flags for gcc
-LDFLAGS=-L./lib/bin -lmcc2
+LDFLAGS=-L./lib/bin -lmcc2 -lm
 
 # file paths
 SRCS=$(wildcard ./src/*.c)
@@ -64,7 +64,7 @@ $(eval $(1)_MCC := $(3))
 $(eval $(1)_TARGET_COMPILER := self/$(2)/mcc2)
 $(eval $(1)_SELF_OBJS := $(patsubst ./src/%.c, $(value $(1)_BASE_DIR)/%.o, $(SRCS)))
 $(eval $(1)_SELF_LIB_OBJS := $(patsubst ./lib/%.c, $(value $(1)_BASE_DIR)/lib/%.o, $(LIBS)))
-$(eval $(1)_LDFLAGS_SELF := -L$(value $(1)_BASE_DIR)/lib/bin -lmcc2)
+$(eval $(1)_LDFLAGS_SELF := -L$(value $(1)_BASE_DIR)/lib/bin -lmcc2 -lm)
 
 $(eval $(1)_SELF_TEST_OBJS := $(patsubst ./test/c/%.c, $(value $(1)_BASE_DIR)/test/c/%.o, $(TESTS)))
 

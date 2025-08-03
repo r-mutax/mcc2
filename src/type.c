@@ -12,6 +12,8 @@ SimpleType* ty_ushort;
 SimpleType* ty_uint;
 SimpleType* ty_ulong;
 SimpleType* ty_ullong;
+SimpleType* ty_float;
+SimpleType* ty_double;
 
 
 void ty_init(){
@@ -55,6 +57,12 @@ void ty_init(){
     ty_ullong = new_type(TY_INT, 8);
     ty_ullong->is_unsigned = 1;
     ty_ullong->name = create_token(TK_UNSIGNED, "unsigned long long", 18);
+
+    ty_float = new_type(TY_FLOAT, 4);
+    ty_float->name = create_token(TK_FLOAT, "float", 5);
+
+    ty_double = new_type(TY_FLOAT, 8);
+    ty_double->name = create_token(TK_DOUBLE, "double", 6);
 }
 
 QualType* pointer_to(QualType* base){

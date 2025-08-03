@@ -56,6 +56,9 @@ int test_primary(){
     num = 0b10; // 2進数
     ASSERT(num, 2);
 
+    printf("test of float num...\n");
+    1.2;
+
     return 0;
 }
 

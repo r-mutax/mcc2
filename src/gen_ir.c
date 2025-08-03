@@ -555,6 +555,14 @@ static Reg* gen_expr(Node* node){
             new_IR(IR_VA_START, ret, r1, new_RegImm(gcnt));
             return ret;
         }
+        case ND_FLOAT_NUM:
+        {
+            Reg* ret = new_Reg();
+            ret->kind = REG_FLOAT;
+            ret->fval = node->fval;
+            ret->size = get_qtype_size(node->qtype); // floatは4バイト
+            return ret;
+        }
         default:
             break;
     }

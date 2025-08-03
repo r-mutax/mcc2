@@ -326,36 +326,50 @@ Token* scan(char* src){
                 break;
             default:
                 if(isdigit(c)){
+                    int base = 10;
+                    TokenKind kind = TK_NUM;
                     if(c == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X')){
-                        // 16進数
+                        base = 16;
                         p += 2;
-                        cur = new_token(TK_NUM, cur, p - 2, 0);
-                        cur->val = strtoul(p, &p, 16);
-                        cur->len = p - cur->pos;
                     } else if(c == '0' && (*(p + 1) == 'b' || *(p + 1) == 'B')){
-                        // 2進数
+                        base = 2;
                         p += 2;
-                        cur = new_token(TK_NUM, cur, p - 2, 0);
-                        cur->val = strtoul(p, &p, 2);
-                        cur->len = p - cur->pos;
                     } else if(c == '0'){
-                        // 8進数
+                        base = 8;
                         p++;
-                        cur = new_token(TK_NUM, cur, p - 1, 0);
-                        cur->val = strtoul(p, &p, 8);
-                        cur->len = p - cur->pos;
-                    } else {
-                        // 10進数
-                        cur = new_token(TK_NUM, cur, p, 0);
-                        cur->val = strtoul(p, &p, 10);
-                        cur->len = p - cur->pos;
                     }
+                    char* start = p;
+                    unsigned long val1 = strtoul(p, &p, base);
+
+                    if(*p == '.'){
+                        // 小数点がある場合は浮動小数点
+                        kind = TK_FLOAT_NUM;
+                        char* start2 = p++;
+                        unsigned long val2 = strtoul(p, &p, base);
+                        cur = new_token(TK_FLOAT_NUM, cur, start - 2, 0);
+                        if (p - start2 != 0) {
+                            // TODO : 浮動小数点を引数に指定した関数呼び出しができたら
+                            // pow()に変更する
+                            int cnt = p - start2;
+                            while(cnt--){
+                                val2 /= 10;
+                            }
+                            cur->fval = val1 + val2;
+                        } else {
+                            cur->fval = val1;
+                        }
+                        cur->len = p - start + 2; // 小数点分も含める
+                    } else {
+                        cur = new_token(TK_NUM, cur, start - 2, 0);
+                        cur->val = val1;
+                        cur->len = p - start;
+                    }
+
                     //    1 : 'u' 'l'opt
                     //    2 : 'u' 'll'opt
                     //    3 : 'l' 'u'opt
                     //    4 : 'll' 'u'opt
                     //    なら読み飛ばす
-
                     if(toupper(*p) == 'U'){
                         p++;
                         if(toupper(*p) == 'L'){

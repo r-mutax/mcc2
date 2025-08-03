@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+#include <math.h>
 #include <bits/getopt_core.h>
 #endif
 
@@ -81,6 +82,7 @@ struct IF_GROUP {
 
 typedef enum TokenKind {
     TK_NUM,                     // 数値
+    TK_FLOAT_NUM,               // 浮動小数点数
     TK_IDENT,
     TK_STRING_LITERAL,          // 文字列リテラル
     TK_PLUS,                    // + 記号
@@ -204,7 +206,8 @@ struct Token {
     char*           pos;    // 位置
     char*           str;    // const stringの中身
     SrcFile*        file;   // ファイル
-    unsigned long   val;
+    unsigned long   val;    // 数値の値
+    double          fval;   // 浮動小数点数の値
     int             len;
     long            row;
     long            col;
@@ -213,7 +216,7 @@ struct Token {
 
 // ビルドイントークン定義マクロ
 //  sizeof(const string liteal) は終端0を含めるため-1している。
-#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, sizeof(name) - 1, 0, 0, NULL,}
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, 0.0, sizeof(name) - 1, 0, 0, NULL,}
 
 struct Macro {
     Token*     name;
@@ -280,6 +283,7 @@ struct Parameter {
 
 typedef enum NodeKind {
     ND_NUM,
+    ND_FLOAT_NUM,
     ND_VAR,
     ND_ADD,
     ND_SUB,
@@ -330,6 +334,7 @@ typedef enum NodeKind {
 struct Node {
     NodeKind        kind;
     unsigned long   val;
+    double          fval;  // 浮動小数点数の値
     Node*           lhs;
     Node*           rhs;
     Ident*          ident;
@@ -366,6 +371,7 @@ typedef enum RegKind {
     REG_REG = 0,    // 普通のレジスタ
     REG_IMM,        // 直値
     REG_VAR,        // 変数
+    REG_FLOAT,      // 浮動小数点数
     REG_ADDR,       // アドレスが入っているレジスタ
     REG_STR,        // 文字列
     REG_FNAME,      // 関数名
@@ -376,6 +382,7 @@ struct Reg {
     int idx;
     int spill_idx;
     unsigned long val;
+    double fval;  // 浮動小数点数の値
     bool is_unsigned;
     Ident*  ident;
     Reg*    addr;   // REG_ADDRのアドレスを格納しているところ
@@ -552,6 +559,7 @@ struct Scope {
 
 enum TypeKind{
     TY_INT,
+    TY_FLOAT,
     TY_POINTER,
     TY_ARRAY,
     TY_BOOL,
@@ -583,6 +591,8 @@ enum {
     K_SHORT     = 1 << 6,
     K_INT       = 1 << 8,
     K_LONG      = 1 << 10,      // up to 2 times can.
+    K_FLOAT     = 1 << 12,
+    K_DOUBLE    = 1 << 14,
     K_USER      = 1 << 16,
     K_SIGNED    = 1 << 17,
     K_UNSIGNED  = 1 << 18
@@ -712,6 +722,8 @@ extern SimpleType* ty_ushort;
 extern SimpleType* ty_uint;
 extern SimpleType* ty_ulong;
 extern SimpleType* ty_ullong;
+extern SimpleType* ty_float;
+extern SimpleType* ty_double;
 
 void ty_init();
 QualType* pointer_to(QualType* base);

@@ -75,6 +75,9 @@ int vsnprintf(char *fmt, size_t n, const char *format, va_list arg_ptr);
 extern int getopt (int ___argc, char * *___argv, const char *__shortopts);
 extern char* optarg;
 
+// math.h
+double pow(double x, double y);
+
 // unistd.h
 char *getcwd(char *buffer, size_t size);
 

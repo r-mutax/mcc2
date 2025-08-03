@@ -118,6 +118,7 @@ Token* expect_ident();
 Token* consume_string_literal();
 Token* consume_typedef_name();
 unsigned long expect_num();
+Token* consume_float_num();
 bool is_eof();
 bool is_type();
 bool is_label();
@@ -1080,6 +1081,10 @@ static QualType* declspec(StorageClassKind* sck){
             count_decl_spec(&type_flg, K_SIGNED, tok);
         if(consume_token(TK_UNSIGNED))
             count_decl_spec(&type_flg, K_UNSIGNED, tok);
+        if(consume_token(TK_FLOAT))
+            count_decl_spec(&type_flg, K_FLOAT, tok);
+        if(consume_token(TK_DOUBLE))
+            count_decl_spec(&type_flg, K_DOUBLE, tok);
     }
 
     if(!ty){
@@ -1135,6 +1140,12 @@ static QualType* declspec(StorageClassKind* sck){
             case K_UNSIGNED + K_LONG + K_LONG:
             case K_UNSIGNED + K_LONG + K_LONG + K_INT:
                 ty = ty_ullong;
+                break;
+            case K_FLOAT:
+                ty = ty_float;
+                break;
+            case K_DOUBLE:
+                ty = ty_double;
                 break;
             default:
                 error_tok(get_token(), "Invalid type.\n");
@@ -1425,6 +1436,9 @@ static int emit2(Node* expr, char** label){
             break;
         case ND_NUM:
             val = expr->val;
+            break;
+        case ND_FLOAT_NUM:
+            val = (int)expr->fval;
             break;
         case ND_ADDR:
         {
@@ -1959,6 +1973,16 @@ static Node* primary(){
         }
     }
 
+    // 実数リテラル
+    Token* float_num = consume_float_num();
+    if(float_num){
+        Node* node = new_node(ND_FLOAT_NUM, 0, 0);
+        node->fval = float_num->fval;
+
+        node->qtype = make_qual_type(ty_double);
+        return node;
+    }
+
     // 数値リテラル
     unsigned long val = expect_num();
     Node* node_num = new_node_num(val);
@@ -2180,6 +2204,16 @@ unsigned long expect_num(){
     return result;
 }
 
+Token* consume_float_num(){
+    if(token->kind != TK_FLOAT_NUM){
+        return NULL;
+    }
+
+    Token* tok = token;
+    token = token->next;
+    return tok;
+}
+
 bool consume_token(TokenKind kind){
     if(token->kind != kind){
         return false;
@@ -2256,6 +2290,8 @@ bool is_type(){
         || token->kind == TK_STATIC
         || token->kind == TK_BOOL
         || token->kind == TK_VOID
+        || token->kind == TK_FLOAT
+        || token->kind == TK_DOUBLE
         || token->kind == TK_INT
         || token->kind == TK_LONG
         || token->kind == TK_SHORT
