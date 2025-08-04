@@ -14,6 +14,7 @@ SimpleType* ty_ulong;
 SimpleType* ty_ullong;
 SimpleType* ty_float;
 SimpleType* ty_double;
+SimpleType* ty_ldouble;
 
 
 void ty_init(){
@@ -63,6 +64,9 @@ void ty_init(){
 
     ty_double = new_type(TY_FLOAT, 8);
     ty_double->name = create_token(TK_DOUBLE, "double", 6);
+
+    ty_ldouble = new_type(TY_FLOAT, 16);
+    ty_ldouble->name = create_token(TK_LONG + TK_DOUBLE, "long double", 12);
 }
 
 QualType* pointer_to(QualType* base){

@@ -7,6 +7,7 @@ static Ident* cur_func = NULL;
 static int stack_size = 0;
 
 static int string_literal_num = 0;
+static int float_literal_num = 0;
 
 static int static_id = 0;
 
@@ -110,6 +111,22 @@ Ident* register_string_literal(Token* tok){
     ident->tok = sl->val;
     ident->is_string_literal = 1;
     ident->qtype = array_of(make_qual_type(ty_char), sl->val->len + 1);
+
+    ident->next = global_scope.ident;
+    global_scope.ident = ident;
+    return ident;
+}
+
+Ident* register_float_literal(Token* tok){
+    Ident* ident = calloc(1, sizeof(Ident));
+    ident->kind = ID_GVAR;
+    ident->name = calloc(1, sizeof(20));
+    sprintf(ident->name, ".LFLT%d", float_literal_num++);
+    ident->tok = tok;
+    ident->is_float_literal = true;
+    // 現在は浮動小数リテラルはすべてdouble
+    ident->qtype = make_qual_type(ty_double);
+    ident->is_const = true;
 
     ident->next = global_scope.ident;
     global_scope.ident = ident;

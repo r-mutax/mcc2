@@ -596,6 +596,25 @@ static void convert_ir2x86asm(IR* ir){
                     set_section(DATA);
                     print("%s:\n", ident->name);
                     print("\t.string \"%s\"\n", get_token_string_literal(ident->tok));
+                } else if(ident->is_float_literal){
+                    set_section(DATA);
+                    print("%s:\n", ident->name);
+                    if(get_qtype_size(ident->qtype) == 4){
+                        union { float f; unsigned int l; } u;
+                        u.f = ident->tok->fval;
+                        print("\t.long %d\n", u.l);
+                    } else if(get_qtype_size(ident->qtype) == 8){
+                        union {
+                            double d;
+                            struct {
+                                unsigned int l1;
+                                unsigned int l2;
+                            } d2;
+                        } u;
+                        u.d = ident->tok->fval;
+                        print("\t.long %d\n", u.d2.l1);
+                        print("\t.long %d\n", u.d2.l2);
+                    }
                 } else {
 
                     // ファイルローカルかグローバルか？

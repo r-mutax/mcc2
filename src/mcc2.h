@@ -207,7 +207,7 @@ struct Token {
     char*           str;    // const stringの中身
     SrcFile*        file;   // ファイル
     unsigned long   val;    // 数値の値
-    double          fval;   // 浮動小数点数の値
+    long double     fval;   // 浮動小数点数の値
     int             len;
     long            row;
     long            col;
@@ -249,6 +249,7 @@ struct Ident {
     Token* tok;             // 宣言部分のトークンポインタ
     int offset;             // ローカル変数ののオフセット
     int is_string_literal;  // 文字列リテラルか？のフラグ
+    bool is_float_literal;  // 浮動小数点リテラルか？
     Scope* scope;           // 関数スコープ
     unsigned long val;      // 数値(enum用)
     unsigned long level;    // スコープのレベル
@@ -263,6 +264,7 @@ struct Ident {
     int is_static;          // staticか？
     int static_id;          // static変数のID
     int is_builtin;         // 組み込み定義か？
+    bool is_const;          // constか？
     Ident* va_area;         // 可変長引数のエリア
     int func_id;            // 識別子のID
     PList* vars;            // 変数のリスト
@@ -382,8 +384,8 @@ struct Reg {
     int idx;
     int spill_idx;
     unsigned long val;
-    double fval;  // 浮動小数点数の値
     bool is_unsigned;
+    bool is_float;  // 浮動小数点数か？
     Ident*  ident;
     Reg*    addr;   // REG_ADDRのアドレスを格納しているところ
     int     size;
@@ -663,6 +665,7 @@ Ident* declare_ident(Token* ident, IdentKind kind, QualType* qty);
 Ident* make_ident(Token* ident, IdentKind kind, QualType* qty);
 void register_ident(Ident* ident);
 Ident* register_string_literal(Token* tok);
+Ident* register_float_literal(Token* tok);
 void register_tag(SimpleType* type);
 Ident* find_ident(Token* tok);
 Ident* find_typedef(Token* tok);
@@ -724,6 +727,7 @@ extern SimpleType* ty_ulong;
 extern SimpleType* ty_ullong;
 extern SimpleType* ty_float;
 extern SimpleType* ty_double;
+extern SimpleType* ty_ldouble;
 
 void ty_init();
 QualType* pointer_to(QualType* base);

@@ -1147,6 +1147,9 @@ static QualType* declspec(StorageClassKind* sck){
             case K_DOUBLE:
                 ty = ty_double;
                 break;
+            case K_LONG + K_DOUBLE:
+                ty = ty_ldouble;
+                break;
             default:
                 error_tok(get_token(), "Invalid type.\n");
                 break;
@@ -1976,10 +1979,11 @@ static Node* primary(){
     // 実数リテラル
     Token* float_num = consume_float_num();
     if(float_num){
-        Node* node = new_node(ND_FLOAT_NUM, 0, 0);
-        node->fval = float_num->fval;
-
-        node->qtype = make_qual_type(ty_double);
+        Ident* float_ident = register_float_literal(float_num);
+        Node* node = new_node(ND_VAR, 0, 0);
+        node->ident = float_ident;
+        node->qtype = float_ident->qtype;
+        node->pos = pos_tok;
         return node;
     }
 

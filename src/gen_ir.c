@@ -21,6 +21,7 @@ static IR* new_IRLabel(long label);
 static IR* new_IRJmp(long label);
 static Reg* new_Reg();
 static Reg* new_RegImm(unsigned long val);
+static Reg* new_RegFloatImm(Node* node);
 static Reg* new_RegVar(Ident* ident);
 static Reg* new_RegStr(char* str);
 static Reg* new_RegAddr(Reg* reg, int size);
@@ -322,6 +323,11 @@ static Reg* gen_lvar(Node*  node){
             new_IR(IR_REL, reg, new_RegVar(node->ident), NULL);
             reg->size = get_qtype_size(node->qtype);
             reg->is_unsigned = get_qtype_is_unsigned(node->qtype);
+            if(get_qtype_kind(node->qtype) == TY_FLOAT){
+                reg->is_float = true;
+            } else {
+                reg->is_float = false;
+            }
             break;
         case ND_DREF:
             reg = gen_expr(node->lhs);
@@ -353,6 +359,9 @@ static Reg* gen_expr(Node* node){
                 && kind != TY_STRUCT
                 && kind != TY_UNION){
                 Reg* reg = new_Reg();
+                if(regvar->is_float){
+                    reg->is_float = true;
+                }
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;
             }
@@ -553,14 +562,6 @@ static Reg* gen_expr(Node* node){
             Reg* ret = new_Reg();
             Reg* r1 = gen_lvar(node->lhs);
             new_IR(IR_VA_START, ret, r1, new_RegImm(gcnt));
-            return ret;
-        }
-        case ND_FLOAT_NUM:
-        {
-            Reg* ret = new_Reg();
-            ret->kind = REG_FLOAT;
-            ret->fval = node->fval;
-            ret->size = get_qtype_size(node->qtype); // floatは4バイト
             return ret;
         }
         default:

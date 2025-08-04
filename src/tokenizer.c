@@ -344,21 +344,11 @@ Token* scan(char* src){
                     if(*p == '.'){
                         // 小数点がある場合は浮動小数点
                         kind = TK_FLOAT_NUM;
-                        char* start2 = p++;
-                        unsigned long val2 = strtoul(p, &p, base);
+                        // char* start2 = ++p;
+                        // unsigned long val2 = strtoul(p, &p, base);
                         cur = new_token(TK_FLOAT_NUM, cur, start - 2, 0);
-                        if (p - start2 != 0) {
-                            // TODO : 浮動小数点を引数に指定した関数呼び出しができたら
-                            // pow()に変更する
-                            int cnt = p - start2;
-                            while(cnt--){
-                                val2 /= 10;
-                            }
-                            cur->fval = val1 + val2;
-                        } else {
-                            cur->fval = val1;
-                        }
-                        cur->len = p - start + 2; // 小数点分も含める
+                        cur->fval = strtold(start, &p);
+                        cur->len = p - start + 1; // 小数点分も含める
                     } else {
                         cur = new_token(TK_NUM, cur, start - 2, 0);
                         cur->val = val1;
