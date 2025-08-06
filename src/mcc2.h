@@ -394,6 +394,9 @@ struct Reg {
     Token*  tok;
 };
 
+// spill個数（整数系も浮動小数系もそれぞれ）
+#define MAX_SPILL_REG 30
+
 typedef enum {
     ierr = -1,
     i8 = 0,
