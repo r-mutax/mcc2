@@ -8,9 +8,12 @@ static const char *rreg16[] = {"r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
 static const char *rreg32[] = {"r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
 static const char *rreg64[] = {"r10", "r11", "r12", "r13", "r14", "r15"};
 static Reg* realReg[6] = { } ;
+static int spillReg[MAX_SPILL_REG] = { } ;  // 仮想レジスタの退避領域（1: 退避済み, 0: 未退避）
+static int useReg[3] = { -1 };              // 処理対象の中間命令で使用する実レジスタのインデックス
 
-static int spillReg[30] = { } ; // 仮想レジスタの退避領域（1: 退避済み, 0: 未退避）
-static int useReg[3] = { -1 };     // 処理対象の中間命令で使用する実レジスタのインデックス
+static const char* xrreg[] = {"xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"};
+static Reg* realXReg[8] = { } ;
+static int useXReg[3] = { -1 };
 
 static const char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static const char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
@@ -102,13 +105,18 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd);
 static void pop(char* reg);
 static void push(char* reg);
 
-static int findReg();
-
 static void activateRegLhs(Reg* reg);
 static void activateRegRhs(Reg* reg);
-static void activateReg(Reg* reg, int is_lhs);
 
+static int findReg();
+static void activateReg(Reg* reg, int is_lhs);
+static void assignReg(Reg* reg);
 static void freeReg(Reg* reg);
+
+static int findXReg();
+static void activateXReg(Reg* reg, int is_lhs);
+static void assignXReg(Reg* reg);
+static void freeXReg(Reg* reg);
 
 // DWARF規格に従ったレジスタのidxを取得する
 static int get_regno(char* reg){
@@ -145,7 +153,7 @@ static void push(char* reg){
 }
 
 static int findSpillReg(){
-    for(int i = 0; i < 30; i++){
+    for(int i = 0; i < MAX_SPILL_REG; i++){
         if(!spillReg[i]){
             return i;
         }
@@ -207,12 +215,20 @@ static void assignReg(Reg* reg){
 
 // レジスタを左辺値としてアクティベートする
 static void activateRegLhs(Reg* reg){
-    activateReg(reg, 1);
+    if(reg->is_float){
+        activateXReg(reg, 1);
+    } else {
+        activateReg(reg, 1);
+    }
 }
 
 // レジスタを右辺値としてアクティベートする
 static void activateRegRhs(Reg* reg){
-    activateReg(reg, 0);
+    if(reg->is_float){
+        activateXReg(reg, 0);
+    } else {
+        activateReg(reg, 0);
+    }
 }
 
 // レジスタをアクティベートする
@@ -291,15 +307,59 @@ static void activateReg(Reg* reg, int is_lhs){
     }
 }
 
-
 static void freeReg(Reg* reg){
     free(reg->rreg);
     reg->rreg = NULL;
 
     if(reg->idx == -1) return;
 
-    realReg[reg->idx] = NULL;
+    if(reg->is_float){
+        realXReg[reg->idx] = NULL;
+    } else {
+        realReg[reg->idx] = NULL;
+    }
     reg->idx = -1;
+}
+
+static int findXReg(){
+    for(int i = 0; i < 8; i++){
+        if(!realXReg[i]){
+            return i;
+        }
+    }
+
+    // TODO 実レジスタをすべて使用していたらspillする
+}
+
+// レジスタを割り当てる
+static void assignXReg(Reg* reg){
+    if(reg->rreg) return;
+
+    int idx = findXReg();
+    reg->idx = idx;
+    realXReg[idx] = reg;
+    reg->rreg = format_string("%s", xrreg[idx]);
+}
+
+static void activateXReg(Reg* reg, int is_lhs){
+    if(reg->rreg) return;
+
+    switch(reg->kind){
+        case REG_REG:
+            assignXReg(reg);
+            break;
+        default:
+            error("activateXReg error");
+            return;
+    }
+
+    // 使用するレジスタはマークする
+    for(int i = 0; i < 3; i++){
+        if(useXReg[i] == -1){
+            useXReg[i] = reg->idx;
+            break;
+        }
+    }
 }
 
 static void freeRegAll(Reg* t, Reg* s1, Reg* s2){
@@ -674,7 +734,11 @@ static void convert_ir2x86asm(IR* ir){
                 break;
             }
             case IR_ADD:
-                emit_binop("add", ir->t, ir->s1, ir->s2);
+                if(ir->s1->is_float){
+                    emit_binop("addsd", ir->t, ir->s1, ir->s2);
+                } else {
+                    emit_binop("add", ir->t, ir->s1, ir->s2);
+                }
                 break;
             case IR_SUB:
                 emit_binop("sub", ir->t, ir->s1, ir->s2);
@@ -713,9 +777,22 @@ static void convert_ir2x86asm(IR* ir){
                 // cmp命令は直値は32bit幅までしか受け取れないので、
                 // 左辺値として割り当てる
                 activateRegLhs(ir->s2);
-                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("\tsete al\n");
-                print("\tmovzb %s, al\n", ir->t->rreg);
+
+                if(ir->s1->is_float){
+                    // NaNチェック -> al
+                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsetnp al\n");
+
+                    // 等価チェック
+                    print("\tmov %s, 0\n", ir->t->rreg);
+                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tcmovne rax, %s\n", ir->t->rreg);
+                    print("\tmovzx %s, al\n", ir->t->rreg);
+                } else {
+                    print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsete al\n");
+                    print("\tmovzb %s, al\n", ir->t->rreg);
+                }
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_NOT_EQUAL:
@@ -956,25 +1033,31 @@ static void convert_ir2x86asm(IR* ir){
             case IR_LOAD:
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                if(ir->s2->is_unsigned){
-                    if(ir->s2->size == 1){
-                        print("\tmovzx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                    } else if(ir->s2->size == 2){
-                        print("\tmovzx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                    } else if(ir->s2->size == 4){
-                        print("\tmov %s, DWORD PTR [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
-                    } else if(ir->s2->size == 8){
-                        print("\tmov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                if(ir->s1->is_float){
+                    if(ir->s2->size == 8){
+                        print("\tmovsd %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     }
                 } else {
-                    if(ir->s2->size == 1){
-                        print("\tmovsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                    } else if(ir->s2->size == 2){
-                        print("\tmovsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                    } else if(ir->s2->size == 4){
-                        print("\tmovsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
-                    } else if(ir->s2->size == 8){
-                        print("\tmov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    if(ir->s2->is_unsigned){
+                        if(ir->s2->size == 1){
+                            print("\tmovzx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        } else if(ir->s2->size == 2){
+                            print("\tmovzx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        } else if(ir->s2->size == 4){
+                            print("\tmov %s, DWORD PTR [%s]\n", rreg32[ir->s1->idx], ir->s2->rreg);
+                        } else if(ir->s2->size == 8){
+                            print("\tmov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        }
+                    } else {
+                        if(ir->s2->size == 1){
+                            print("\tmovsx %s, BYTE PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        } else if(ir->s2->size == 2){
+                            print("\tmovsx %s, WORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        } else if(ir->s2->size == 4){
+                            print("\tmovsxd %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        } else if(ir->s2->size == 8){
+                            print("\tmov %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                        }
                     }
                 }
                 freeReg(ir->s2);
@@ -1031,6 +1114,7 @@ static void convert_ir2x86asm(IR* ir){
         // レジスタの使用状況をクリア
         for(int i = 0; i < 3; i++){
             useReg[i] = -1;
+            useXReg[i] = -1;
         }
     }
 }

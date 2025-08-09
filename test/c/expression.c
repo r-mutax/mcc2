@@ -3,6 +3,7 @@
 int test_expression(){
     printf("test of expression..\n");
     ASSERT( 3 + 5, 8);
+    ASSERT( 1.2 + 1.2, 2.4);
     ASSERT( 8 - 5, 3);
     ASSERT( 1 + 3 * 4, 13);
     ASSERT( 3 + 4 / 2, 5);

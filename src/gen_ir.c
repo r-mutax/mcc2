@@ -360,6 +360,8 @@ static Reg* gen_expr(Node* node){
                 && kind != TY_UNION){
                 Reg* reg = new_Reg();
                 if(regvar->is_float){
+                    // アドレスの読み込み先は、整数レジスタにしたいのでis_floatを外す
+                    regvar->is_float = false;
                     reg->is_float = true;
                 }
                 new_IR(IR_LOAD, NULL, reg, regvar);
