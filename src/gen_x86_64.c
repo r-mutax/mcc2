@@ -329,6 +329,7 @@ static int findXReg(){
     }
 
     // TODO 実レジスタをすべて使用していたらspillする
+    error("cant find XReg\n");
 }
 
 // レジスタを割り当てる
@@ -373,6 +374,9 @@ static void freeRegAllForce(){
     for(int i = 0; i < 6; i++){
         if(realReg[i]){
             freeReg(realReg[i]);
+        }
+        if(realXReg[i]){
+            freeReg(realXReg[i]);
         }
     }
 }
@@ -741,10 +745,18 @@ static void convert_ir2x86asm(IR* ir){
                 }
                 break;
             case IR_SUB:
-                emit_binop("sub", ir->t, ir->s1, ir->s2);
+                if(ir->s1->is_float){
+                    emit_binop("subsd", ir->t, ir->s1, ir->s2);
+                } else {
+                    emit_binop("sub", ir->t, ir->s1, ir->s2);
+                }
                 break;
             case IR_MUL:
-                emit_binop("imul", ir->t, ir->s1, ir->s2);
+                if(ir->s1->is_float){
+                    emit_binop("mulsd", ir->t, ir->s1, ir->s2);
+                } else {
+                    emit_binop("imul", ir->t, ir->s1, ir->s2);
+                }
                 break;
             case IR_DIV:
                 activateRegLhs(ir->s1);
@@ -752,10 +764,14 @@ static void convert_ir2x86asm(IR* ir){
                 // idivが受け取るoperandはレジスタなので、
                 // 左辺値として割り当てる
                 activateRegLhs(ir->s2);
-                print("\tmov rax, %s\n", ir->s1->rreg);
-                print("\tcqo\n");
-                print("\tidiv %s\n", ir->s2->rreg);
-                print("\tmov %s, rax\n", ir->s1->rreg);
+                if(ir->s1->is_float){
+                    print("\tdivsd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                } else {
+                    print("\tmov rax, %s\n", ir->s1->rreg);
+                    print("\tcqo\n");
+                    print("\tidiv %s\n", ir->s2->rreg);
+                    print("\tmov %s, rax\n", ir->s1->rreg);
+                }
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_MOD:

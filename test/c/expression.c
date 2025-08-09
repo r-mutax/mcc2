@@ -139,5 +139,16 @@ int test_expression(){
     ASSERT(reg2[1], 2);
     ASSERT(reg2[2], 1);
 
+    printf("test of expression ON double..\n");
+    1.1 + 1.2;
+    3.3 - 1.1;
+    2.2 * 3.2;
+    5.5 / 1.1;
+    5.5 / 1.1;
+    5.5 / 1.1;
+    5.5 / 1.1;
+    5.5 / 1.1;
+    5.5 / 1.1;
+
     return 0;
 }
