@@ -855,9 +855,15 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("\tsetle al\n");
-                print("\tmovzb %s, al\n", ir->t->rreg);
+                if(ir->s1->is_float){
+                    print("\tcomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsetbe al\n");
+                    print("\tmovzx %s, al\n", ir->t->rreg);
+                } else {
+                    print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsetle al\n");
+                    print("\tmovzb %s, al\n", ir->t->rreg);
+                }
                 freeReg(ir->s1);
                 freeReg(ir->s2);
                 break;
