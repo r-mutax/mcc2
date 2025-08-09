@@ -795,13 +795,17 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s2);
 
                 if(ir->s1->is_float){
-                    // NaNチェック -> al
+                    // NaNチェック
+                    // NaNは等しくない扱いとなるのでsetnpでorderedのときにal=1とする
                     print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                    print("\tsetnp al\n");
+                    print("\tsetnp al\n");  //　ordered -> al = 1, non ordered -> al = 0
 
                     // 等価チェック
                     print("\tmov %s, 0\n", ir->t->rreg);
                     print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+
+                    // 等しくないときにraxに0(=ir->t)を書き込んで、falseに倒す
+                    // 等しいときはorderedによって決まる
                     print("\tcmovne rax, %s\n", ir->t->rreg);
                     print("\tmovzx %s, al\n", ir->t->rreg);
                 } else {
@@ -815,9 +819,20 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->t);
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
-                print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                print("\tsetne al\n");
-                print("\tmovzb %s, al\n", ir->t->rreg);
+
+                if(ir->s1->is_float){
+                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsetp al\n");   // ordered = 0, not ordered -> 1
+
+                    print("\tmov %s, 1\n", ir->t->rreg);
+                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tcmovne rax, %s\n", ir->t->rreg);   // not equalならraxに1書き込んで、trueに倒す
+                    print("\tmovzx %s, al\n", ir->t->rreg);
+                } else {
+                    print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tsetne al\n");
+                    print("\tmovzb %s, al\n", ir->t->rreg);
+                }
                 freeRegAll(ir->t, ir->s1, ir->s2);
                 break;
             case IR_LT:
