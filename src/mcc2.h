@@ -208,6 +208,7 @@ struct Token {
     SrcFile*        file;   // ファイル
     unsigned long   val;    // 数値の値
     long double     fval;   // 浮動小数点数の値
+    size_t          sz;     // 数値リテラルのサイズ
     int             len;
     long            row;
     long            col;
@@ -216,7 +217,7 @@ struct Token {
 
 // ビルドイントークン定義マクロ
 //  sizeof(const string liteal) は終端0を含めるため-1している。
-#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, 0.0, sizeof(name) - 1, 0, 0, NULL,}
+#define MAKE_TOKEN(kind, name)    { kind, name, NULL, NULL, 0, 0.0, 0, sizeof(name) - 1, 0, 0, NULL,}
 
 struct Macro {
     Token*     name;

@@ -349,36 +349,49 @@ Token* scan(char* src){
                         cur = new_token(TK_FLOAT_NUM, cur, start - 2, 0);
                         cur->fval = strtold(start, &p);
                         cur->len = p - start + 1; // 小数点分も含める
+                        cur->sz = 8;
+                        switch(*p){
+                            case 'f':
+                            case 'F':
+                                cur->sz = 4;
+                                p++;
+                                break;
+                            case 'l':
+                            case 'L':
+                                cur->sz = 10;
+                                p++;
+                                break;
+                        }
                     } else {
                         cur = new_token(TK_NUM, cur, start - 2, 0);
                         cur->val = val1;
                         cur->len = p - start;
-                    }
-
-                    //    1 : 'u' 'l'opt
-                    //    2 : 'u' 'll'opt
-                    //    3 : 'l' 'u'opt
-                    //    4 : 'll' 'u'opt
-                    //    なら読み飛ばす
-                    if(toupper(*p) == 'U'){
-                        p++;
-                        if(toupper(*p) == 'L'){
+                                            //    1 : 'u' 'l'opt
+                        //    2 : 'u' 'll'opt
+                        //    3 : 'l' 'u'opt
+                        //    4 : 'll' 'u'opt
+                        //    なら読み飛ばす
+                        if(toupper(*p) == 'U'){
                             p++;
                             if(toupper(*p) == 'L'){
                                 p++;
+                                if(toupper(*p) == 'L'){
+                                    p++;
+                                }
                             }
-                        }
-                    } else if(toupper(*p) == 'L'){
-                        p++;
-                        if(toupper(*p) == 'U'){
-                            p++;
                         } else if(toupper(*p) == 'L'){
                             p++;
                             if(toupper(*p) == 'U'){
                                 p++;
+                            } else if(toupper(*p) == 'L'){
+                                p++;
+                                if(toupper(*p) == 'U'){
+                                    p++;
+                                }
                             }
                         }
                     }
+
                 } else if(isspace(c)){
                     cur = new_token(TK_SPACE, cur, p++ , 1);
                     // p++;

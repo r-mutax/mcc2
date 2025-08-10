@@ -663,11 +663,13 @@ static void convert_ir2x86asm(IR* ir){
                 } else if(ident->is_float_literal){
                     set_section(DATA);
                     print("%s:\n", ident->name);
-                    if(get_qtype_size(ident->qtype) == 4){
+                    int sz = get_qtype_size(ident->qtype);
+
+                    if(sz == 4){
                         union { float f; unsigned int l; } u;
                         u.f = ident->tok->fval;
                         print("\t.long %d\n", u.l);
-                    } else if(get_qtype_size(ident->qtype) == 8){
+                    } else if(sz == 8){
                         union {
                             double d;
                             struct {
@@ -678,6 +680,21 @@ static void convert_ir2x86asm(IR* ir){
                         u.d = ident->tok->fval;
                         print("\t.long %d\n", u.d2.l1);
                         print("\t.long %d\n", u.d2.l2);
+                    } else if(sz == 16){
+                        union {
+                            long double ld;
+                            struct {
+                                unsigned int l1;
+                                unsigned int l2;
+                                unsigned int l3;
+                                unsigned int l4;
+                            } d4;
+                        } u;
+                        u.ld = ident->tok->fval;
+                        print("\t.long %d\n", u.d4.l1);
+                        print("\t.long %d\n", u.d4.l2);
+                        print("\t.long %d\n", u.d4.l3);
+                        print("\t.long %d\n", u.d4.l4);
                     }
                 } else {
 
@@ -1077,8 +1094,12 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
                 if(ir->s1->is_float){
-                    if(ir->s2->size == 8){
+                    if(ir->s2->size == 4){
+                        print("\tmovss %s, DWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 8){
                         print("\tmovsd %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s2->size == 16){
+                        error("long double can not load.");
                     }
                 } else {
                     if(ir->s2->is_unsigned){

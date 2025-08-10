@@ -125,7 +125,13 @@ Ident* register_float_literal(Token* tok){
     ident->tok = tok;
     ident->is_float_literal = true;
     // 現在は浮動小数リテラルはすべてdouble
-    ident->qtype = make_qual_type(ty_double);
+    if(tok->sz == 4){
+            ident->qtype = make_qual_type(ty_float);
+    } else if(tok->sz == 8){
+        ident->qtype = make_qual_type(ty_double);
+    } else if(tok->sz == 10){
+        ident->qtype = make_qual_type(ty_ldouble);
+    }
     ident->is_const = true;
 
     ident->next = global_scope.ident;
