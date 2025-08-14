@@ -1980,7 +1980,7 @@ static Node* primary(){
     Token* float_num = consume_float_num();
     if(float_num){
         Ident* float_ident = register_float_literal(float_num);
-        Node* node = new_node(ND_VAR, 0, 0);
+        Node* node = new_node(ND_FLOAT_NUM, 0, 0);
         node->ident = float_ident;
         node->qtype = float_ident->qtype;
         node->pos = pos_tok;

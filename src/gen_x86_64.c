@@ -366,6 +366,14 @@ static void activateXReg(Reg* reg, int is_lhs){
     if(reg->rreg) return;
 
     switch(reg->kind){
+        case REG_IMM:
+            assignXReg(reg);
+            if(reg->size == 4){
+                print("\tmovss %s, DWORD PTR [rip + %s]\n", reg->rreg, reg->ident->name);
+            } else if(reg->size == 8){
+                print("\tmovsd %s, QWORD PTR [rip + %s]\n", reg->rreg, reg->ident->name);
+            }
+            return;
         case REG_REG:
             assignXReg(reg);
             break;
@@ -398,6 +406,11 @@ static void activateXXReg(Reg* reg, int is_lhs){
     if(reg->rreg) return;
 
     switch(reg->kind){
+        case REG_IMM:
+            assignXXReg(reg);
+            print("\tfld TBYTE PTR [rip + %s]\n", reg->ident->name);
+            print("\tfstp %s\n", reg->rreg);
+            break;
         case REG_REG:
             assignXXReg(reg);
             break;
@@ -423,9 +436,9 @@ static void assignXXReg(Reg* reg){
     realXXReg[idx] = reg;
     unsigned long long stack_offset = LDOUBLE_BASE + idx * 16 - 240;
     if(stack_offset < 0){
-        reg->rreg = format_string("TWORD PTR [rbp %lld]", stack_offset);
+        reg->rreg = format_string("TBYTE PTR [rbp %lld]", stack_offset);
     } else {
-        reg->rreg = format_string("TWORD PTR [rbp + %lld]", stack_offset);
+        reg->rreg = format_string("TBYTE PTR [rbp + %lld]", stack_offset);
     }
 }
 

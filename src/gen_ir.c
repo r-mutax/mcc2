@@ -350,6 +350,9 @@ static Reg* gen_expr(Node* node){
         case ND_NUM: {
             return new_RegImm(node->val);
         }
+        case ND_FLOAT_NUM: {
+            return new_RegFloatImm(node);
+        }
         case ND_VAR:
         case ND_MEMBER:
         {
@@ -671,6 +674,15 @@ static Reg* new_RegImm(unsigned long val){
     Reg* reg = new_Reg();
     reg->kind = REG_IMM;
     reg->val = val;
+    return reg;
+}
+
+static Reg* new_RegFloatImm(Node* node){
+    Reg* reg = new_Reg();
+    reg->kind = REG_IMM;
+    reg->ident = node->ident;
+    reg->is_float = true;
+    reg->size = get_qtype_size(node->ident->qtype);
     return reg;
 }
 
