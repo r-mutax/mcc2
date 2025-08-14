@@ -364,6 +364,7 @@ static Reg* gen_expr(Node* node){
                     regvar->is_float = false;
                     reg->is_float = true;
                 }
+                reg->size = regvar->size;
                 new_IR(IR_LOAD, NULL, reg, regvar);
                 return reg;
             }

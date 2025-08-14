@@ -25,6 +25,17 @@
 // include mcc2 libraries
 #include "pointer_list.h"
 
+#define SPILL_NUM           30
+#define SPILL_AREA_SIZE     (SPILL_NUM * 8)
+#define SPILL_BASE          0
+#define SPILL_F_LEN         30
+#define SPILL_F_AREA_SIZE   (SPILL_F_LEN * 16)
+#define SPILL_F_BASE        (SPILL_BASE + SPILL_AREA_SIZE)
+
+#define LDOUBLE_NUM         8
+#define LDOUBLE_AREA_SIZE   (LDOUBLE_NUM + 16)
+#define LDOUBLE_BASE        (SPILL_F_BASE + SPILL_F_AREA_SIZE)
+
 typedef struct CompilationInfo CompilationInfo;
 typedef struct Token Token;
 typedef struct Node Node;
@@ -386,7 +397,8 @@ struct Reg {
     int spill_idx;
     unsigned long val;
     bool is_unsigned;
-    bool is_float;  // 浮動小数点数か？
+    bool is_float;      // 浮動小数点数か？
+    bool is_ldouble;    // long doubleか？
     Ident*  ident;
     Reg*    addr;   // REG_ADDRのアドレスを格納しているところ
     int     size;

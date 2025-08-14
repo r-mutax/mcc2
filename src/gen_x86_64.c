@@ -11,9 +11,14 @@ static Reg* realReg[6] = { } ;
 static int spillReg[MAX_SPILL_REG] = { } ;  // 仮想レジスタの退避領域（1: 退避済み, 0: 未退避）
 static int useReg[3] = { -1 };              // 処理対象の中間命令で使用する実レジスタのインデックス
 
+// float / double用
 static const char* xrreg[] = {"xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"};
 static Reg* realXReg[8] = { } ;
 static int useXReg[3] = { -1 };
+
+// long double 仮想レジスタ用スタック領域管理
+static Reg* realXXReg[6] = { };
+static int useXXReg[3] = { -1 };
 
 static const char *argreg8[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 static const char *argreg16[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
@@ -116,7 +121,10 @@ static void freeReg(Reg* reg);
 static int findXReg();
 static void activateXReg(Reg* reg, int is_lhs);
 static void assignXReg(Reg* reg);
-static void freeXReg(Reg* reg);
+
+static int findXXReg();
+static void activateXXReg(Reg* reg, int is_lhs);
+static void assignXXReg(Reg* reg);
 
 // DWARF規格に従ったレジスタのidxを取得する
 static int get_regno(char* reg){
@@ -196,7 +204,7 @@ static int findReg(){
         print("# spill %s to [rbp - %d]\n", rreg64[src_reg_idx], 8 * spill_idx);
     }
 
-    print("\tmov QWORD PTR [rbp - 240 + %d], %s\n", 8 * spill_idx, rreg64[src_reg_idx]);
+    print("\tmov QWORD PTR [rbp - 240 + %d], %s\n", SPILL_BASE + 8 * spill_idx, rreg64[src_reg_idx]);
     spillReg[spill_idx] = 1;
     realReg[src_reg_idx]->spill_idx = spill_idx;
 
@@ -216,7 +224,11 @@ static void assignReg(Reg* reg){
 // レジスタを左辺値としてアクティベートする
 static void activateRegLhs(Reg* reg){
     if(reg->is_float){
-        activateXReg(reg, 1);
+        if(reg->size == 16){
+            activateXXReg(reg, 1);
+        } else {
+            activateXReg(reg, 1);
+        }
     } else {
         activateReg(reg, 1);
     }
@@ -225,7 +237,11 @@ static void activateRegLhs(Reg* reg){
 // レジスタを右辺値としてアクティベートする
 static void activateRegRhs(Reg* reg){
     if(reg->is_float){
-        activateXReg(reg, 0);
+        if(reg->size == 16){
+            activateXXReg(reg, 0);
+        } else {
+            activateXReg(reg, 0);
+        }
     } else {
         activateReg(reg, 0);
     }
@@ -314,7 +330,11 @@ static void freeReg(Reg* reg){
     if(reg->idx == -1) return;
 
     if(reg->is_float){
-        realXReg[reg->idx] = NULL;
+        if(reg->is_ldouble){
+            realXXReg[reg->idx] = NULL;
+        } else {
+            realXReg[reg->idx] = NULL;
+        }
     } else {
         realReg[reg->idx] = NULL;
     }
@@ -360,6 +380,52 @@ static void activateXReg(Reg* reg, int is_lhs){
             useXReg[i] = reg->idx;
             break;
         }
+    }
+}
+
+static int findXXReg(){
+    for(int i = 0; i < 8; i++){
+        if(!realXXReg[i]){
+            return i;
+        }
+    }
+
+    // TODO 実レジスタをすべて使用していたらspillする
+    error("cant find XXReg\n");
+}
+
+static void activateXXReg(Reg* reg, int is_lhs){
+    if(reg->rreg) return;
+
+    switch(reg->kind){
+        case REG_REG:
+            assignXXReg(reg);
+            break;
+        default:
+            error("activateXXReg error");
+            return;
+    }
+
+    // 使用するレジスタはマークする
+    for(int i = 0; i < 3; i++){
+        if(useXXReg[i] == -1){
+            useXXReg[i] = reg->idx;
+            break;
+        }
+    }
+}
+
+static void assignXXReg(Reg* reg){
+    if(reg->rreg) return;
+
+    int idx = findXXReg();
+    reg->idx = idx;
+    realXXReg[idx] = reg;
+    unsigned long long stack_offset = LDOUBLE_BASE + idx * 16 - 240;
+    if(stack_offset < 0){
+        reg->rreg = format_string("TWORD PTR [rbp %lld]", stack_offset);
+    } else {
+        reg->rreg = format_string("TWORD PTR [rbp + %lld]", stack_offset);
     }
 }
 
@@ -1099,7 +1165,8 @@ static void convert_ir2x86asm(IR* ir){
                     } else if(ir->s2->size == 8){
                         print("\tmovsd %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 16){
-                        error("long double can not load.");
+                        print("\tfld TBYTE PTR [%s]\n", ir->s2->rreg);
+                        print("\tfstp %s\n", ir->s1->rreg);
                     }
                 } else {
                     if(ir->s2->is_unsigned){
@@ -1179,6 +1246,7 @@ static void convert_ir2x86asm(IR* ir){
         for(int i = 0; i < 3; i++){
             useReg[i] = -1;
             useXReg[i] = -1;
+            useXXReg[i] = -1;
         }
     }
 }
