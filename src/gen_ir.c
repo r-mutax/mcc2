@@ -20,11 +20,11 @@ static IR* new_IR(IRCmd cmd, Reg* t, Reg* s1, Reg* s2);
 static IR* new_IRLabel(long label);
 static IR* new_IRJmp(long label);
 static Reg* new_Reg();
+static Reg* new_RegAddr();
 static Reg* new_RegImm(unsigned long val);
 static Reg* new_RegFloatImm(Node* node);
 static Reg* new_RegVar(Ident* ident);
 static Reg* new_RegStr(char* str);
-static Reg* new_RegAddr(Reg* reg, int size);
 static Reg* new_RegFname(Ident* ident);
 static Reg* new_RegToken(Token* tok);
 static Reg* gen_expr(Node* node);
@@ -319,15 +319,11 @@ static Reg* gen_lvar(Node*  node){
     Reg* reg = NULL;
     switch(node->kind){
         case ND_VAR:
-            reg = new_Reg();
+            reg = new_RegAddr();
             new_IR(IR_REL, reg, new_RegVar(node->ident), NULL);
             reg->size = get_qtype_size(node->qtype);
             reg->is_unsigned = get_qtype_is_unsigned(node->qtype);
-            if(get_qtype_kind(node->qtype) == TY_FLOAT){
-                reg->is_float = true;
-            } else {
-                reg->is_float = false;
-            }
+            reg->is_float = node->qtype->type->kind == TY_FLOAT;
             break;
         case ND_DREF:
             reg = gen_expr(node->lhs);
@@ -363,8 +359,6 @@ static Reg* gen_expr(Node* node){
                 && kind != TY_UNION){
                 Reg* reg = new_Reg();
                 if(regvar->is_float){
-                    // アドレスの読み込み先は、整数レジスタにしたいのでis_floatを外す
-                    regvar->is_float = false;
                     reg->is_float = true;
                 }
                 reg->size = regvar->size;
@@ -458,6 +452,11 @@ static Reg* gen_expr(Node* node){
                 Node* var = dref->lhs;
                 QualType* va_type = get_qtype_ptr_to(var->qtype);
                 reg_lvar->size =  get_qtype_size(va_type);
+            }
+
+            if(reg_lvar->is_float){
+                reg->is_float = true;
+                reg->size = reg_lvar->size;
             }
 
             // 代入
@@ -670,6 +669,12 @@ static Reg* new_Reg(){
     return reg;
 }
 
+static Reg* new_RegAddr(){
+    Reg* reg = new_Reg();
+    reg->kind = REG_ADDR;
+    return reg;
+}
+
 static Reg* new_RegImm(unsigned long val){
     Reg* reg = new_Reg();
     reg->kind = REG_IMM;
@@ -699,14 +704,6 @@ static Reg* new_RegStr(char* str){
     Reg* reg = new_Reg();
     reg->kind = REG_STR;
     reg->str = str;
-    return reg;
-}
-
-static Reg* new_RegAddr(Reg* addr, int size){
-    Reg* reg = new_Reg();
-    reg->kind = REG_ADDR;
-    reg->addr = addr;
-    reg->size = size;
     return reg;
 }
 

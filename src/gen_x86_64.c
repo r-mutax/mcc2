@@ -223,6 +223,10 @@ static void assignReg(Reg* reg){
 
 // レジスタを左辺値としてアクティベートする
 static void activateRegLhs(Reg* reg){
+    if(reg->kind == REG_ADDR){
+        activateReg(reg, 1);
+    }
+
     if(reg->is_float){
         if(reg->size == 16){
             activateXXReg(reg, 1);
@@ -236,6 +240,10 @@ static void activateRegLhs(Reg* reg){
 
 // レジスタを右辺値としてアクティベートする
 static void activateRegRhs(Reg* reg){
+    if(reg->kind == REG_ADDR){
+        activateReg(reg, 0);
+    }
+
     if(reg->is_float){
         if(reg->size == 16){
             activateXXReg(reg, 0);
@@ -273,6 +281,7 @@ static void activateReg(Reg* reg, int is_lhs){
             }
             break;
         case REG_REG:
+        case REG_ADDR:
             assignReg(reg);
             break;
         case REG_VAR:
@@ -1016,21 +1025,44 @@ static void convert_ir2x86asm(IR* ir){
                 }
                 break;
             case IR_ASSIGN:
+                // TODO:assignのmovをdoubleようにする
                 activateRegLhs(ir->s1);
                 activateRegLhs(ir->s2);
-                if(ir->s1->size == 1){
-                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg8[ir->s2->idx]);
-                } else if(ir->s1->size == 2){
-                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg16[ir->s2->idx]);
-                } else if(ir->s1->size == 4){
-                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg32[ir->s2->idx]);
-                } else if(ir->s1->size == 8){
-                    print("\tmov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
+                if(ir->s1->is_float){
+                    if(ir->s1->size == 4){
+                        print("\tmovss [%s], %s\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s1->size == 8){
+                        print("\tmovsd [%s], %s\n", ir->s1->rreg, ir->s2->rreg);
+                    } else if(ir->s1->size == 16){
+                        print("\tfld %s\n", ir->s2->rreg);
+                        print("\tfstp TBYTE PTR [%s]\n", ir->s1->rreg);
+                    }
+                } else {
+                    if(ir->s1->size == 1){
+                        print("\tmov [%s], %s\n", ir->s1->rreg, rreg8[ir->s2->idx]);
+                    } else if(ir->s1->size == 2){
+                        print("\tmov [%s], %s\n", ir->s1->rreg, rreg16[ir->s2->idx]);
+                    } else if(ir->s1->size == 4){
+                        print("\tmov [%s], %s\n", ir->s1->rreg, rreg32[ir->s2->idx]);
+                    } else if(ir->s1->size == 8){
+                        print("\tmov [%s], %s\n", ir->s1->rreg, rreg64[ir->s2->idx]);
+                    }
                 }
 
                 if(ir->t){
                     activateRegLhs(ir->t);
-                    print("\tmov %s, %s\n", ir->t->rreg, ir->s2->rreg);
+                    if(ir->t->is_float){
+                        if(ir->t->size == 4){
+                            print("\tmovss %s, %s\n", ir->t->rreg, ir->s2->rreg);
+                        } else if(ir->s1->size == 8){
+                            print("\tmovsd %s, %s\n", ir->t->rreg, ir->s2->rreg);
+                        } else if(ir->s1->size == 16){
+                            print("\tfld TBYTE PTR [%s]\n", ir->s2->rreg);
+                            print("\tfstp %s\n", ir->t->rreg);
+                        }
+                    } else {
+                        print("\tmov %s, %s\n", ir->t->rreg, ir->s2->rreg);
+                    }
                 }
                 freeReg(ir->s2);
                 freeReg(ir->s1);
