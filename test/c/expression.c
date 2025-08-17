@@ -140,15 +140,27 @@ int test_expression(){
     ASSERT(reg2[2], 1);
 
     printf("test of expression ON double..\n");
-    1.1 + 1.2;
-    3.3 - 1.1;
-    2.2 * 3.2;
+    ASSERT(1.1 == 1.1, 1);
+    ASSERT(1.1 == 1.11, 0);
+    ASSERT(1.1 != 1.2, 1);
+    ASSERT(1.1 != 1.1, 0);
+    ASSERT(1.1 < 1.11, 1);
+    ASSERT(1.1 < 1.1, 0);
+    ASSERT(1.1 <= 1.1, 1);
+    ASSERT(1.1 <= 1.11, 1);
     5.5 / 1.1;
     5.5 / 1.1;
     5.5 / 1.1;
     5.5 / 1.1;
-    5.5 / 1.1;
-    5.5 / 1.1;
+
+    printf("test of expression ON float..\n");
+    ASSERT(1.1f == 1.1f, 1);
+    ASSERT(1.1f != 1.2f, 1);
+    ASSERT(1.1f < 1.11f, 1);
+    ASSERT(1.1f < 1.1f, 0);
+    ASSERT(1.1f <= 1.1f, 1);
+    ASSERT(1.1f <= 1.11f, 1);
+
 
     return 0;
 }

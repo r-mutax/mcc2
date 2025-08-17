@@ -903,15 +903,9 @@ static void convert_ir2x86asm(IR* ir){
                     // NaNチェック
                     // NaNは等しくない扱いとなるのでsetnpでorderedのときにal=1とする
                     print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                    print("\tsetnp al\n");  //　ordered -> al = 1, non ordered -> al = 0
-
-                    // 等価チェック
-                    print("\tmov %s, 0\n", ir->t->rreg);
-                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-
-                    // 等しくないときにraxに0(=ir->t)を書き込んで、falseに倒す
-                    // 等しいときはorderedによって決まる
-                    print("\tcmovne rax, %s\n", ir->t->rreg);
+                    print("\tsete al\n");
+                    print("\tsetnp %s\n", rreg8[ir->t->idx]); // ordered = 1, not ordered -> 0
+                    print("\tand al, %s\n", rreg8[ir->t->idx]);
                     print("\tmovzx %s, al\n", ir->t->rreg);
                 } else {
                     print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
@@ -927,11 +921,9 @@ static void convert_ir2x86asm(IR* ir){
 
                 if(ir->s1->is_float){
                     print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                    print("\tsetp al\n");   // ordered = 0, not ordered -> 1
-
-                    print("\tmov %s, 1\n", ir->t->rreg);
-                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
-                    print("\tcmovne rax, %s\n", ir->t->rreg);   // not equalならraxに1書き込んで、trueに倒す
+                    print("\tsetne al\n");
+                    print("\tsetp %s\n", rreg8[ir->t->idx]);
+                    print("\tor al, %s\n", rreg8[ir->t->idx]);
                     print("\tmovzx %s, al\n", ir->t->rreg);
                 } else {
                     print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
@@ -945,8 +937,10 @@ static void convert_ir2x86asm(IR* ir){
                 activateRegLhs(ir->s1);
                 activateRegRhs(ir->s2);
                 if(ir->s1->is_float){
-                    print("\tcomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
+                    print("\tucomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                     print("\tsetb al\n");
+                    print("\tsetnp %s\n", rreg8[ir->t->idx]);
+                    print("\tand al, %s\n", rreg8[ir->t->idx]);
                     print("\tmovzx %s, al\n", ir->t->rreg);
                 } else {
                     print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
@@ -963,6 +957,8 @@ static void convert_ir2x86asm(IR* ir){
                 if(ir->s1->is_float){
                     print("\tcomisd %s, %s\n", ir->s1->rreg, ir->s2->rreg);
                     print("\tsetbe al\n");
+                    print("\tsetnp %s\n", rreg8[ir->t->idx]);
+                    print("\tand al, %s\n", rreg8[ir->t->idx]);
                     print("\tmovzx %s, al\n", ir->t->rreg);
                 } else {
                     print("\tcmp %s, %s\n", ir->s1->rreg, ir->s2->rreg);
