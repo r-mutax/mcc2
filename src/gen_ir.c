@@ -537,6 +537,10 @@ static Reg* gen_expr(Node* node){
             ret->is_unsigned = get_qtype_is_unsigned(node->qtype);
             target->is_unsigned = get_qtype_is_unsigned(node->lhs->qtype);
 
+            // 浮動小数フラグの設定
+            ret->is_float = node->qtype->type->kind == TY_FLOAT;
+            target->is_float = node->lhs->qtype->type->kind == TY_FLOAT;
+
             // キャスト種別の判定
             IRCmd cmd = IR_CAST;    // 整数→整数のキャスト
 

@@ -117,4 +117,9 @@ int test_cast(){
     } PointerCastStruct2;
     (PointerCastStruct2*)&pcs2;
     ASSERT(((PointerCastStruct2*)&pcs2)->b, 12);
+
+    // long double cast to ...
+    long double ld = 1.1L;
+    ASSERT((float)ld, 1.1f);
+    ASSERT((double)ld, 1.1);
 }

@@ -87,22 +87,35 @@ typedef enum
     u64_u8,
     u64_u16,
     u64_u32,
+
+    f4_f8,
+    f4_f16,
+
+    f8_f4,
+    f8_f16,
+
+    f16_f4,
+    f16_f8,
 } CAST_CMD;
 
 // cast instruction table
 // cast_table[src][dst]のように使う
 // レジスタは基本64bit幅に出している。
-static CAST_CMD cast_table[][8] = {
-// dst              i8       i16       i32       i64        u8       u16       u32       u64
-/* s:i8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
-/* s:i16    */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
-/* s:i32    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
-/* s:i64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED  },
+static CAST_CMD cast_table[][11] = {
+// dst              i8       i16       i32       i64        u8       u16       u32       u64        f4        f8        f16
+/* s:i8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:i16    */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:i32    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:i64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
 
-/* s:u8     */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED  },
-/* s:u16    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED  },
-/* s:u32    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED  },
-/* s:u64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED  },
+/* s:u8     */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:u16    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:u32    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:u64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+
+/* s:f4     */ {    NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED, NO_NEED,  f4_f8,  f4_f16 },
+/* s:f8     */ {    NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED, f8_f4,  NO_NEED,  f8_f16 },
+/* s:f16    */ {    NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED, f16_f4,  f16_f8,  NO_NEED }
 };
 
 static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd);
@@ -418,7 +431,7 @@ static void activateXXReg(Reg* reg, int is_lhs){
         case REG_IMM:
             assignXXReg(reg);
             print("\tfld TBYTE PTR [rip + %s]\n", reg->ident->name);
-            print("\tfstp %s\n", reg->rreg);
+            print("\tfstp TBYTE PTR %s\n", reg->rreg);
             break;
         case REG_REG:
             assignXXReg(reg);
@@ -445,9 +458,9 @@ static void assignXXReg(Reg* reg){
     realXXReg[idx] = reg;
     unsigned long long stack_offset = LDOUBLE_BASE + idx * 16 - 240;
     if(stack_offset < 0){
-        reg->rreg = format_string("TBYTE PTR [rbp %lld]", stack_offset);
+        reg->rreg = format_string("[rbp %lld]", stack_offset);
     } else {
-        reg->rreg = format_string("TBYTE PTR [rbp + %lld]", stack_offset);
+        reg->rreg = format_string("[rbp + %lld]", stack_offset);
     }
 }
 
@@ -486,22 +499,36 @@ static void emit_binop(char* op, Reg* t, Reg* s1, Reg* s2){
 static SIZE_TYPE_ID get_size_type_id(Reg* reg)
 {
     SIZE_TYPE_ID id = 0;
-    switch(reg->size){
-        case 1:
-            id = reg->is_unsigned ? u8 : i8;
-            break;
-        case 2:
-            id = reg->is_unsigned ? u16 : i16;
-            break;
-        case 4:
-            id = reg->is_unsigned ? u32 : i32;
-            break;
-        case 8:
-            id = reg->is_unsigned ? u64 : i64;
-            break;
-        default:
-            id = ierr;
-            break;
+    if(reg->is_float){
+        switch(reg->size){
+            case 4:
+                id = f4;
+                break;
+            case 8:
+                id = f8;
+                break;
+            case 16:
+                id = f16;
+                break;
+        }
+    } else {
+        switch(reg->size){
+            case 1:
+                id = reg->is_unsigned ? u8 : i8;
+                break;
+            case 2:
+                id = reg->is_unsigned ? u16 : i16;
+                break;
+            case 4:
+                id = reg->is_unsigned ? u32 : i32;
+                break;
+            case 8:
+                id = reg->is_unsigned ? u64 : i64;
+                break;
+            default:
+                id = ierr;
+                break;
+        }
     }
 
     return id;
@@ -552,6 +579,16 @@ static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd){
             break;
         case u64_u32:
             print("\tmov %s, %s\n", rreg32[t->idx], rreg32[s1->idx]);
+            break;
+        case f16_f8:
+            print("\tfld TBYTE PTR %s\n", s1->rreg);
+            print("\tfstp QWORD PTR %s\n", s1->rreg);
+            print("\tmovsd %s, QWORD PTR %s\n", t->rreg, s1->rreg);
+            break;
+        case f16_f4:
+            print("\tfld TBYTE PTR %s\n", s1->rreg);
+            print("\tfstp DWORD PTR %s\n", s1->rreg);
+            print("\tmovss %s, DWORD PTR %s\n", t->rreg, s1->rreg);
             break;
         default:
             error("invalid cast %d \n", cmd);
@@ -1030,7 +1067,7 @@ static void convert_ir2x86asm(IR* ir){
                     } else if(ir->s1->size == 8){
                         print("\tmovsd [%s], %s\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s1->size == 16){
-                        print("\tfld %s\n", ir->s2->rreg);
+                        print("\tfld TBYTE PTR %s\n", ir->s2->rreg);
                         print("\tfstp TBYTE PTR [%s]\n", ir->s1->rreg);
                     }
                 } else {
@@ -1054,7 +1091,7 @@ static void convert_ir2x86asm(IR* ir){
                             print("\tmovsd %s, %s\n", ir->t->rreg, ir->s2->rreg);
                         } else if(ir->s1->size == 16){
                             print("\tfld TBYTE PTR [%s]\n", ir->s2->rreg);
-                            print("\tfstp %s\n", ir->t->rreg);
+                            print("\tfstp TBYTE PTR %s\n", ir->t->rreg);
                         }
                     } else {
                         print("\tmov %s, %s\n", ir->t->rreg, ir->s2->rreg);
@@ -1207,7 +1244,7 @@ static void convert_ir2x86asm(IR* ir){
                         print("\tmovsd %s, QWORD PTR [%s]\n", ir->s1->rreg, ir->s2->rreg);
                     } else if(ir->s2->size == 16){
                         print("\tfld TBYTE PTR [%s]\n", ir->s2->rreg);
-                        print("\tfstp %s\n", ir->s1->rreg);
+                        print("\tfstp TBYTE PTR %s\n", ir->s1->rreg);
                     }
                 } else {
                     if(ir->s2->is_unsigned){

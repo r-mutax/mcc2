@@ -419,7 +419,10 @@ typedef enum {
     u8,
     u16,
     u32,
-    u64
+    u64,
+    f4,
+    f8,
+    f16,
 } SIZE_TYPE_ID;
 
 typedef enum IRCmd{
