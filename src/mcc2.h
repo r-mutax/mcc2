@@ -701,6 +701,7 @@ void set_current_func(Ident* func);
 
 // parse.c
 void parse(Token* tok);
+Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 
 // preprocess.c
 Token* preprocess(Token* token);
@@ -759,6 +760,7 @@ void register_typedef(Ident* ident, QualType* qty);
 bool is_integer_type(QualType* qty);
 
 QualType* make_qual_type(SimpleType* type);
+QualType* copy_qual_type(QualType* qtype);
 int get_qtype_size(QualType* qty);
 TypeKind get_qtype_kind(QualType* qty);
 QualType* get_qtype_ptr_to(QualType* qty);

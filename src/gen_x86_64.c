@@ -96,6 +96,8 @@ typedef enum
 
     f16_f4,
     f16_f8,
+
+    NOT_IMPL, // 実装されていないキャストコマンド
 } CAST_CMD;
 
 // cast instruction table
@@ -103,19 +105,19 @@ typedef enum
 // レジスタは基本64bit幅に出している。
 static CAST_CMD cast_table[][11] = {
 // dst              i8       i16       i32       i64        u8       u16       u32       u64        f4        f8        f16
-/* s:i8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
-/* s:i16    */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
-/* s:i32    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
-/* s:i64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:i8     */ {    NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
+/* s:i16    */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
+/* s:i32    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
+/* s:i64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   i64_u8,  i64_u16,  i64_u32,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
 
-/* s:u8     */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
-/* s:u16    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
-/* s:u32    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
-/* s:u64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED },
+/* s:u8     */ {    i64_i8,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED, NO_NEED,  NO_NEED,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
+/* s:u16    */ {    i64_i8,  i64_i16,  NO_NEED,  NO_NEED,   u64_u8,  NO_NEED,  NO_NEED,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
+/* s:u32    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  NO_NEED,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
+/* s:u64    */ {    i64_i8,  i64_i16,  i64_i32,  NO_NEED,   u64_u8,  u64_u16,  u64_u32,  NO_NEED,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL },
 
-/* s:f4     */ {    NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED, NO_NEED,  f4_f8,  f4_f16 },
-/* s:f8     */ {    NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED, f8_f4,  NO_NEED,  f8_f16 },
-/* s:f16    */ {    NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED,   NO_NEED,  NO_NEED,  NO_NEED,  NO_NEED, f16_f4,  f16_f8,  NO_NEED }
+/* s:f4     */ {    NOT_IMPL,  NOT_IMPL,  NOT_IMPL,  NOT_IMPL,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL,  NOT_IMPL, NO_NEED,  f4_f8,  f4_f16 },
+/* s:f8     */ {    NOT_IMPL,  NOT_IMPL,  NOT_IMPL,  NOT_IMPL,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL,  NOT_IMPL, f8_f4,  NO_NEED,  f8_f16 },
+/* s:f16    */ {    NOT_IMPL,  NOT_IMPL,  NOT_IMPL,  NOT_IMPL,   NOT_IMPL,  NOT_IMPL,  NOT_IMPL,  NOT_IMPL, f16_f4,  f16_f8,  NO_NEED }
 };
 
 static void gen_cast_x86(Reg* t, Reg* s1, CAST_CMD cmd);

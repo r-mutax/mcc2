@@ -93,7 +93,6 @@ static Node* unary();
 static Node* postfix();
 static Node* primary();
 static Node* const_expr();
-static Node* new_node(NodeKind kind, Node* lhs, Node* rhs);
 static Node* new_node_add(Node* lhs, Node* rhs);
 static Node* new_node_sub(Node* lhs, Node* rhs);
 static Node* new_node_div(Node* lhs, Node* rhs);
@@ -2001,7 +2000,7 @@ static Node* const_expr(){
     return new_node_num(a);
 }
 
-static Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
+Node* new_node(NodeKind kind, Node* lhs, Node* rhs){
     Node* result = calloc(1, sizeof(Node));
     result->kind = kind;
     result->lhs = lhs;

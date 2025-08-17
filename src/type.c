@@ -147,6 +147,15 @@ void add_type(Node* node){
             if(get_qtype_kind(node->lhs->qtype) == TY_VOID){
                 error_tok(node->lhs->pos, "variable or field declared void");
             }
+            node->qtype = node->lhs->qtype;
+            if(get_qtype_kind(node->rhs->qtype) == TY_FLOAT){
+                if(get_qtype_size(node->lhs->qtype) != get_qtype_size(node->rhs->qtype)){
+                    node->rhs = new_node(ND_CAST, node->rhs, NULL);
+                    node->rhs->qtype = copy_qual_type(node->lhs->qtype);
+                    add_type(node->rhs);
+                }
+            }
+            break;
         case ND_ADD:                // 足し算
         case ND_SUB:                // 引き算
         case ND_MUL:                // 掛け算
@@ -256,6 +265,14 @@ QualType* make_qual_type(SimpleType* type){
     QualType* qty = calloc(1, sizeof(QualType));
     qty->type = type;
     return qty;
+}
+
+QualType* copy_qual_type(QualType* qtype){
+    if (!qtype) return NULL;
+
+    QualType* new_qtype = calloc(1, sizeof(QualType));
+    memcpy(new_qtype, qtype, sizeof(QualType));
+    return new_qtype;
 }
 
 int get_qtype_size(QualType* qty){
